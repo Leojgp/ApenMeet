@@ -1,0 +1,23 @@
+# Node Modules
+node_modules/
+
+# Variables de entorno
+.env
+
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+#Sistema Operativo
+.DS_Store
+Thumbs.db
+
+.vscode/
+.idea/
+
+# Tests
+coverage/
+
+# Build
+dist/
+build/
