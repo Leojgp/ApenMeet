@@ -32,7 +32,5 @@ const UserSchema: Schema = new Schema({
   isVerified: { type: Boolean, default: false },
 });
 
-UserSchema.index({ username: 1 });
-UserSchema.index({ email: 1 });
 
 export const User = mongoose.model<IUser>('User', UserSchema);

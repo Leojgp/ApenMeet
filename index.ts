@@ -1,28 +1,23 @@
-import dotenv from "dotenv";
+import express from 'express';
+import mongoose from 'mongoose';
+import dotenv from 'dotenv';
+import userRoutes from './src/routing/userRoutes';
+
+
 dotenv.config();
 
-import express, { Request, Response } from "express";
-import cors from 'cors';
-import bodyParser from 'body-parser';
-import { connectDB } from "./src/db/dbClient";
-import AuthenticationRouter from "./src/routing/AuthenticationRouting";
-
 const app = express();
+const PORT = process.env.PORT || 3000;
 
-const PORT = process.env.PORT;
+app.use(express.json());
 
-app.use(cors({
-  credentials: true
-}));
-app.use(bodyParser.json());
 
-connectDB().then(() => {
+app.use('/api/users', userRoutes);
 
-app.use('/', AuthenticationRouter); 
 
-app.listen(PORT, () => { 
-  console.log("Server running at PORT:", PORT); 
-}).on("error", (error) => { 
-  throw new Error(error.message);
-});
-});
+mongoose.connect(process.env.DB_KEY!)
+  .then(() => {
+    console.log('Conectado a MongoDB');
+    app.listen(PORT, () => console.log(`Servidor corriendo en puerto ${PORT}`));
+  })
+  .catch(err => console.error('Error al conectar a MongoDB:', err));
