@@ -5,6 +5,7 @@ import express, { Request, Response } from "express";
 import cors from 'cors';
 import bodyParser from 'body-parser';
 import { connectDB } from "./src/db/dbClient";
+import AuthenticationRouter from "./src/routing/AuthenticationRouting";
 
 const app = express();
 
@@ -17,9 +18,7 @@ app.use(bodyParser.json());
 
 connectDB().then(() => {
 
-app.get("/", (request: Request, response: Response) => { 
-  response.status(200).send("El servidor ha funcionado");
-}); 
+app.use('/', AuthenticationRouter); 
 
 app.listen(PORT, () => { 
   console.log("Server running at PORT:", PORT); 
