@@ -1,0 +1,40 @@
+import { Request, Response } from 'express';
+import { Plan } from '../db/models/Plan';
+
+export const getAllPlans = async (_req: Request, res: Response) => {
+  try {
+    const plans = await Plan.find().populate('creatorId', 'username').populate('participants', 'username');
+    res.json(plans);
+  } catch (err) {
+    res.status(500).json({ error: 'Error al obtener los planes' });
+  }
+};
+
+
+export const createPlan = async (req: Request, res: Response) => {
+  try {
+    const newPlan = new Plan(req.body);
+    await newPlan.save();
+    res.status(201).json(newPlan);
+  } catch (err) {
+    res.status(400).json({ error: 'Error al crear el plan' });
+  }
+};
+
+
+export const getPlanById = async (req: Request, res: Response): Promise<void> => {
+    try {
+      const plan = await Plan.findById(req.params.id)
+        .populate('creatorId', 'username')
+        .populate('participants', 'username');
+  
+      if (!plan) {
+        res.status(404).json({ error: 'Plan no encontrado' });
+        return;
+      }
+  
+      res.json(plan);
+    } catch (err) {
+      res.status(500).json({ error: 'Error al obtener el plan' });
+    }
+  };
