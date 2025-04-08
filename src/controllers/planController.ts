@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import { Plan } from '../db/models/Plan';
+import { User } from '../db/models/User';
 
 export const getAllPlans = async (_req: Request, res: Response) => {
   try {
@@ -30,11 +31,37 @@ export const getPlanById = async (req: Request, res: Response): Promise<void> =>
   
       if (!plan) {
         res.status(404).json({ error: 'Plan no encontrado' });
-        return;
       }
   
       res.json(plan);
     } catch (err) {
       res.status(500).json({ error: 'Error al obtener el plan' });
+    }
+  };
+
+  export const getPlansByUsername = async (req: Request, res: Response): Promise<void>  => {
+    try {
+      const {username} = req.params;
+
+      if (!username) {
+        res.status(400).json({ error: 'Nombre de usuario requerido' });
+        return;
+      }
+
+      const user = await User.findOne({ username });
+
+      if (!user) {
+        res.status(404).json({ error: 'Usuario no encontrado' });
+        return;
+      }
+  
+      const filter = { creatorId: user._id };
+
+      const plans = await Plan.find(filter)
+      
+      res.json(plans);
+    } catch (err) {
+      console.error('Error al obtener planes por username:', err);
+      res.status(500).json({ error: 'Error al obtener los planes del usuario' });
     }
   };
