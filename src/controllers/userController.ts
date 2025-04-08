@@ -13,6 +13,8 @@ export const getAllUsers = async (_req: Request, res: Response) => {
 
 //TODO Hacer la autentificación con JWT usando Tokens, para más adelante
 
+// Registro 
+
 export const registerUser = async (req: Request, res: Response): Promise<void> => {
   try {
     const { username, email, password } = req.body;

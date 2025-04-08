@@ -2,6 +2,7 @@ import express from 'express';
 import mongoose from 'mongoose';
 import dotenv from 'dotenv';
 import userRoutes from './src/routing/userRoutes';
+import reviewRoutes from './src/routing/reviewRoutes';
 
 
 dotenv.config();
@@ -13,6 +14,7 @@ app.use(express.json());
 
 
 app.use('/api/users', userRoutes);
+app.use('/api/reviews', reviewRoutes);
 
 
 mongoose.connect(process.env.DB_KEY!)
