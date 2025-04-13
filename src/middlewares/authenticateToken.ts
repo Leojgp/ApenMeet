@@ -1,8 +1,10 @@
 import { Request, Response, NextFunction } from 'express';
+import dotenv from 'dotenv';
 
+dotenv.config();
 const jwt = require('jsonwebtoken');
 
-const JWT_SECRET = process.env.JWT_SECRET;
+const JWT_SECRET = process.env.ACCESS_TOKEN_SECRET;
 
 export function authenticateToken(req: Request, res: Response, next: NextFunction): void {
     const authHeader = req.headers['authorization'];

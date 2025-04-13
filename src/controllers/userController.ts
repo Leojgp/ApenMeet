@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import { User } from '../db/models/User';
 import dotenv from 'dotenv';
+import bcrypt from 'bcryptjs';
 
 dotenv.config();
 const jwt = require('jsonwebtoken');
@@ -50,9 +51,19 @@ export const getUserData = async (req: Request, res: Response): Promise<void> =>
 // Registro
 export const registerUser = async (req: Request, res: Response): Promise<void> => {
   try {
-    const { username, email, password } = req.body;
+    const { 
+      username, 
+      email, 
+      password, 
+      bio, 
+      location, 
+      interests, 
+      profileImage, 
+      rating, 
+      isVerified 
+    } = req.body;
 
-    if (!username || !email || !password) {
+    if (!username || !email || !password || !location || !interests) {
       res.status(400).json({ message: 'Faltan campos obligatorios' });
       return;
     }
@@ -63,10 +74,23 @@ export const registerUser = async (req: Request, res: Response): Promise<void> =
       return;
     }
 
+// Encriptación de la contraseña porque no puedo guardarla en texto plano
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(password, salt);
+
     const newUser = new User({
       username,
       email,
-      passwordHash: password,
+      passwordHash: hashedPassword,
+      bio: bio || '',
+      location: {
+        city: location.city || '',
+        coordinates: location.coordinates || [0, 0],
+      },
+      interests: interests || [],
+      profileImage: profileImage || '',
+      rating: rating || 0,
+      isVerified: isVerified || false,
     });
 
     await newUser.save();
@@ -95,7 +119,13 @@ export const loginUser = async (req: Request, res: Response): Promise<void> => {
     }
 
     const user = await User.findOne({ email });
-    if (!user || user.passwordHash !== password) {
+    if (!user) {
+      res.status(401).json({ message: 'Usuario no encontrado' });
+      return;
+    }
+
+    const passwordMatch = await bcrypt.compare(password, user.passwordHash); 
+    if (!passwordMatch) {
       res.status(401).json({ message: 'Credenciales inválidas' });
       return;
     }
@@ -107,6 +137,7 @@ export const loginUser = async (req: Request, res: Response): Promise<void> => {
     };
 
     const accesToken = jwt.sign(userResponse, process.env.ACCESS_TOKEN_SECRET || '');
+    
     res.status(200).json({
       message: 'Inicio de sesión exitoso',
       accesToken: accesToken,
