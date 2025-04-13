@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import { User } from '../db/models/User';
 import dotenv from 'dotenv';
 import bcrypt from 'bcryptjs';
+import { RefreshToken } from '../db/models/RefreshToken';
 
 dotenv.config();
 const jwt = require('jsonwebtoken');
@@ -109,6 +110,7 @@ export const registerUser = async (req: Request, res: Response): Promise<void> =
 };
 
 // Inicio de sesión
+
 export const loginUser = async (req: Request, res: Response): Promise<void> => {
   try {
     const { email, password } = req.body;
@@ -124,7 +126,7 @@ export const loginUser = async (req: Request, res: Response): Promise<void> => {
       return;
     }
 
-    const passwordMatch = await bcrypt.compare(password, user.passwordHash); 
+    const passwordMatch = await bcrypt.compare(password, user.passwordHash);
     if (!passwordMatch) {
       res.status(401).json({ message: 'Credenciales inválidas' });
       return;
@@ -136,14 +138,60 @@ export const loginUser = async (req: Request, res: Response): Promise<void> => {
       email: user.email,
     };
 
-    const accesToken = jwt.sign(userResponse, process.env.ACCESS_TOKEN_SECRET || '');
-    
+    const accessToken = generateAccesToken(userResponse);
+    const refreshToken = jwt.sign(userResponse, process.env.REFRESH_TOKEN_SECRET || '');
+
+    const tokenDoc = new RefreshToken({ token: refreshToken, userId: user._id });
+    await tokenDoc.save();
+
     res.status(200).json({
       message: 'Inicio de sesión exitoso',
-      accesToken: accesToken,
+      accessToken,
+      refreshToken,
     });
   } catch (error) {
     console.error('Error al iniciar sesión:', error);
     res.status(500).json({ message: 'Error interno del servidor' });
   }
 };
+
+
+export const getToken = async (req: Request, res: Response): Promise<void> => {
+  const refreshToken = req.body.token;
+
+  if (!refreshToken) {
+    res.sendStatus(401);
+    return;
+  }
+
+  const tokenExists = await RefreshToken.findOne({ token: refreshToken });
+  if (!tokenExists) {
+    res.sendStatus(403);
+    return;
+  }
+
+  jwt.verify(refreshToken, process.env.REFRESH_TOKEN_SECRET || '', (err:Error, user: any) => {
+    if (err) {
+      res.sendStatus(403);
+      return;
+    }
+
+    const accessToken = generateAccesToken(user);
+    res.json({ accessToken });
+  });
+};
+
+function generateAccesToken(user: any){
+  return jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, {expiresIn: process.env.ACCESS_TOKEN_EXPIRATION});
+}
+
+export const deleteRefreshToken = async (req: Request, res: Response): Promise<void> => {
+  const token = req.body.token;
+  try {
+    await RefreshToken.findOneAndDelete({ token });
+    res.sendStatus(204);
+  } catch (err) {
+    res.status(500).json({ message: 'Error al eliminar el token' });
+  }
+};
+
