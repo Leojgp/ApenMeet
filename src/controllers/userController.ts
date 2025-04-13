@@ -1,4 +1,4 @@
-import { NextFunction, Request, Response } from 'express';
+import { Request, Response } from 'express';
 import { User } from '../db/models/User';
 import dotenv from 'dotenv';
 
@@ -116,24 +116,3 @@ export const loginUser = async (req: Request, res: Response): Promise<void> => {
     res.status(500).json({ message: 'Error interno del servidor' });
   }
 };
-
-// Middleware para autenticar
-export function authenticateToken(req: Request, res: Response, next: NextFunction): void {
-  const authHeader = req.headers['authorization'];
-  const token = authHeader && authHeader.split(' ')[1];
-
-  if (!token) {
-    res.status(401).json({ message: 'Token no proporcionado' });
-    return;
-  }
-
-  jwt.verify(token, process.env.ACCESS_TOKEN_SECRET || '', (err: Error | null, user: any) => {
-    if (err) {
-      res.status(403).json({ message: 'Token no válido', error: err.message });
-      return;
-    }
-
-    (req as any).user = user;
-    next();
-  });
-}
