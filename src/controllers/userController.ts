@@ -18,7 +18,34 @@ export const getAllUsers = async (_req: Request, res: Response) => {
   }
 };
 
+export const getUserData = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const user = await User.findById(req.params.id);
 
+    if (!user) {
+      res.status(404).json({ error: 'Usuario no encontrado' });
+      return;
+    }
+
+    const authenticatedUser = (req as any).user;
+
+    if (!authenticatedUser || authenticatedUser.username !== user.username) {
+      res.status(403).json({ error: 'Acceso denegado. Usuario no autenticado' });
+      return;
+    }
+
+    res.status(200).json({
+      success: true,
+      user: {
+        username: user.username,
+        email: user.email,
+      },
+    });
+  } catch (err) {
+    console.error('Error al obtener los datos del usuario:', err);
+    res.status(500).json({ error: 'Error interno del servidor al obtener los datos del usuario' });
+  }
+};
 
 // Registro
 export const registerUser = async (req: Request, res: Response): Promise<void> => {
@@ -90,3 +117,23 @@ export const loginUser = async (req: Request, res: Response): Promise<void> => {
   }
 };
 
+// Middleware para autenticar
+export function authenticateToken(req: Request, res: Response, next: NextFunction): void {
+  const authHeader = req.headers['authorization'];
+  const token = authHeader && authHeader.split(' ')[1];
+
+  if (!token) {
+    res.status(401).json({ message: 'Token no proporcionado' });
+    return;
+  }
+
+  jwt.verify(token, process.env.ACCESS_TOKEN_SECRET || '', (err: Error | null, user: any) => {
+    if (err) {
+      res.status(403).json({ message: 'Token no válido', error: err.message });
+      return;
+    }
+
+    (req as any).user = user;
+    next();
+  });
+}
