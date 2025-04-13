@@ -1,20 +1,26 @@
-import { Request, Response } from 'express';
+import { NextFunction, Request, Response } from 'express';
 import { User } from '../db/models/User';
+import dotenv from 'dotenv';
 
+dotenv.config();
+const jwt = require('jsonwebtoken');
 
 export const getAllUsers = async (_req: Request, res: Response) => {
   try {
     const users = await User.find();
     res.json(users);
-  } catch (err) {
-    res.status(500).json({ error: 'Error al obtener los usuarios' });
+
+  }
+  catch (err) {
+    res.status(500).json(
+      { error: 'Error al obtener los usuarios' }
+    );
   }
 };
 
-//TODO Hacer la autentificación con JWT usando Tokens, para más adelante
 
-// Registro 
 
+// Registro
 export const registerUser = async (req: Request, res: Response): Promise<void> => {
   try {
     const { username, email, password } = req.body;
@@ -57,12 +63,12 @@ export const loginUser = async (req: Request, res: Response): Promise<void> => {
     const { email, password } = req.body;
 
     if (!email || !password) {
-      res.status(400).json({ message: 'Email y contraseña son requeridos' });
+      res.status(400).json({ message: 'Email/usuario y contraseña son requeridos' });
       return;
     }
 
     const user = await User.findOne({ email });
-    if (!user || user.passwordHash!== password) { 
+    if (!user || user.passwordHash !== password) {
       res.status(401).json({ message: 'Credenciales inválidas' });
       return;
     }
@@ -73,7 +79,11 @@ export const loginUser = async (req: Request, res: Response): Promise<void> => {
       email: user.email,
     };
 
-    res.status(200).json({ message: 'Inicio de sesión exitoso', user: userResponse });
+    const accesToken = jwt.sign(userResponse, process.env.ACCESS_TOKEN_SECRET || '');
+    res.status(200).json({
+      message: 'Inicio de sesión exitoso',
+      accesToken: accesToken,
+    });
   } catch (error) {
     console.error('Error al iniciar sesión:', error);
     res.status(500).json({ message: 'Error interno del servidor' });
