@@ -23,7 +23,7 @@ export const createPlan = async (req: Request, res: Response): Promise<void> => 
       return;
     }
 
-    const user = await User.findById(authenticatedUser.id);
+    const user = await User.findById(authenticatedUser._id);
     if (!user) {
       res.status(404).json({ error: 'Usuario creador no encontrado' });
       return;
@@ -31,8 +31,8 @@ export const createPlan = async (req: Request, res: Response): Promise<void> => 
 
     const newPlan = new Plan({
       ...req.body,
-      creatorId: authenticatedUser.id,
-      participants: [authenticatedUser.id],
+      creatorId: authenticatedUser._id,
+      participants: [authenticatedUser._id],
       origin: 'user',
       createdAt: new Date(),
       status: 'open'
@@ -114,12 +114,12 @@ export const joinPlan = async (req: Request, res: Response): Promise<void> => {
       return;
     }
 
-    if (plan.participants.some(p => p.toString() === authenticatedUser.id)) {
+    if (plan.participants.some(p => p.toString() === authenticatedUser._id)) {
       res.status(400).json({ error: 'Ya eres participante de este plan' });
       return;
     }
 
-    plan.participants.push(new mongoose.Types.ObjectId(authenticatedUser.id));
+    plan.participants.push(new mongoose.Types.ObjectId(authenticatedUser._id));
     await plan.save();
 
     const updatedPlan = await Plan.findById(id)
@@ -152,17 +152,17 @@ export const leavePlan = async (req: Request, res: Response): Promise<void> => {
       return;
     }
 
-    if (!plan.participants.some(p => p.toString() === authenticatedUser.id)) {
-      res.status(400).json({ error: 'No eres participante de este plan' });
+    if (!plan.participants.some(p => p.toString() === authenticatedUser._id.toString())) {
+      res.status(400).json({ error: `No eres participante de este plan ${authenticatedUser._id}` });
       return;
     }
 
-    if (plan.creatorId.toString() === authenticatedUser.id) {
+    if (plan.creatorId.toString() === authenticatedUser._id) {
       res.status(400).json({ error: 'Eres el creador del plan. Si deseas cancelarlo, usa la función cancelar' });
       return;
     }
 
-    plan.participants = plan.participants.filter(p => p.toString() !== authenticatedUser.id);
+    plan.participants = plan.participants.filter(p => p.toString() !== authenticatedUser._id);
     await plan.save();
 
     res.status(200).json({ message: 'Has abandonado el plan con éxito' });
@@ -187,7 +187,7 @@ export const updatePlan = async (req: Request, res: Response): Promise<void> => 
       return;
     }
 
-    if (plan.creatorId.toString() !== authenticatedUser.id) {
+    if (plan.creatorId.toString() !== authenticatedUser._id) {
       res.status(403).json({ error: 'No tienes permiso para actualizar este plan' });
       return;
     }
@@ -231,7 +231,7 @@ export const cancelPlan = async (req: Request, res: Response): Promise<void> => 
       return;
     }
 
-    if (plan.creatorId.toString() !== authenticatedUser.id) {
+    if (plan.creatorId.toString() !== authenticatedUser._id) {
       res.status(403).json({ error: 'No tienes permiso para cancelar este plan' });
       return;
     }

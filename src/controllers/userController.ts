@@ -189,7 +189,7 @@ export const deleteRefreshToken = async (req: Request, res: Response): Promise<v
   const token = req.body.token;
   try {
     await RefreshToken.findOneAndDelete({ token });
-    res.sendStatus(204);
+    res.sendStatus(204).json({ message: 'RefreshToken eliminado correctamente' });
   } catch (err) {
     res.status(500).json({ message: 'Error al eliminar el token' });
   }
