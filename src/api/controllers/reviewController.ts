@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
-import { Review } from '../db/models/Review';
+import { Review } from '../../db/models/Review';
+
 
 
 export const getAllReviews = async (_req: Request, res: Response) => {

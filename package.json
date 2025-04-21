@@ -2,12 +2,12 @@
   "name": "restapi",
   "version": "1.0.0",
   "description": "This the server for my ApenMeet app",
-  "main": "index.ts",
+  "main": "server.ts",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "build": "npx tsc",
-    "start": "node dist/index.js",
-    "dev": "nodemon index.ts"
+    "start": "node dist/server.js",
+    "dev": "nodemon server.ts"
   },
   "author": "Leonardo Garcia Paulsen",
   "license": "ISC",

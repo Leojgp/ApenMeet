@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
-import { Plan } from '../db/models/Plan';
-import { User } from '../db/models/User';
+import { Plan } from '../../db/models/Plan';
+import { User } from '../../db/models/User';
 import mongoose from 'mongoose';
 
 export const getAllPlans = async (_req: Request, res: Response) => {

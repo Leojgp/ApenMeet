@@ -1,9 +1,10 @@
 import express from 'express';
 import mongoose from 'mongoose';
 import dotenv from 'dotenv';
-import userRoutes from './src/routing/userRoutes';
-import reviewRoutes from './src/routing/reviewRoutes';
-import planRoutes from './src/routing/planRoutes';
+import userRoutes from './src/api/routing/userRoutes';
+import reviewRoutes from './src/api/routing/reviewRoutes';
+import planRoutes from './src/api/routing/planRoutes';
+
 
 
 dotenv.config();

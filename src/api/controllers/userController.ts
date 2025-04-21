@@ -1,8 +1,9 @@
 import { Request, Response } from 'express';
-import { User } from '../db/models/User';
 import dotenv from 'dotenv';
+import { User } from '../../db/models/User';
 import bcrypt from 'bcryptjs';
-import { RefreshToken } from '../db/models/RefreshToken';
+import { RefreshToken } from '../../db/models/RefreshToken';
+
 
 dotenv.config();
 const jwt = require('jsonwebtoken');
