@@ -139,7 +139,9 @@ export const loginUser = async (req: Request, res: Response): Promise<void> => {
       email: user.email,
     };
 
-    const accessToken = generateAccesToken(userResponse);
+    await RefreshToken.deleteMany({ userId: user._id });
+
+    const accessToken = generateAccesToken(userResponse, false);
     const refreshToken = jwt.sign(userResponse, process.env.REFRESH_TOKEN_SECRET || '');
 
     const tokenDoc = new RefreshToken({ token: refreshToken, userId: user._id });
@@ -171,26 +173,42 @@ export const getToken = async (req: Request, res: Response): Promise<void> => {
     return;
   }
 
-  jwt.verify(refreshToken, process.env.REFRESH_TOKEN_SECRET || '', (err:Error, user: any) => {
+  jwt.verify(refreshToken, process.env.REFRESH_TOKEN_SECRET || '', async (err:Error, userData: any) => {
     if (err) {
       res.sendStatus(403);
       return;
     }
 
-    const accessToken = generateAccesToken(user);
+    const user = await User.findById(userData._id);
+    if (!user) {
+      res.sendStatus(403);
+      return;
+    }
+
+    const userForToken = {
+      _id: user._id,
+      username: user.username,
+      email: user.email
+    };
+
+    const accessToken = generateAccesToken(userForToken, true);
     res.json({ accessToken });
   });
 };
 
-function generateAccesToken(user: any){
-  return jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, {expiresIn: process.env.ACCESS_TOKEN_EXPIRATION});
+function generateAccesToken(user: any,isRefreshToken: boolean){
+  return jwt.sign(
+    { ...user, isRefreshToken, iat: Math.floor(Date.now() / 1000)}, 
+    process.env.ACCESS_TOKEN_SECRET,
+    { expiresIn: process.env.ACCESS_TOKEN_EXPIRATION }
+  );
 }
 
 export const deleteRefreshToken = async (req: Request, res: Response): Promise<void> => {
   const token = req.body.token;
   try {
     await RefreshToken.findOneAndDelete({ token });
-    res.sendStatus(204).json({ message: 'RefreshToken eliminado correctamente' });
+    res.sendStatus(204).send();
   } catch (err) {
     res.status(500).json({ message: 'Error al eliminar el token' });
   }
