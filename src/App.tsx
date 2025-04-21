@@ -15,7 +15,7 @@ export default function App() {
         <Stack.Screen name="Home" component={HomeScreen} options={{ headerShown: false }} />
         <Stack.Screen name="SignUp" component={SignUpScreen} options={{ headerShown: false }} />
         <Stack.Screen name="SignIn" component={SignInScreen} options={{ headerShown: false }} />
-        <Stack.Screen name="main" component={MainScreen}/>
+        <Stack.Screen name="main" component={MainScreen} options={{ headerLeft: () => null, gestureEnabled: false }}/>
       </Stack.Navigator>
     </NavigationContainer>
   );
