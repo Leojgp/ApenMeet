@@ -1,12 +1,9 @@
-import axios from 'axios';
-import { IP_ADDRESS } from '@env';
+import api from './axiosInstance';
 
-
-const API_URL = `http://${IP_ADDRESS}:3000/api/users`;
 
 export const loginUser = async (email: string, password: string) => {
     try {
-        const response = await axios.post(`${API_URL}/login`, { email, password });
+        const response = await api.post(`users/login`, { email, password });
         return response.data;
     } catch (error: any) {
         if (error.response) {
@@ -16,3 +13,17 @@ export const loginUser = async (email: string, password: string) => {
           }
     }
 };
+
+export const getCurrentUser  = async () => {
+  try {
+  const response = await api.get(`/users/me`);
+  return response.data;
+} catch (error: any) {
+  if (error.response) {
+      throw new Error(error.response.data.message || 'Error desconocido');
+    } else {
+      throw new Error('Error al obtener datos del usuario ' + error.message);
+    }
+}
+};
+
