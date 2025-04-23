@@ -20,6 +20,7 @@ export default function SignInScreen({ navigation }: SignInProps) {
   return (
     <SafeAreaProvider>
       <SafeAreaView style={styles.container}>
+        <Text style={styles.title}>Login</Text>
         <TextInput
           style={styles.input}
           onChangeText={setEmail}
@@ -48,6 +49,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     padding: 20,
+  },
+  title: {
+    fontSize: 24,
+    marginBottom: 10,
   },
   input: {
     height: 40,

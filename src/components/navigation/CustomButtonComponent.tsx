@@ -13,7 +13,6 @@ export default function CustomButton({ title, screenName, navigation }: CustomBu
       <Button
         title={title}  
         onPress={() => {
-          console.log(`${title} button pressed`);
           navigation.navigate(screenName);  
         }}
       />

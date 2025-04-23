@@ -1,6 +1,6 @@
 import { StyleSheet, Text, View } from 'react-native'
 import React from 'react'
-import CustomButton from '../components/CustomButtonComponent'
+import CustomButton from '../components/navigation/CustomButtonComponent'
 
 
 interface HomeScreenProps{
