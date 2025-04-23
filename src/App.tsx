@@ -8,6 +8,7 @@ import MainScreen from './screens/MainScreen';
 import ConfigScreen from './screens/configScreens/ConfigScreen';
 import LogoutButton from './components/navigation/LogOutButton';
 import PlansScreen from './screens/PlansScreen';
+import PlanDetailScreen from './screens/plans/PlansDetailsScreen';
 
 const Stack = createStackNavigator();
 
@@ -29,6 +30,7 @@ export default function App() {
         />
         <Stack.Screen name="Config" component={ConfigScreen}/>
         <Stack.Screen name="Plans" component={PlansScreen}/>
+        <Stack.Screen name="PlanDetail" component={PlanDetailScreen}/>
       </Stack.Navigator>
     </NavigationContainer>
   );
