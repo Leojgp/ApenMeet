@@ -1,16 +1,21 @@
 import React from 'react';
 import { Ionicons } from '@expo/vector-icons';
 import { TouchableOpacity } from 'react-native';
+import * as SecureStore from 'expo-secure-store'; 
 
-interface LogoutButtonProps {
-  navigation: any;
-}
+const LogoutButton: React.FC<{ navigation: any }> = ({ navigation }) => {
+  const handleLogout = async () => {
 
-function LogoutButton({ navigation }: LogoutButtonProps){
+    console.log('Eliminando Tokens...');
+    await SecureStore.deleteItemAsync('refreshToken');
+    await SecureStore.deleteItemAsync('accessToken');
+    
+    navigation.navigate('Home');
+  };
 
   return (
-    <TouchableOpacity onPress={() => navigation.navigate('SignIn')} style={{ marginRight: 10 }}>
-      <Ionicons name="log-out-outline" size={24} color="black" />
+    <TouchableOpacity onPress={handleLogout} style={{ marginRight: 10 }}>
+      <Ionicons name="log-out-outline" size={30} color="gray" />
     </TouchableOpacity>
   );
 };

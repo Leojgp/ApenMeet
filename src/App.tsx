@@ -7,6 +7,7 @@ import SignInScreen from './screens/SignInScreen';
 import MainScreen from './screens/MainScreen';
 import ConfigScreen from './screens/configScreens/ConfigScreen';
 import LogoutButton from './components/navigation/LogOutButton';
+import PlansScreen from './screens/PlansScreen';
 
 const Stack = createStackNavigator();
 
@@ -27,6 +28,7 @@ export default function App() {
           })}
         />
         <Stack.Screen name="Config" component={ConfigScreen}/>
+        <Stack.Screen name="Plans" component={PlansScreen}/>
       </Stack.Navigator>
     </NavigationContainer>
   );

@@ -14,7 +14,7 @@ const BottomTabMenu: React.FC<BottomTabMenuProps> = ({ navigation }) => {
         <Ionicons name="chatbubble-outline" size={30} color="gray" />
       </TouchableOpacity>
 
-      <TouchableOpacity style={styles.iconButton} onPress={() => navigation.navigate('Config')}>
+      <TouchableOpacity style={styles.iconButton} onPress={() => navigation.navigate('Plans')}>
         <Ionicons name="walk-outline" size={30} color="gray" />
       </TouchableOpacity>
 
