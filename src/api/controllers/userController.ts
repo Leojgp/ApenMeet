@@ -23,17 +23,17 @@ export const getAllUsers = async (_req: Request, res: Response) => {
 
 export const getUserData = async (req: Request, res: Response): Promise<void> => {
   try {
-    const user = await User.findById(req.params.id);
+    const authenticatedUser = (req as any).user;
 
-    if (!user) {
-      res.status(404).json({ error: 'Usuario no encontrado' });
+    if (!authenticatedUser || !authenticatedUser._id) {
+      res.status(401).json({ error: 'Token inválido o no proporcionado' });
       return;
     }
 
-    const authenticatedUser = (req as any).user;
+    const user = await User.findById(authenticatedUser._id);
 
-    if (!authenticatedUser || authenticatedUser.username !== user.username) {
-      res.status(403).json({ error: 'Acceso denegado. Usuario no autenticado' });
+    if (!user) {
+      res.status(404).json({ error: 'Usuario no encontrado' });
       return;
     }
 

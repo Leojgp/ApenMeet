@@ -4,6 +4,7 @@ export interface IPlan extends Document {
   title: string;
   description: string;
   creatorId: mongoose.Types.ObjectId;
+  imageUrl: string;
   location: {
     address: string;
     coordinates: [number, number];
@@ -21,6 +22,10 @@ const PlanSchema: Schema = new Schema({
   title: { type: String, required: true },
   description: { type: String, required: true },
   creatorId: { type: Schema.Types.ObjectId, ref: 'User', required: true },
+  imageUrl: {
+    type: String,
+    default: 'https://st4.depositphotos.com/14953852/24787/v/450/depositphotos_247872612-stock-illustration-no-image-available-icon-vector.jpg'
+  },
   location: {
     address: { type: String, required: true },
     coordinates: { type: [Number], index: '2dsphere', required: true },
