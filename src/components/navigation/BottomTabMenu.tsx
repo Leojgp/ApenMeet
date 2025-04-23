@@ -1,7 +1,7 @@
-// components/BottomTabMenu.tsx
 import React from 'react';
 import { View, TouchableOpacity, StyleSheet } from 'react-native';
 import Ionicons from '@expo/vector-icons/Ionicons';
+import AntDesign from '@expo/vector-icons/AntDesign';
 
 interface BottomTabMenuProps {
   navigation: any;
@@ -15,7 +15,7 @@ const BottomTabMenu: React.FC<BottomTabMenuProps> = ({ navigation }) => {
       </TouchableOpacity>
 
       <TouchableOpacity style={styles.iconButton} onPress={() => navigation.navigate('Plans')}>
-        <Ionicons name="walk-outline" size={30} color="gray" />
+        <AntDesign name="find" size={30} color="gray" />
       </TouchableOpacity>
 
       <TouchableOpacity style={styles.iconButton} onPress={() => navigation.navigate('Config')}>
