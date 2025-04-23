@@ -16,10 +16,9 @@ export const useAuth = ({ navigation }: useAuthProps) => {
 
         try {
             const response = await loginUser(email, password);
-            console.log('Login exitoso:', response);
             await saveToken('accessToken', response.accessToken);
             await saveToken('refreshToken', response.refreshToken);
-            navigation.navigate('main');
+            navigation.navigate('Main');
         } catch (err: any) {
             setError(err.message || 'Ocurrió un error. Intenta nuevamente.');
             console.log('Error en login:', err.message);

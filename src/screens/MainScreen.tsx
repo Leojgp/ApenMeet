@@ -1,8 +1,13 @@
 import { StyleSheet, Text, View, ActivityIndicator } from 'react-native';
 import React from 'react';
 import { useUser } from '../hooks/useUser';
+import CustomButton from '../components/CustomButtonComponent';
 
-export default function MainScreen() {
+interface MainScreenProps{
+  navigation:any
+}
+
+export default function MainScreen({navigation}:MainScreenProps) {
 
   const { user, loading, error } = useUser();
 
@@ -13,6 +18,7 @@ export default function MainScreen() {
     <View style={styles.container}>
       <Text style={styles.title}>MainScreen</Text>
       {user && <Text style={styles.username}>Hola, {user.user.username}</Text>}
+      <CustomButton title="Click me" screenName='Config' navigation={navigation}/>
     </View>
   );
 }
