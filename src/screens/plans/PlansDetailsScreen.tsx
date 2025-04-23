@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, Image, StyleSheet, ActivityIndicator, Dimensions } from 'react-native';
-import { usePlans } from '../../hooks/usePlans';
+import { View, Text, Image, StyleSheet, ActivityIndicator, Dimensions, Button } from 'react-native';
 import MapView, { Marker } from 'react-native-maps';
+import { useJoinPlan } from '../../hooks/useJoinPlan';
+import { usePlansById } from '../../hooks/usePlansById';
 
 interface PlanDetailProps {
   route: any;
@@ -9,12 +10,18 @@ interface PlanDetailProps {
 
 export default function PlanDetailScreen({ route }: PlanDetailProps) {
   const { planId } = route.params;
-  const { plans, loading, error } = usePlans();
-
-  const plan = plans.find(p => p.id === planId);
+  const { plan, loading, error } = usePlansById(planId);
+  const { join} = useJoinPlan();
 
   const [mapReady, setMapReady] = useState(false);
 
+  const handleJoin = async () => {
+
+    const result = await join(planId);
+    if (result) {
+        console.log('You joined succesfully to the plan')
+    }
+}
   if (loading) {
     return (
       <View style={styles.container}>
@@ -54,6 +61,7 @@ export default function PlanDetailScreen({ route }: PlanDetailProps) {
         <Text>Max Participants: {plan.maxParticipants}</Text>
         <Text>Participants: {plan.participants.map(p => p.username).join(', ')}</Text>
         <Text>Status: {plan.status}</Text>
+        <Button title='Join Plan' onPress={() => handleJoin()}/>
       </View>
       
       {latitude && longitude ? (
@@ -85,7 +93,7 @@ export default function PlanDetailScreen({ route }: PlanDetailProps) {
       )}
     </View>
   );
-}
+  }
 
 const styles = StyleSheet.create({
   containerFull: {
