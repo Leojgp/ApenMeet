@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, Image, StyleSheet, ActivityIndicator, Dimensions, Button } from 'react-native';
+import { View, Text, Image, StyleSheet, ActivityIndicator, Dimensions, Button, Modal, TouchableOpacity } from 'react-native';
 import MapView, { Marker } from 'react-native-maps';
 import { useJoinPlan } from '../../hooks/useJoinPlan';
 import { usePlansById } from '../../hooks/usePlansById';
+import { getCurrentUser } from '../../api/userApi';
 
 interface PlanDetailProps {
   route: any;
@@ -11,17 +12,50 @@ interface PlanDetailProps {
 export default function PlanDetailScreen({ route }: PlanDetailProps) {
   const { planId } = route.params;
   const { plan, loading, error } = usePlansById(planId);
-  const { join} = useJoinPlan();
-
+  const { join } = useJoinPlan();
   const [mapReady, setMapReady] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [showJoinRequest, setShowJoinRequest] = useState(false);
+  const [currentUser, setCurrentUser] = useState<any>(null);
+
+  useEffect(() => {
+    const fetchCurrentUser = async () => {
+      try {
+        const user = await getCurrentUser();
+        setCurrentUser(user);
+        if (plan && user) {
+          setIsAdmin(plan.admins.some(a => a._id === user._id));
+        }
+      } catch (err) {
+        console.error('Error fetching current user:', err);
+      }
+    };
+    fetchCurrentUser();
+  }, [plan]);
 
   const handleJoin = async () => {
+    if (isAdmin) {
+      setShowJoinRequest(true);
+    } else {
+      const result = await join(planId);
+      if (result) {
+        console.log('You joined successfully to the plan');
+      }
+    }
+  };
 
+  const handleAcceptJoin = async () => {
     const result = await join(planId);
     if (result) {
-        console.log('You joined succesfully to the plan')
+      console.log('User joined successfully to the plan');
+      setShowJoinRequest(false);
     }
-}
+  };
+
+  const handleRejectJoin = () => {
+    setShowJoinRequest(false);
+  };
+
   if (loading) {
     return (
       <View style={styles.container}>
@@ -61,6 +95,7 @@ export default function PlanDetailScreen({ route }: PlanDetailProps) {
         <Text>Max Participants: {plan.maxParticipants}</Text>
         <Text>Participants: {plan.participants.map(p => p.username).join(', ')}</Text>
         <Text>Status: {plan.status}</Text>
+        <Text>Admins: {plan.admins.map(a => a.username).join(', ')}</Text>
         <Button title='Join Plan' onPress={() => handleJoin()}/>
       </View>
       
@@ -91,9 +126,31 @@ export default function PlanDetailScreen({ route }: PlanDetailProps) {
       ) : (
         <Text style={styles.locationMissing}>No location coordinates available</Text>
       )}
+
+      <Modal
+        visible={showJoinRequest}
+        transparent={true}
+        animationType="slide"
+        onRequestClose={() => setShowJoinRequest(false)}
+      >
+        <View style={styles.modalContainer}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Join Request</Text>
+            <Text style={styles.modalText}>A user wants to join your plan. Do you want to accept?</Text>
+            <View style={styles.modalButtons}>
+              <TouchableOpacity style={[styles.modalButton, styles.acceptButton]} onPress={handleAcceptJoin}>
+                <Text style={styles.buttonText}>Accept</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={[styles.modalButton, styles.rejectButton]} onPress={handleRejectJoin}>
+                <Text style={styles.buttonText}>Reject</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
-  }
+}
 
 const styles = StyleSheet.create({
   containerFull: {
@@ -138,5 +195,49 @@ const styles = StyleSheet.create({
     marginTop: 10,
     textAlign: 'center',
     padding: 20,
-  }
+  },
+  modalContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+  },
+  modalContent: {
+    backgroundColor: 'white',
+    padding: 20,
+    borderRadius: 10,
+    width: '80%',
+    alignItems: 'center',
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    marginBottom: 10,
+  },
+  modalText: {
+    fontSize: 16,
+    marginBottom: 20,
+    textAlign: 'center',
+  },
+  modalButtons: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    width: '100%',
+  },
+  modalButton: {
+    padding: 10,
+    borderRadius: 5,
+    width: '40%',
+    alignItems: 'center',
+  },
+  acceptButton: {
+    backgroundColor: '#4CAF50',
+  },
+  rejectButton: {
+    backgroundColor: '#f44336',
+  },
+  buttonText: {
+    color: 'white',
+    fontWeight: 'bold',
+  },
 });

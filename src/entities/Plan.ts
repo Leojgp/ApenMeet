@@ -17,7 +17,8 @@ export interface Participant {
       public maxParticipants: number,
       public participants: Participant[],
       public imageUrl: string,
-      public status: string
+      public status: string,
+      public admins: Participant[]
     ) {}
   
     static fromApiResponse(apiData: any): Plan {
@@ -31,7 +32,8 @@ export interface Participant {
         apiData.maxParticipants,
         apiData.participants,
         apiData.imageUrl,
-        apiData.status
+        apiData.status,
+        apiData.admins
       );
     }
   }
