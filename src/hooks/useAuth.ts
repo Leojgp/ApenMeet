@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { loginUser } from '../api/userApi';
+import { loginUser, registerUser } from '../api/userApi';
 import { saveToken } from '../utils/tokenStorage';
 
 interface useAuthProps {
@@ -27,5 +27,18 @@ export const useAuth = ({ navigation }: useAuthProps) => {
         }
     };
 
-    return { handleSubmit, loading, error };
+    const handleRegister = async (username: string, email: string, password: string, city: string, interests: string[]) => {
+        setLoading(true);
+        setError('');
+        try {
+            await registerUser(username, email, password, city, interests);
+            navigation.navigate('SignIn');
+        } catch (err: any) {
+            setError(err.message || 'Ocurrió un error. Intenta nuevamente.');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    return { handleSubmit, handleRegister, loading, error };
 };

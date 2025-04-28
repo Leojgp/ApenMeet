@@ -27,3 +27,22 @@ export const getCurrentUser  = async () => {
 }
 };
 
+export const registerUser = async (username: string, email: string, password: string, city: string, interests: string[]) => {
+    try {
+        const response = await api.post('users/register', {
+            username,
+            email,
+            password,
+            location: { city, coordinates: [0, 0] },
+            interests
+        });
+        return response.data;
+    } catch (error: any) {
+        if (error.response) {
+            throw new Error(error.response.data.message || 'Error desconocido');
+        } else {
+            throw new Error('Error al registrar usuario: ' + error.message);
+        }
+    }
+};
+
