@@ -33,6 +33,7 @@ export const createPlan = async (req: Request, res: Response): Promise<void> => 
       ...req.body,
       creatorId: authenticatedUser._id,
       participants: [authenticatedUser._id],
+      admins: [authenticatedUser._id],
       origin: 'user',
       createdAt: new Date(),
       status: 'open'
@@ -42,7 +43,8 @@ export const createPlan = async (req: Request, res: Response): Promise<void> => 
 
     const populatedPlan = await Plan.findById(newPlan._id)
       .populate('creatorId', 'username profileImage')
-      .populate('participants', 'username profileImage');
+      .populate('participants', 'username profileImage')
+      .populate('admins', 'username profileImage');
 
     res.status(201).json({
       message: 'Plan creado con éxito',
@@ -58,7 +60,8 @@ export const getPlanById = async (req: Request, res: Response): Promise<void> =>
   try {
     const plan = await Plan.findById(req.params.id)
       .populate('creatorId', 'username')
-      .populate('participants', 'username');
+      .populate('participants', 'username')
+      .populate('admins', 'username');
     if (!plan) {
       res.status(404).json({ error: 'Plan no encontrado' });
       return;
@@ -242,5 +245,114 @@ export const cancelPlan = async (req: Request, res: Response): Promise<void> => 
     res.status(200).json({ message: 'Plan cancelado con éxito' });
   } catch (error) {
     res.status(500).json({ error: 'Error al cancelar el plan' });
+  }
+};
+
+export const addAdmin = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { planId, userId } = req.params;
+    const authenticatedUser = (req as any).user;
+
+    const plan = await Plan.findById(planId);
+    if (!plan) {
+      res.status(404).json({ error: 'Plan no encontrado' });
+      return;
+    }
+
+    if (!plan.admins.some(adminId => adminId.toString() === authenticatedUser._id.toString())) {
+      res.status(403).json({ error: 'No tienes permisos para realizar esta acción' });
+      return;
+    }
+
+    const user = await User.findById(userId);
+    if (!user || !user._id) {
+      res.status(404).json({ error: 'Usuario no encontrado' });
+      return;
+    }
+
+    const userIdString = user._id.toString();
+    if (!plan.participants.some(participantId => participantId.toString() === userIdString)) {
+      res.status(400).json({ error: 'El usuario debe ser participante del plan' });
+      return;
+    }
+
+    if (plan.admins.some(adminId => adminId.toString() === userIdString)) {
+      res.status(400).json({ error: 'El usuario ya es administrador' });
+      return;
+    }
+
+    plan.admins.push(new mongoose.Types.ObjectId(userIdString));
+    await plan.save();
+
+    const populatedPlan = await Plan.findById(plan._id)
+      .populate('creatorId', 'username profileImage')
+      .populate('participants', 'username profileImage')
+      .populate('admins', 'username profileImage');
+
+    res.json({
+      message: 'Administrador añadido con éxito',
+      plan: populatedPlan
+    });
+  } catch (error) {
+    console.error('Error al añadir administrador:', error);
+    res.status(400).json({ error: 'Error al añadir administrador' });
+  }
+};
+
+export const removeAdmin = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { planId, userId } = req.params;
+    const authenticatedUser = (req as any).user;
+
+    const plan = await Plan.findById(planId);
+    if (!plan) {
+      res.status(404).json({ error: 'Plan no encontrado' });
+      return;
+    }
+
+    if (!plan.admins.some(adminId => adminId.toString() === authenticatedUser._id.toString())) {
+      res.status(403).json({ error: 'No tienes permisos para realizar esta acción' });
+      return;
+    }
+
+    if (plan.creatorId.toString() === userId) {
+      res.status(400).json({ error: 'No se puede eliminar al creador como administrador' });
+      return;
+    }
+
+    plan.admins = plan.admins.filter(adminId => adminId.toString() !== userId);
+    await plan.save();
+
+    const populatedPlan = await Plan.findById(plan._id)
+      .populate('creatorId', 'username profileImage')
+      .populate('participants', 'username profileImage')
+      .populate('admins', 'username profileImage');
+
+    res.json({
+      message: 'Administrador eliminado con éxito',
+      plan: populatedPlan
+    });
+  } catch (error) {
+    console.error('Error al eliminar administrador:', error);
+    res.status(400).json({ error: 'Error al eliminar administrador' });
+  }
+};
+
+export const isAdmin = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { planId } = req.params;
+    const authenticatedUser = (req as any).user;
+
+    const plan = await Plan.findById(planId);
+    if (!plan) {
+      res.status(404).json({ error: 'Plan no encontrado' });
+      return;
+    }
+
+    const isUserAdmin = plan.admins.some(adminId => adminId.toString() === authenticatedUser._id.toString());
+    res.json({ isAdmin: isUserAdmin });
+  } catch (error) {
+    console.error('Error al verificar administrador:', error);
+    res.status(400).json({ error: 'Error al verificar administrador' });
   }
 };
