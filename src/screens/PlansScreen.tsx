@@ -12,22 +12,22 @@ export default function PlansScreen({navigation}:PlansScreenProps) {
 
     if (loading) {
       return (
-        <View style={styles.container}>
-          <ActivityIndicator size="large" color="#0000ff" />
+        <View style={styles.centered}>
+          <ActivityIndicator size="large" color="#5C4D91" />
         </View>
       );
     }
   
     if (error) {
       return (
-        <View style={styles.container}>
+        <View style={styles.centered}>
           <Text style={styles.error}>{error}</Text>
         </View>
       );
     }
   
     return (
-      <ScrollView contentContainerStyle={styles.container}>
+      <ScrollView contentContainerStyle={styles.container} showsVerticalScrollIndicator={false}>
         {plans.map((plan) => (
           <PlanCard key={plan.id} plan={plan} navigation={navigation} />
         ))}
@@ -37,7 +37,17 @@ export default function PlansScreen({navigation}:PlansScreenProps) {
   
   const styles = StyleSheet.create({
     container: {
-      padding: 10,
+      backgroundColor: '#fff',
+      padding: 18,
+      paddingTop: 24,
+      minHeight: '100%',
+      alignItems: 'stretch',
+    },
+    centered: {
+      flex: 1,
+      backgroundColor: '#fff',
+      alignItems: 'center',
+      justifyContent: 'center',
     },
     error: {
       color: 'red',

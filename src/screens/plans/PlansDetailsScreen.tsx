@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, Image, StyleSheet, ActivityIndicator, Dimensions, Button, Modal, TouchableOpacity } from 'react-native';
+import { View, Text, Image, StyleSheet, ActivityIndicator, TouchableOpacity, Modal, ScrollView } from 'react-native';
 import MapView, { Marker } from 'react-native-maps';
 import { useJoinPlan } from '../../hooks/useJoinPlan';
 import { usePlansById } from '../../hooks/usePlansById';
@@ -58,15 +58,15 @@ export default function PlanDetailScreen({ route }: PlanDetailProps) {
 
   if (loading) {
     return (
-      <View style={styles.container}>
-        <ActivityIndicator size="large" color="#0000ff" />
+      <View style={styles.centered}>
+        <ActivityIndicator size="large" color="#5C4D91" />
       </View>
     );
   }
 
   if (error) {
     return (
-      <View style={styles.container}>
+      <View style={styles.centered}>
         <Text style={styles.error}>{error}</Text>
       </View>
     );
@@ -74,7 +74,7 @@ export default function PlanDetailScreen({ route }: PlanDetailProps) {
 
   if (!plan) {
     return (
-      <View style={styles.container}>
+      <View style={styles.centered}>
         <Text>Plan not found</Text>
       </View>
     );
@@ -84,23 +84,33 @@ export default function PlanDetailScreen({ route }: PlanDetailProps) {
   const longitude = plan.location.coordinates[1];
 
   return (
-    <View style={styles.containerFull}>
-      <View style={styles.infoContainer}>
-        <Image source={{ uri: plan.imageUrl }} style={styles.image} />
-        <Text style={styles.title}>{plan.title}</Text>
-        <Text>{plan.description}</Text>
-        <Text>Location: {plan.location.address}</Text>
-        <Text>Tags: {plan.tags.join(', ')}</Text>
-        <Text>Date: {new Date(plan.dateTime).toLocaleString()}</Text>
-        <Text>Max Participants: {plan.maxParticipants}</Text>
-        <Text>Participants: {plan.participants.map(p => p.username).join(', ')}</Text>
-        <Text>Status: {plan.status}</Text>
-        <Text>Admins: {plan.admins.map(a => a.username).join(', ')}</Text>
-        <Button title='Join Plan' onPress={() => handleJoin()}/>
+    <ScrollView style={styles.bg} contentContainerStyle={styles.scrollContent}>
+      <View style={styles.header}>
+        <Image source={{ uri: plan.imageUrl }} style={styles.avatar} />
+        <View style={styles.headerTextContainer}>
+          <Text style={styles.title}>{plan.title}</Text>
+          <Text style={styles.subtitle}>{plan.location.address}</Text>
+        </View>
       </View>
-      
-      {latitude && longitude ? (
-        <View style={styles.mapContainer}>
+      <View style={styles.card}>
+        <Text style={styles.sectionTitle}>Description</Text>
+        <Text style={styles.sectionText}>{plan.description}</Text>
+        <View style={styles.badgesRow}>
+          <View style={styles.badge}><Text style={styles.badgeText}>{new Date(plan.dateTime).toLocaleString()}</Text></View>
+          <View style={styles.badge}><Text style={styles.badgeText}>{plan.participants.length} going</Text></View>
+          <View style={styles.badge}><Text style={styles.badgeText}>{plan.status}</Text></View>
+        </View>
+      </View>
+      <View style={styles.card}>
+        <Text style={styles.sectionTitle}>Tags</Text>
+        <Text style={styles.sectionText}>{plan.tags.join(', ')}</Text>
+      </View>
+      <View style={styles.card}>
+        <Text style={styles.sectionTitle}>Admins</Text>
+        <Text style={styles.sectionText}>{plan.admins.map(a => a.username).join(', ')}</Text>
+      </View>
+      <View style={styles.mapCard}>
+        {latitude && longitude ? (
           <MapView
             style={styles.map}
             onMapReady={() => setMapReady(true)}
@@ -113,20 +123,19 @@ export default function PlanDetailScreen({ route }: PlanDetailProps) {
           >
             {mapReady && (
               <Marker
-                coordinate={{
-                  latitude,
-                  longitude,
-                }}
+                coordinate={{ latitude, longitude }}
                 title={plan.title}
                 description={plan.location.address}
               />
             )}
           </MapView>
-        </View>
-      ) : (
-        <Text style={styles.locationMissing}>No location coordinates available</Text>
-      )}
-
+        ) : (
+          <Text style={styles.locationMissing}>No location coordinates available</Text>
+        )}
+      </View>
+      <TouchableOpacity style={styles.joinButton} onPress={handleJoin}>
+        <Text style={styles.joinButtonText}>Join Plan</Text>
+      </TouchableOpacity>
       <Modal
         visible={showJoinRequest}
         transparent={true}
@@ -148,46 +157,100 @@ export default function PlanDetailScreen({ route }: PlanDetailProps) {
           </View>
         </View>
       </Modal>
-    </View>
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
-  containerFull: {
-    flex: 1,
+  bg: {
+    backgroundColor: '#fff',
   },
-  container: {
-    padding: 10,
+  scrollContent: {
+    padding: 20,
+    paddingBottom: 40,
+  },
+  centered: {
     flex: 1,
-    justifyContent: 'center',
+    backgroundColor: '#fff',
     alignItems: 'center',
+    justifyContent: 'center',
   },
-  infoContainer: {
-    padding: 10,
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 24,
   },
-  image: {
-    width: '100%',
-    height: 200,
-    marginBottom: 10,
-    borderRadius: 8,
+  avatar: {
+    width: 70,
+    height: 70,
+    borderRadius: 16,
+    marginRight: 18,
+    backgroundColor: '#E6E0F8',
+  },
+  headerTextContainer: {
+    flex: 1,
   },
   title: {
     fontSize: 24,
     fontWeight: 'bold',
-    marginBottom: 10,
+    color: '#5C4D91',
+    marginBottom: 4,
   },
-  error: {
-    color: 'red',
+  subtitle: {
+    color: '#888',
+    fontSize: 15,
+    marginBottom: 2,
   },
-  mapContainer: {
-    padding: 10,
-    height: 300,
-    marginBottom: 20,
+  card: {
+    backgroundColor: '#F7F5FF',
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 18,
+    shadowColor: '#5C4D91',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 6,
+    elevation: 2,
+  },
+  sectionTitle: {
+    fontWeight: 'bold',
+    color: '#5C4D91',
+    fontSize: 16,
+    marginBottom: 6,
+  },
+  sectionText: {
+    color: '#444',
+    fontSize: 15,
+    marginBottom: 8,
+  },
+  badgesRow: {
+    flexDirection: 'row',
+    marginTop: 4,
+  },
+  badge: {
+    backgroundColor: '#E6E0F8',
+    borderRadius: 8,
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    marginRight: 8,
+  },
+  badgeText: {
+    color: '#5C4D91',
+    fontSize: 12,
+    fontWeight: 'bold',
+  },
+  mapCard: {
+    backgroundColor: '#F7F5FF',
+    borderRadius: 16,
+    padding: 8,
+    marginBottom: 18,
+    overflow: 'hidden',
+    height: 200,
   },
   map: {
     width: '100%',
     height: '100%',
-    borderRadius: 8,
+    borderRadius: 12,
   },
   locationMissing: {
     fontStyle: 'italic',
@@ -195,6 +258,19 @@ const styles = StyleSheet.create({
     marginTop: 10,
     textAlign: 'center',
     padding: 20,
+  },
+  joinButton: {
+    backgroundColor: '#5C4D91',
+    borderRadius: 14,
+    paddingVertical: 16,
+    alignItems: 'center',
+    marginTop: 8,
+    marginBottom: 16,
+  },
+  joinButtonText: {
+    color: '#fff',
+    fontSize: 18,
+    fontWeight: 'bold',
   },
   modalContainer: {
     flex: 1,
@@ -239,5 +315,10 @@ const styles = StyleSheet.create({
   buttonText: {
     color: 'white',
     fontWeight: 'bold',
+  },
+  error: {
+    color: 'red',
+    marginBottom: 10,
+    textAlign: 'center',
   },
 });

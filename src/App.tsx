@@ -24,11 +24,10 @@ export default function App() {
           component={MainScreen} 
           options={({ navigation }) => ({
             headerLeft: () => null,
-            headerRight: () => <LogoutButton navigation={navigation} />,
             gestureEnabled: false
           })}
         />
-        <Stack.Screen name="Config" component={ConfigScreen}/>
+        <Stack.Screen name="Config" component={ConfigScreen} options={{ headerShown: false }}/>
         <Stack.Screen name="Plans" component={PlansScreen}/>
         <Stack.Screen name="PlanDetail" component={PlanDetailScreen}/>
       </Stack.Navigator>
