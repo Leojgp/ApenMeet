@@ -1,7 +1,8 @@
-import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from 'react-native'
-import React from 'react'
+import { ActivityIndicator, ScrollView, StyleSheet, Text, View, TextInput } from 'react-native'
+import React, { useState } from 'react'
 import PlanCard from '../components/plans/PlanCard';
 import { usePlans } from '../hooks/usePlans';
+import { useUser } from '../hooks/useUser';
 
 interface PlansScreenProps{
     navigation: any;
@@ -9,26 +10,39 @@ interface PlansScreenProps{
 
 export default function PlansScreen({navigation}:PlansScreenProps) {
     const { plans, loading, error } = usePlans();
+    const { user } = useUser();
+    const [search, setSearch] = useState('');
 
-    if (loading) {
-      return (
-        <View style={styles.centered}>
-          <ActivityIndicator size="large" color="#5C4D91" />
-        </View>
-      );
+    let filteredPlans = plans;
+    if (user && user.location && user.location.city) {
+      filteredPlans = filteredPlans.filter(plan => plan.location && plan.location.address && plan.location.address.toLowerCase().includes(user.location.city.toLowerCase()));
     }
-  
-    if (error) {
-      return (
-        <View style={styles.centered}>
-          <Text style={styles.error}>{error}</Text>
-        </View>
-      );
+    if (search) {
+      filteredPlans = filteredPlans.filter(plan => plan.title.toLowerCase().includes(search.toLowerCase()));
     }
-  
+    const uniquePlans = Object.values(filteredPlans.reduce((acc, plan) => {
+      if (!acc[plan.title + '_' + plan.admins.map(a => a._id).join(',')]) {
+        acc[plan.title + '_' + plan.admins.map(a => a._id).join(',')] = plan;
+      }
+      return acc;
+    }, {} as Record<string, any>));
+
     return (
       <ScrollView contentContainerStyle={styles.container} showsVerticalScrollIndicator={false}>
-        {plans.map((plan) => (
+        <View style={styles.searchBarContainer}>
+          <TextInput
+            style={styles.searchInput}
+            placeholder="Search by name"
+            placeholderTextColor="#A9A9A9"
+            value={search}
+            onChangeText={setSearch}
+            returnKeyType="search"
+          />
+        </View>
+        {loading && <ActivityIndicator size="small" color="#5C4D91" style={{marginBottom: 16}} />}
+        {error && <Text style={styles.notFound}>{error}</Text>}
+        {uniquePlans.length === 0 && !loading && <Text style={styles.notFound}>No plan found</Text>}
+        {uniquePlans.map((plan: any) => (
           <PlanCard key={plan.id} plan={plan} navigation={navigation} />
         ))}
       </ScrollView>
@@ -43,13 +57,27 @@ export default function PlansScreen({navigation}:PlansScreenProps) {
       minHeight: '100%',
       alignItems: 'stretch',
     },
-    centered: {
-      flex: 1,
-      backgroundColor: '#fff',
+    searchBarContainer: {
+      flexDirection: 'row',
       alignItems: 'center',
-      justifyContent: 'center',
+      marginBottom: 18,
+      gap: 8,
     },
-    error: {
-      color: 'red',
+    searchInput: {
+      flex: 1,
+      height: 44,
+      backgroundColor: '#F7F5FF',
+      borderRadius: 10,
+      paddingHorizontal: 14,
+      fontSize: 16,
+      borderWidth: 1,
+      borderColor: '#E6E0F8',
+      marginRight: 8,
+    },
+    notFound: {
+      color: '#f44336',
+      fontSize: 16,
+      marginBottom: 12,
+      textAlign: 'center',
     },
   });

@@ -19,6 +19,9 @@ export default function PlanCard ({ plan, navigation }:PlanCardProps){
       <Image source={{ uri: plan.imageUrl }} style={styles.image} />
       <View style={styles.textContainer}>
         <Text style={styles.title}>{plan.title}</Text>
+        {plan.admins && plan.admins.length > 0 && (
+          <Text style={styles.admins}>Admins: {plan.admins.map(a => a.username).join(', ')}</Text>
+        )}
         <Text style={styles.subtitle}>{plan.description}</Text>
         <View style={styles.badgesRow}>
           <View style={styles.badge}><Text style={styles.badgeText}>{new Date(plan.dateTime).toLocaleDateString()}</Text></View>
@@ -63,6 +66,11 @@ const styles = StyleSheet.create({
     color: '#888',
     fontSize: 14,
     marginBottom: 8,
+  },
+  admins: {
+    color: '#888',
+    fontSize: 12,
+    marginBottom: 2,
   },
   badgesRow: {
     flexDirection: 'row',
