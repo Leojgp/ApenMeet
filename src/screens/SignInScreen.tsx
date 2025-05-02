@@ -11,10 +11,10 @@ interface SignInProps {
 export default function SignInScreen({ navigation }: SignInProps) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const { handleSubmit, loading, error } = useAuth({navigation});
+  const { handleLogin, loading, error } = useAuth({navigation});
 
   const onSubmit = async () => {
-    await handleSubmit(email, password);
+    await handleLogin(email, password);
   };
 
   return (
