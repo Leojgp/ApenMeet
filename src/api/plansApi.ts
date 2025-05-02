@@ -40,3 +40,16 @@ export const joinPlan = async (planId: string) => {
           }
     }
 }
+
+export const createPlan = async (plan: any) => {
+    try {
+        const response = await api.post('plans', plan);
+        return response.data;
+    } catch (error: any) {
+        if (error.response) {
+            throw new Error(error.response.data.message || 'Error desconocido');
+        } else {
+            throw new Error('Error al crear el plan: ' + error.message);
+        }
+    }
+};

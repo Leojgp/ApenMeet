@@ -1,8 +1,9 @@
-import { ActivityIndicator, ScrollView, StyleSheet, Text, View, TextInput } from 'react-native'
+import { ActivityIndicator, ScrollView, StyleSheet, Text, View, TextInput, TouchableOpacity } from 'react-native'
 import React, { useState } from 'react'
 import PlanCard from '../components/plans/PlanCard';
 import { usePlans } from '../hooks/usePlans';
 import { useUser } from '../hooks/useUser';
+import { Ionicons } from '@expo/vector-icons';
 
 interface PlansScreenProps{
     navigation: any;
@@ -28,24 +29,29 @@ export default function PlansScreen({navigation}:PlansScreenProps) {
     }, {} as Record<string, any>));
 
     return (
-      <ScrollView contentContainerStyle={styles.container} showsVerticalScrollIndicator={false}>
-        <View style={styles.searchBarContainer}>
-          <TextInput
-            style={styles.searchInput}
-            placeholder="Search by name"
-            placeholderTextColor="#A9A9A9"
-            value={search}
-            onChangeText={setSearch}
-            returnKeyType="search"
-          />
-        </View>
-        {loading && <ActivityIndicator size="small" color="#5C4D91" style={{marginBottom: 16}} />}
-        {error && <Text style={styles.notFound}>{error}</Text>}
-        {uniquePlans.length === 0 && !loading && <Text style={styles.notFound}>No plan found</Text>}
-        {uniquePlans.map((plan: any) => (
-          <PlanCard key={plan.id} plan={plan} navigation={navigation} />
-        ))}
-      </ScrollView>
+      <View style={{flex: 1}}>
+        <ScrollView contentContainerStyle={styles.container} showsVerticalScrollIndicator={false}>
+          <View style={styles.searchBarContainer}>
+            <TextInput
+              style={styles.searchInput}
+              placeholder="Search by name"
+              placeholderTextColor="#A9A9A9"
+              value={search}
+              onChangeText={setSearch}
+              returnKeyType="search"
+            />
+          </View>
+          {loading && <ActivityIndicator size="small" color="#5C4D91" style={{marginBottom: 16}} />}
+          {error && <Text style={styles.notFound}>{error}</Text>}
+          {uniquePlans.length === 0 && !loading && <Text style={styles.notFound}>No plan found</Text>}
+          {uniquePlans.map((plan: any) => (
+            <PlanCard key={plan.id} plan={plan} navigation={navigation} />
+          ))}
+        </ScrollView>
+        <TouchableOpacity style={styles.fab} onPress={() => navigation.navigate('CreatePlan')}>
+          <Ionicons name="add" size={36} color="#fff" />
+        </TouchableOpacity>
+      </View>
     );
   };
   
@@ -79,5 +85,21 @@ export default function PlansScreen({navigation}:PlansScreenProps) {
       fontSize: 16,
       marginBottom: 12,
       textAlign: 'center',
+    },
+    fab: {
+      position: 'absolute',
+      right: 24,
+      bottom: 32,
+      backgroundColor: '#5C4D91',
+      width: 60,
+      height: 60,
+      borderRadius: 30,
+      alignItems: 'center',
+      justifyContent: 'center',
+      shadowColor: '#5C4D91',
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.18,
+      shadowRadius: 8,
+      elevation: 6,
     },
   });
