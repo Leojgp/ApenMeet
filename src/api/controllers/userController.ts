@@ -59,10 +59,7 @@ export const registerUser = async (req: Request, res: Response): Promise<void> =
       password, 
       bio, 
       location, 
-      interests, 
-      profileImage, 
-      rating, 
-      isVerified 
+      interests 
     } = req.body;
 
     if (!username || !email || !password || !location || !interests) {
@@ -80,6 +77,11 @@ export const registerUser = async (req: Request, res: Response): Promise<void> =
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password, salt);
 
+    let profileImage = '';
+    if (req.file) {
+      profileImage = `/uploads/${req.file.filename}`;
+    }
+
     const newUser = new User({
       username,
       email,
@@ -89,10 +91,10 @@ export const registerUser = async (req: Request, res: Response): Promise<void> =
         city: location.city || '',
         coordinates: location.coordinates || [0, 0],
       },
-      interests: interests || [],
-      profileImage: profileImage || '',
-      rating: rating || 0,
-      isVerified: isVerified || false,
+      interests: Array.isArray(interests) ? interests : interests.split(',').map((i: string) => i.trim()),
+      profileImage,
+      rating: 0,
+      isVerified: false,
     });
 
     await newUser.save();
@@ -101,6 +103,12 @@ export const registerUser = async (req: Request, res: Response): Promise<void> =
       _id: newUser._id,
       username: newUser.username,
       email: newUser.email,
+      bio: newUser.bio,
+      location: newUser.location,
+      interests: newUser.interests,
+      profileImage: newUser.profileImage,
+      rating: newUser.rating,
+      isVerified: newUser.isVerified,
     };
 
     res.status(201).json({ message: 'Usuario registrado con éxito', user: userResponse });
