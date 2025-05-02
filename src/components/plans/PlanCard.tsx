@@ -9,6 +9,8 @@ interface PlanCardProps {
   navigation: any;
 }
 
+const DEFAULT_IMAGE_URL = 'https://st4.depositphotos.com/14953852/24787/v/450/depositphotos_247872612-stock-illustration-no-image-available-icon-vector.jpg';
+
 export default function PlanCard ({ plan, navigation }:PlanCardProps){
   const handlePress = () => {
     navigation.navigate('PlanDetail', { planId: String(plan.id) });
@@ -16,7 +18,13 @@ export default function PlanCard ({ plan, navigation }:PlanCardProps){
 
   return (
     <TouchableOpacity onPress={handlePress} style={styles.cardContainer}>
-      <Image source={{ uri: plan.imageUrl }} style={styles.image} />
+      <Image 
+        source={{ uri: plan.imageUrl || DEFAULT_IMAGE_URL }} 
+        style={styles.image} 
+        onError={(e) => {
+          console.log('Error loading image:', e.nativeEvent.error);
+        }}
+      />
       <View style={styles.textContainer}>
         <Text style={styles.title}>{plan.title}</Text>
         {plan.admins && plan.admins.length > 0 && (

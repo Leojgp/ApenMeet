@@ -7,6 +7,7 @@ export default function CreatePlanScreen() {
     formState,
     updateFormState,
     handleCreate,
+    pickImage,
     loading,
     error
   } = useCreatePlanForm();
@@ -18,6 +19,7 @@ export default function CreatePlanScreen() {
         formState={formState}
         updateFormState={updateFormState}
         handleCreate={handleCreate}
+        pickImage={pickImage}
         loading={loading}
         error={error}
       />

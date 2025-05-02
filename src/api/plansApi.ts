@@ -43,7 +43,11 @@ export const joinPlan = async (planId: string) => {
 
 export const createPlan = async (plan: any) => {
     try {
-        const response = await api.post('plans', plan);
+        const response = await api.post('plans', plan, {
+            headers: {
+                'Content-Type': 'multipart/form-data',
+            },
+        });
         return response.data;
     } catch (error: any) {
         if (error.response) {

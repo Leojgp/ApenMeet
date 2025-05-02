@@ -22,16 +22,16 @@ api.interceptors.response.use(
 
         if (error.response?.status === 403 && !originalRequest._retry) {
             originalRequest._retry = true;
-
             try {
-                console.log('Creando un nuevo accessToken...')
+                console.log('Creando un nuevo accessToken...');
                 const newToken = await refreshAccessToken();
                 originalRequest.headers.Authorization = `Bearer ${newToken}`;
                 return api(originalRequest);
             } catch (err) {
-                console.log('Error al refrescar el token:', err);
+                await SecureStore.deleteItemAsync('accessToken');
+                await SecureStore.deleteItemAsync('refreshToken');
+                return Promise.reject(err);
             }
-            console.log('Access Token creado correctamente');
         }
 
         return Promise.reject(error);

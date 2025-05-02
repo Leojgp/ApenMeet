@@ -23,16 +23,6 @@ export default function SignUpForm({
 }: SignUpFormProps) {
   return (
     <View style={styles.container}>
-      <TouchableOpacity style={styles.imageContainer} onPress={pickImage}>
-        {formState.profileImage ? (
-          <Image source={{ uri: formState.profileImage }} style={styles.profileImage} />
-        ) : (
-          <View style={styles.placeholderImage}>
-            <Text style={styles.placeholderText}>Add Photo</Text>
-          </View>
-        )}
-      </TouchableOpacity>
-
       <TextInput
         style={styles.input}
         onChangeText={(value) => updateFormState('username', value)}

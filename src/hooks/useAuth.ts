@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigation } from '@react-navigation/native';
-import { API_URL } from '../config';
+import { loginUser, registerUser } from '../api/userApi';
+import { saveToken } from '../utils/tokenStorage';
 
 interface useAuthProps {
     navigation: any
@@ -16,58 +17,38 @@ export const useAuth = ({ navigation }: useAuthProps) => {
             setLoading(true);
             setError(null);
 
-            const response = await fetch(`${API_URL}/users/register`, {
-                method: 'POST',
-                body: formData,
-                headers: {
-                    'Content-Type': 'multipart/form-data',
-                },
-            });
+            const username = formData.get('username') as string;
+            const email = formData.get('email') as string;
+            const password = formData.get('password') as string;
+            const location = formData.get('location') as string;
+            const interests = formData.get('interests') as string;
+            const city = location ? JSON.parse(location).city : '';
+            const interestsArray = interests ? interests.split(',').map(i => i.trim()) : [];
 
-            const data = await response.json();
-
-            if (!response.ok) {
-                throw new Error(data.message || 'Error al registrar usuario');
-            }
+            await registerUser(username, email, password, city, interestsArray);
 
             if (navigation) {
                 navigation.navigate('SignIn');
             }
-        } catch (err) {
-            setError(err instanceof Error ? err.message : 'Error al registrar usuario');
+        } catch (err: any) {
+            setError(err.message || 'Error al registrar usuario');
         } finally {
             setLoading(false);
         }
     };
 
     const handleLogin = async (email: string, password: string) => {
+        setLoading(true);
+        setError('');
+
         try {
-            setLoading(true);
-            setError(null);
-
-            const response = await fetch(`${API_URL}/users/login`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ email, password }),
-            });
-
-            const data = await response.json();
-
-            if (!response.ok) {
-                throw new Error(data.message || 'Error al iniciar sesión');
-            }
-
-            // Guardar tokens
-            localStorage.setItem('accessToken', data.accessToken);
-            localStorage.setItem('refreshToken', data.refreshToken);
-
-            if (navigation) {
-                navigation.navigate('Home');
-            }
-        } catch (err) {
-            setError(err instanceof Error ? err.message : 'Error al iniciar sesión');
+            const response = await loginUser(email, password);
+            await saveToken('accessToken', response.accessToken);
+            await saveToken('refreshToken', response.refreshToken);
+            navigation.navigate('Main');
+        } catch (err: any) {
+            setError(err.message || 'Ocurrió un error. Intenta nuevamente.');
+            console.log('Error en login:', err.message);
         } finally {
             setLoading(false);
         }
@@ -77,6 +58,6 @@ export const useAuth = ({ navigation }: useAuthProps) => {
         handleRegister,
         handleLogin,
         loading,
-        error,
+        error
     };
 };

@@ -7,10 +7,18 @@ interface PlanHeaderProps {
   imageUrl: string;
 }
 
+const DEFAULT_IMAGE_URL = 'https://st4.depositphotos.com/14953852/24787/v/450/depositphotos_247872612-stock-illustration-no-image-available-icon-vector.jpg';
+
 export default function PlanHeader({ title, address, imageUrl }: PlanHeaderProps) {
   return (
     <View style={styles.header}>
-      <Image source={{ uri: imageUrl }} style={styles.avatar} />
+      <Image 
+        source={{ uri: imageUrl || DEFAULT_IMAGE_URL }} 
+        style={styles.avatar} 
+        onError={(e) => {
+          console.log('Error loading image:', e.nativeEvent.error);
+        }}
+      />
       <View style={styles.headerTextContainer}>
         <Text style={styles.title}>{title}</Text>
         <Text style={styles.subtitle}>{address}</Text>

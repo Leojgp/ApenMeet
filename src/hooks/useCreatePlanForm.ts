@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useCreatePlan } from './useCreatePlan';
 import { useNavigation } from '@react-navigation/native';
+import * as ImagePicker from 'expo-image-picker';
 
 export interface CreatePlanFormState {
   title: string;
@@ -10,7 +11,7 @@ export interface CreatePlanFormState {
   date: Date;
   showDate: boolean;
   maxParticipants: string;
-  imageUrl: string;
+  image: string | null;
   status: string;
 }
 
@@ -26,7 +27,7 @@ export const useCreatePlanForm = () => {
     date: new Date(),
     showDate: false,
     maxParticipants: '',
-    imageUrl: '',
+    image: null,
     status: 'open'
   });
 
@@ -37,21 +38,53 @@ export const useCreatePlanForm = () => {
     }));
   };
 
-  const handleCreate = async () => {
-    const ok = await create({
-      title: formState.title,
-      description: formState.description,
-      location: { 
-        address: formState.address, 
-        coordinates: [0, 0] 
-      },
-      tags: formState.tags.split(',').map(t => t.trim()).filter(Boolean),
-      dateTime: formState.date.toISOString(),
-      maxParticipants: Number(formState.maxParticipants),
-      imageUrl: formState.imageUrl,
-      status: formState.status
+  const pickImage = async () => {
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (status !== 'granted') {
+      alert('Sorry, we need camera roll permissions to make this work!');
+      return;
+    }
+
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [4, 3],
+      quality: 0.5,
     });
-    
+
+    if (!result.cancelled) {
+      setFormState(prev => ({
+        ...prev,
+        image: result.assets[0].uri
+      }));
+    }
+  };
+
+  const handleCreate = async () => {
+    const formData = new FormData();
+    formData.append('title', formState.title);
+    formData.append('description', formState.description);
+    formData.append('location', JSON.stringify({ 
+      address: formState.address, 
+      coordinates: [0, 0] 
+    }));
+    formData.append('tags', JSON.stringify(formState.tags.split(',').map(t => t.trim()).filter(Boolean)));
+    formData.append('dateTime', formState.date.toISOString());
+    formData.append('maxParticipants', formState.maxParticipants);
+    formData.append('status', formState.status);
+
+    if (formState.image) {
+      const uriParts = formState.image.split('.');
+      const fileType = uriParts[uriParts.length - 1];
+
+      formData.append('image', {
+        uri: formState.image,
+        name: `photo.${fileType}`,
+        type: `image/${fileType}`,
+      } as any);
+    }
+
+    const ok = await create(formData);
     if (ok) navigation.goBack();
   };
 
@@ -59,6 +92,7 @@ export const useCreatePlanForm = () => {
     formState,
     updateFormState,
     handleCreate,
+    pickImage,
     loading,
     error
   };

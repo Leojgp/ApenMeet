@@ -6,10 +6,10 @@ import SignUpScreen from './screens/SignUpScreen';
 import SignInScreen from './screens/SignInScreen';
 import MainScreen from './screens/MainScreen';
 import ConfigScreen from './screens/configScreens/ConfigScreen';
-import LogoutButton from './components/navigation/LogOutButton';
 import PlansScreen from './screens/PlansScreen';
 import PlanDetailScreen from './screens/plans/PlansDetailsScreen';
 import CreatePlanScreen from './screens/plans/CreatePlanScreen';
+import EditProfileScreen from './screens/configScreens/EditProfileScreen';
 
 const Stack = createStackNavigator();
 
@@ -32,6 +32,7 @@ export default function App() {
         <Stack.Screen name="Plans" component={PlansScreen}/>
         <Stack.Screen name="PlanDetail" component={PlanDetailScreen}/>
         <Stack.Screen name="CreatePlan" component={CreatePlanScreen}/>
+        <Stack.Screen name="EditProfileScreen" component={EditProfileScreen}/>
       </Stack.Navigator>
     </NavigationContainer>
   );

@@ -46,3 +46,20 @@ export const registerUser = async (username: string, email: string, password: st
     }
 };
 
+export const updateUser = async (formData: FormData) => {
+    try {
+        const response = await api.patch('users/me', formData, {
+            headers: {
+                'Content-Type': 'multipart/form-data',
+            },
+        });
+        return response.data;
+    } catch (error: any) {
+        if (error.response) {
+            throw new Error(error.response.data.message || 'Error desconocido');
+        } else {
+            throw new Error('Error al actualizar usuario: ' + error.message);
+        }
+    }
+};
+

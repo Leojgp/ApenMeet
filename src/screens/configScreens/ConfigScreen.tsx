@@ -19,7 +19,13 @@ export default function ConfigScreen({navigation}:ConfigScreenProps) {
       <Text style={styles.title}>Settings</Text>
       <View style={styles.optionsList}>
         {options.map((opt, idx) => (
-          <TouchableOpacity key={opt.label} style={styles.optionRow}>
+          <TouchableOpacity 
+            key={opt.label} 
+            style={styles.optionRow}
+            onPress={() => {
+              if (opt.label === 'Edit Profile') navigation.navigate('EditProfileScreen');
+            }}
+          >
             {opt.icon}
             <Text style={styles.optionText}>{opt.label}</Text>
           </TouchableOpacity>
