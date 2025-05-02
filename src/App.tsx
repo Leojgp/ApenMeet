@@ -9,6 +9,7 @@ import ConfigScreen from './screens/configScreens/ConfigScreen';
 import LogoutButton from './components/navigation/LogOutButton';
 import PlansScreen from './screens/PlansScreen';
 import PlanDetailScreen from './screens/plans/PlansDetailsScreen';
+import CreatePlanScreen from './screens/plans/CreatePlanScreen';
 
 const Stack = createStackNavigator();
 
@@ -30,6 +31,7 @@ export default function App() {
         <Stack.Screen name="Config" component={ConfigScreen} options={{ headerShown: false }}/>
         <Stack.Screen name="Plans" component={PlansScreen}/>
         <Stack.Screen name="PlanDetail" component={PlanDetailScreen}/>
+        <Stack.Screen name="CreatePlan" component={CreatePlanScreen}/>
       </Stack.Navigator>
     </NavigationContainer>
   );
