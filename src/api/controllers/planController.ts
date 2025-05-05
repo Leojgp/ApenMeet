@@ -2,6 +2,8 @@ import { Request, Response } from 'express';
 import { Plan } from '../../db/models/Plan';
 import { User } from '../../db/models/User';
 import mongoose from 'mongoose';
+import path from 'path';
+import fs from 'fs';
 
 export const getAllPlans = async (_req: Request, res: Response) => {
   try {
@@ -29,6 +31,11 @@ export const createPlan = async (req: Request, res: Response): Promise<void> => 
       return;
     }
 
+    let imageUrl = 'https://st4.depositphotos.com/14953852/24787/v/450/depositphotos_247872612-stock-illustration-no-image-available-icon-vector.jpg';
+    if (req.file) {
+      imageUrl = `/uploads/${req.file.filename}`;
+    }
+
     const newPlan = new Plan({
       ...req.body,
       creatorId: authenticatedUser._id,
@@ -36,7 +43,8 @@ export const createPlan = async (req: Request, res: Response): Promise<void> => 
       admins: [authenticatedUser._id],
       origin: 'user',
       createdAt: new Date(),
-      status: 'open'
+      status: 'open',
+      imageUrl
     });
 
     await newPlan.save();
@@ -190,31 +198,38 @@ export const updatePlan = async (req: Request, res: Response): Promise<void> => 
       return;
     }
 
-    if (plan.creatorId.toString() !== authenticatedUser._id) {
-      res.status(403).json({ error: 'No tienes permiso para actualizar este plan' });
+    if (!plan.admins.includes(authenticatedUser._id)) {
+      res.status(403).json({ error: 'No tienes permisos para actualizar este plan' });
       return;
     }
 
-    const { _id, creatorId, participants, createdAt, origin, ...updateData } = req.body;
 
-    if (updateData.maxParticipants && updateData.maxParticipants < plan.participants.length) {
-      res.status(400).json({ error: 'No puedes reducir el número máximo de participantes por debajo del número actual' });
-      return;
+    if (req.file) {
+      if (plan.imageUrl && !plan.imageUrl.includes('depositphotos')) {
+        const oldImagePath = path.join(__dirname, '..', '..', '..', plan.imageUrl);
+        if (fs.existsSync(oldImagePath)) {
+          fs.unlinkSync(oldImagePath);
+        }
+      }
+      req.body.imageUrl = `/uploads/${req.file.filename}`;
     }
 
     const updatedPlan = await Plan.findByIdAndUpdate(
       id,
-      { $set: updateData },
+      { $set: req.body },
       { new: true }
-    ).populate('creatorId', 'username profileImage')
-     .populate('participants', 'username profileImage');
+    )
+      .populate('creatorId', 'username profileImage')
+      .populate('participants', 'username profileImage')
+      .populate('admins', 'username profileImage');
 
-    res.status(200).json({
+    res.json({
       message: 'Plan actualizado con éxito',
       plan: updatedPlan
     });
   } catch (error) {
-    res.status(500).json({ error: 'Error al actualizar el plan' });
+    console.error('Error al actualizar plan:', error);
+    res.status(400).json({ error: 'Error al actualizar el plan' });
   }
 };
 

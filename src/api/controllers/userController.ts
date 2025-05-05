@@ -222,3 +222,54 @@ export const deleteRefreshToken = async (req: Request, res: Response): Promise<v
   }
 };
 
+export const updateUserData = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const authenticatedUser = (req as any).user;
+    if (!authenticatedUser || !authenticatedUser._id) {
+      res.status(401).json({ error: 'Token inválido o no proporcionado' });
+      return;
+    }
+
+    const user = await User.findById(authenticatedUser._id);
+    if (!user) {
+      res.status(404).json({ error: 'Usuario no encontrado' });
+      return;
+    }
+
+    const { username, email, password, bio, location, interests } = req.body;
+    if (username) user.username = username;
+    if (email) user.email = email;
+    if (bio) user.bio = bio;
+    if (location) user.location = location;
+    if (interests) user.interests = Array.isArray(interests) ? interests : interests.split(',').map((i:string) => i.trim());
+
+    if (req.file) {
+      user.profileImage = `/uploads/${req.file.filename}`;
+    }
+
+    if (password) {
+      const salt = await bcrypt.genSalt(10);
+      user.passwordHash = await bcrypt.hash(password, salt);
+    }
+
+    await user.save();
+
+    res.status(200).json({
+      success: true,
+      user: {
+        username: user.username,
+        email: user.email,
+        bio: user.bio,
+        location: user.location,
+        interests: user.interests,
+        profileImage: user.profileImage,
+        rating: user.rating,
+        isVerified: user.isVerified,
+      },
+    });
+  } catch (err) {
+    console.error('Error al actualizar los datos del usuario:', err);
+    res.status(500).json({ error: 'Error interno del servidor al actualizar los datos del usuario' });
+  }
+};
+
