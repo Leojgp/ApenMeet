@@ -15,15 +15,16 @@ export default function PlansScreen({navigation}:PlansScreenProps) {
     const [search, setSearch] = useState('');
 
     let filteredPlans = plans;
-    if (user && user.location && user.location.city) {
-      filteredPlans = filteredPlans.filter(plan => plan.location && plan.location.address && plan.location.address.toLowerCase().includes(user.location.city.toLowerCase()));
+    if (user?.location?.city) {
+      const userCity = user.location.city;
+      filteredPlans = filteredPlans.filter(plan => plan.location && plan.location.address && plan.location.address.toLowerCase().includes(userCity.toLowerCase()));
     }
     if (search) {
       filteredPlans = filteredPlans.filter(plan => plan.title.toLowerCase().includes(search.toLowerCase()));
     }
     const uniquePlans = Object.values(filteredPlans.reduce((acc, plan) => {
-      if (!acc[plan.title + '_' + plan.admins.map(a => a._id).join(',')]) {
-        acc[plan.title + '_' + plan.admins.map(a => a._id).join(',')] = plan;
+      if (!acc[plan.title + '_' + plan.admins.map(a => a.id).join(',')]) {
+        acc[plan.title + '_' + plan.admins.map(a => a.id).join(',')] = plan;
       }
       return acc;
     }, {} as Record<string, any>));

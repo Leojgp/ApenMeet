@@ -4,6 +4,7 @@ import { User } from '../models/User';
 type UserState = User;
 
 const initialState: UserState = {
+  id: '',
   username: '',
   email: '',
   bio: '',

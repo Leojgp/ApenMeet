@@ -39,24 +39,35 @@ export const useCreatePlanForm = () => {
   };
 
   const pickImage = async () => {
-    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (status !== 'granted') {
-      alert('Sorry, we need camera roll permissions to make this work!');
-      return;
-    }
+    try {
+      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (status !== 'granted') {
+        alert('Se necesitan permisos para acceder a la galería');
+        return;
+      }
 
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      allowsEditing: true,
-      aspect: [4, 3],
-      quality: 0.5,
-    });
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        aspect: [4, 3],
+        quality: 0.5,
+      });
 
-    if (!result.cancelled) {
+      if (result.cancelled) {
+        return;
+      }
+      if (!result.assets || result.assets.length === 0) {
+        alert('No se pudo seleccionar la imagen');
+        return;
+      }
+
       setFormState(prev => ({
         ...prev,
         image: result.assets[0].uri
       }));
+    } catch (error) {
+      console.error('Error picking image:', error);
+      alert('Error al seleccionar la imagen. Por favor, inténtalo de nuevo.');
     }
   };
 

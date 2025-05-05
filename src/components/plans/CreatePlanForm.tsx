@@ -1,6 +1,7 @@
 import React from 'react';
 import { StyleSheet, Text, View, TextInput, TouchableOpacity, Image } from 'react-native';
 import { CreatePlanFormState } from '../../hooks/useCreatePlanForm';
+import ImageUpload from './ImageUpload';
 
 interface CreatePlanFormProps {
   formState: CreatePlanFormState;
@@ -78,15 +79,16 @@ export default function CreatePlanForm({
         onChangeText={(value) => updateFormState('maxParticipants', value)} 
         keyboardType="numeric" 
       />
-      <TouchableOpacity style={styles.imageContainer} onPress={pickImage}>
-        {formState.image ? (
+      {formState.image ? (
+        <View style={styles.imageContainer}>
           <Image source={{ uri: formState.image }} style={styles.imagePreview} />
-        ) : (
-          <View style={styles.placeholderImage}>
-            <Text style={styles.placeholderText}>Add Plan Image</Text>
-          </View>
-        )}
-      </TouchableOpacity>
+          <TouchableOpacity style={styles.changeImageButton} onPress={pickImage}>
+            <Text style={styles.changeImageText}>Change Image</Text>
+          </TouchableOpacity>
+        </View>
+      ) : (
+        <ImageUpload onPress={pickImage} hasImage={false} />
+      )}
       <TextInput 
         style={styles.input} 
         placeholder="Status (open/cancelled, optional)" 
@@ -165,11 +167,11 @@ const styles = StyleSheet.create({
   },
   imageContainer: {
     width: '100%',
-    height: 150,
+    height: 200,
     marginBottom: 16,
     borderRadius: 12,
     overflow: 'hidden',
-    backgroundColor: '#E6E0F8',
+    backgroundColor: '#fff',
     borderWidth: 1,
     borderColor: '#D1C4E9',
   },
@@ -177,14 +179,18 @@ const styles = StyleSheet.create({
     width: '100%',
     height: '100%',
   },
-  placeholderImage: {
-    flex: 1,
-    justifyContent: 'center',
+  changeImageButton: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    padding: 8,
     alignItems: 'center',
   },
-  placeholderText: {
-    color: '#5C4D91',
-    fontSize: 16,
+  changeImageText: {
+    color: '#fff',
+    fontSize: 14,
   },
   createButton: {
     backgroundColor: '#5C4D91',

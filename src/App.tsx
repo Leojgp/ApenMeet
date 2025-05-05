@@ -12,32 +12,41 @@ import CreatePlanScreen from './screens/plans/CreatePlanScreen';
 import EditProfileScreen from './screens/configScreens/EditProfileScreen';
 import { Provider } from 'react-redux';
 import { store } from './store';
+import { useUser } from './hooks/useUser';
 
 const Stack = createStackNavigator();
+
+function AppContent() {
+  useUser();
+
+  return (
+    <NavigationContainer>
+      <Stack.Navigator initialRouteName="Home">
+        <Stack.Screen name="Home" component={HomeScreen} options={{ headerShown: false }} />
+        <Stack.Screen name="SignUp" component={SignUpScreen} options={{ headerShown: false }} />
+        <Stack.Screen name="SignIn" component={SignInScreen} options={{ headerShown: false }} />
+        <Stack.Screen 
+          name="Main" 
+          component={MainScreen} 
+          options={({ navigation }) => ({
+            headerLeft: () => null,
+            gestureEnabled: false
+          })}
+        />
+        <Stack.Screen name="Config" component={ConfigScreen} options={{ headerShown: false }}/>
+        <Stack.Screen name="Plans" component={PlansScreen}/>
+        <Stack.Screen name="PlanDetail" component={PlanDetailScreen}/>
+        <Stack.Screen name="CreatePlan" component={CreatePlanScreen}/>
+        <Stack.Screen name="EditProfileScreen" component={EditProfileScreen}/>
+      </Stack.Navigator>
+    </NavigationContainer>
+  );
+}
 
 export default function App() {
   return (
     <Provider store={store}>
-      <NavigationContainer>
-        <Stack.Navigator initialRouteName="Home">
-          <Stack.Screen name="Home" component={HomeScreen} options={{ headerShown: false }} />
-          <Stack.Screen name="SignUp" component={SignUpScreen} options={{ headerShown: false }} />
-          <Stack.Screen name="SignIn" component={SignInScreen} options={{ headerShown: false }} />
-          <Stack.Screen 
-            name="Main" 
-            component={MainScreen} 
-            options={({ navigation }) => ({
-              headerLeft: () => null,
-              gestureEnabled: false
-            })}
-          />
-          <Stack.Screen name="Config" component={ConfigScreen} options={{ headerShown: false }}/>
-          <Stack.Screen name="Plans" component={PlansScreen}/>
-          <Stack.Screen name="PlanDetail" component={PlanDetailScreen}/>
-          <Stack.Screen name="CreatePlan" component={CreatePlanScreen}/>
-          <Stack.Screen name="EditProfileScreen" component={EditProfileScreen}/>
-        </Stack.Navigator>
-      </NavigationContainer>
+      <AppContent />
     </Provider>
   );
 }

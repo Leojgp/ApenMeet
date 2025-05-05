@@ -8,6 +8,7 @@ import { setUser } from '../../store/userSlice';
 export default function EditProfileScreen({ navigation }: any) {
   const dispatch = useDispatch();
   const [form, setForm] = useState({
+    id: '',
     username: '',
     email: '',
     bio: '',
@@ -24,6 +25,7 @@ export default function EditProfileScreen({ navigation }: any) {
     getCurrentUser()
       .then((data) => {
         setForm({
+          id: data.user._id || data.user.id || '',
           username: data.user.username || '',
           email: data.user.email || '',
           bio: data.user.bio || '',
@@ -32,6 +34,7 @@ export default function EditProfileScreen({ navigation }: any) {
           profileImage: data.user.profileImage || null,
         });
         dispatch(setUser({
+          id: data.user._id || data.user.id || '',
           username: data.user.username || '',
           email: data.user.email || '',
           bio: data.user.bio || '',
@@ -84,6 +87,7 @@ export default function EditProfileScreen({ navigation }: any) {
       }
       await updateUser(formData);
       dispatch(setUser({
+        id: form.id,
         username: form.username,
         email: form.email,
         bio: form.bio,
@@ -118,11 +122,11 @@ export default function EditProfileScreen({ navigation }: any) {
           </View>
         )}
       </TouchableOpacity>
-      <TextInput style={styles.input} placeholder="Username" value={form.username} onChangeText={v => setForm(f => ({ ...f, username: v }))} />
-      <TextInput style={styles.input} placeholder="Email" value={form.email} onChangeText={v => setForm(f => ({ ...f, email: v }))} />
-      <TextInput style={styles.input} placeholder="Bio" value={form.bio} onChangeText={v => setForm(f => ({ ...f, bio: v }))} multiline />
-      <TextInput style={styles.input} placeholder="City" value={form.location.city} onChangeText={v => setForm(f => ({ ...f, location: { ...f.location, city: v } }))} />
-      <TextInput style={styles.input} placeholder="Interests (comma separated)" value={form.interests} onChangeText={v => setForm(f => ({ ...f, interests: v }))} />
+      <TextInput style={styles.input} placeholder="Username" value={form.username} onChangeText={v => setForm(user => ({ ...user, username: v }))} />
+      <TextInput style={styles.input} placeholder="Email" value={form.email} onChangeText={v => setForm(user => ({ ...user, email: v }))} />
+      <TextInput style={styles.input} placeholder="Bio" value={form.bio} onChangeText={v => setForm(user => ({ ...user, bio: v }))} multiline />
+      <TextInput style={styles.input} placeholder="City" value={form.location.city} onChangeText={v => setForm(user => ({ ...user, location: { ...user.location, city: v } }))} />
+      <TextInput style={styles.input} placeholder="Interests (comma separated)" value={form.interests} onChangeText={v => setForm(user => ({ ...user, interests: v }))} />
       {error ? <Text style={styles.error}>{error}</Text> : null}
       <TouchableOpacity style={styles.saveButton} onPress={handleSave} disabled={saving}>
         <Text style={styles.saveButtonText}>{saving ? 'Saving...' : 'Save'}</Text>

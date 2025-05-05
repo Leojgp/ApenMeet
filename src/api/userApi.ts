@@ -14,17 +14,17 @@ export const loginUser = async (email: string, password: string) => {
     }
 };
 
-export const getCurrentUser  = async () => {
+export const getCurrentUser = async () => {
   try {
-  const response = await api.get(`/users/me`);
-  return response.data;
-} catch (error: any) {
-  if (error.response) {
+    const response = await api.get('users/me');
+    return response.data;
+  } catch (error: any) {
+    if (error.response) {
       throw new Error(error.response.data.message || 'Error desconocido');
     } else {
-      throw new Error('Error al obtener datos del usuario ' + error.message);
+      throw new Error('Error al obtener datos del usuario: ' + error.message);
     }
-}
+  }
 };
 
 export const registerUser = async (username: string, email: string, password: string, city: string, interests: string[]) => {

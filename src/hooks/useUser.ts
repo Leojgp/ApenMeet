@@ -1,30 +1,33 @@
-import { useEffect, useState } from 'react';
-import { getCurrentUser  } from '../api/userApi';
+import { useEffect } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
+import { setUser } from '../store/userSlice';
+import { getCurrentUser } from '../api/userApi';
+import { RootState } from '../store';
 
 export const useUser = () => {
-  const [user, setUser] = useState<any>(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const dispatch = useDispatch();
+  const user = useSelector((state: RootState) => state.user);
 
   useEffect(() => {
-
-    const fetchUser = async () => {
-      setLoading(true);
-      setError(null);
-
+    const loadUserData = async () => {
       try {
-        const data = await getCurrentUser ();
-        setUser(data);
-        console.log(data);
-      } catch (err: any) {
-        setError(err.message || 'Error al obtener el usuario');
-      } finally {
-        setLoading(false);
+        const data = await getCurrentUser();
+        dispatch(setUser({
+          id: data.user._id || data.user.id,
+          username: data.user.username,
+          email: data.user.email,
+          bio: data.user.bio || '',
+          location: data.user.location || { city: '', coordinates: [0, 0] },
+          interests: data.user.interests || [],
+          profileImage: data.user.profileImage || null,
+        }));
+      } catch (error) {
+        console.error('Error loading user data:', error);
       }
     };
 
-    fetchUser();
-  }, []);
+    loadUserData();
+  }, [dispatch]);
 
-  return { user, loading, error };
+  return { user };
 };
