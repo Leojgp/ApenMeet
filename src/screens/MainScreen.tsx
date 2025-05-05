@@ -1,66 +1,21 @@
-import { StyleSheet, Text, View, ActivityIndicator } from 'react-native';
 import React from 'react';
-import { useUser } from '../hooks/useUser';
+import { View, Text, StyleSheet } from 'react-native';
+import { useSelector } from 'react-redux';
+import { RootState } from '../store';
 import BottomTabMenu from '../components/navigation/BottomTabMenu';
 
-interface MainScreenProps{
-  navigation:any
-}
-
-export default function MainScreen({navigation}:MainScreenProps) {
-  const { user, loading, error } = useUser();
-
-  if (loading) {
-    return (
-      <View style={styles.centered}>
-        <ActivityIndicator size="large" color="#5C4D91" />
-      </View>
-    );
-  }
-
-  if (error) {
-    return (
-      <View style={styles.centered}>
-        <Text style={styles.error}>{error}</Text>
-      </View>
-    );
-  }
+export default function MainScreen({ navigation }: any) {
+  const user = useSelector((state: RootState) => state.user);
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Welcome</Text>
-      {user && <Text style={styles.username}>Hi, {user.user.username}</Text>}
+      <Text style={styles.title}>Bienvenido, {user.username || 'Usuario'}!</Text>
       <BottomTabMenu navigation={navigation} />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#fff',
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: 24,
-  },
-  centered: {
-    flex: 1,
-    backgroundColor: '#fff',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  title: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    color: '#5C4D91',
-    marginBottom: 12,
-  },
-  username: {
-    fontSize: 18,
-    color: '#888',
-    marginBottom: 24,
-  },
-  error: {
-    color: 'red',
-  },
+  container: { flex: 1, alignItems: 'center', justifyContent: 'center' },
+  title: { fontSize: 28, fontWeight: 'bold', color: '#5C4D91' },
 });

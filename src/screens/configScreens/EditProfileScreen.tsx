@@ -2,9 +2,11 @@ import React, { useEffect, useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, Image, StyleSheet, ScrollView, ActivityIndicator } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { getCurrentUser, updateUser } from '../../api/userApi';
-
+import { useDispatch } from 'react-redux';
+import { setUser } from '../../store/userSlice';
 
 export default function EditProfileScreen({ navigation }: any) {
+  const dispatch = useDispatch();
   const [form, setForm] = useState({
     username: '',
     email: '',
@@ -29,10 +31,18 @@ export default function EditProfileScreen({ navigation }: any) {
           interests: Array.isArray(data.user.interests) ? data.user.interests.join(', ') : (data.user.interests || ''),
           profileImage: data.user.profileImage || null,
         });
+        dispatch(setUser({
+          username: data.user.username || '',
+          email: data.user.email || '',
+          bio: data.user.bio || '',
+          location: data.user.location || { city: '', coordinates: [0, 0] },
+          interests: Array.isArray(data.user.interests) ? data.user.interests : [],
+          profileImage: data.user.profileImage || null,
+        }));
       })
       .catch(() => setError('Error loading user data'))
       .finally(() => setLoading(false));
-  }, []);
+  }, [dispatch]);
 
   const pickImage = async () => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -73,6 +83,14 @@ export default function EditProfileScreen({ navigation }: any) {
         } as any);
       }
       await updateUser(formData);
+      dispatch(setUser({
+        username: form.username,
+        email: form.email,
+        bio: form.bio,
+        location: { city: form.location.city, coordinates: [form.location.coordinates[0], form.location.coordinates[1]] as [number, number] },
+        interests: form.interests.split(',').map(i => i.trim()),
+        profileImage: form.profileImage,
+      }));
       navigation.goBack();
     } catch (e: any) {
       setError(

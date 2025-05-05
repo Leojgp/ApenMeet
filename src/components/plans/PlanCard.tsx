@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, Image, StyleSheet, TouchableOpacity } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-import { Plan } from '../../entities/Plan';
+import { Plan } from '../../models/Plan';
 import { StackNavigationProp } from '@react-navigation/stack/lib/typescript/src/types';
 
 interface PlanCardProps {

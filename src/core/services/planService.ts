@@ -1,12 +1,10 @@
 import { getPlanById, getPlans } from '../../api/plansApi';
-import { Plan } from '../../entities/Plan';
-
-
+import { Plan, fromApiResponse } from '../../models/Plan';
 
 export const fetchPlans = async () => {
   try {
     const data = await getPlans();  
-    return data.map((plan: any) => Plan.fromApiResponse(plan));  
+    return data.map((plan: any) => fromApiResponse(plan));  
   } catch (error: any) {
     throw new Error(error.response?.data?.message || 'Error desconocido');
   }
@@ -15,7 +13,7 @@ export const fetchPlans = async () => {
 export const fetchPlanById = async (PlanId:string) => {
     try {
       const data = await getPlanById(PlanId);  
-      return Plan.fromApiResponse(data);  
+      return fromApiResponse(data);  
     } catch (error: any) {
       throw new Error(error.response?.data?.message || 'Error desconocido');
     }

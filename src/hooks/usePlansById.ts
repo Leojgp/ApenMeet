@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Plan } from '../entities/Plan';
+import { Plan } from '../models/Plan';
 import { fetchPlanById } from '../core/services/planService'; 
 
 export const usePlansById = (planId: string) => {
