@@ -1,28 +1,25 @@
 import { StyleSheet, Text, ScrollView } from 'react-native';
 import { useCreatePlanForm } from '../../hooks/useCreatePlanForm';
-import CreatePlanForm from '../../components/plans/CreatePlanForm';
+import { CreatePlanForm } from '../../components/plans/CreatePlanForm';
 
 export default function CreatePlanScreen() {
   const {
-    formState,
-    updateFormState,
+    form,
+    handleChange,
     handleCreate,
-    pickImage,
-    loading,
-    error
+    handleImagePick,
+    handleDateTimeChange,
+    showDatePicker,
+    setShowDatePicker,
+    handleTagsChange,
+    handleLocationChange,
+    handleCoordinatesChange,
   } = useCreatePlanForm();
 
   return (
     <ScrollView style={styles.bg}>
       <Text style={styles.title}>Create Plan</Text>
-      <CreatePlanForm
-        formState={formState}
-        updateFormState={updateFormState}
-        handleCreate={handleCreate}
-        pickImage={pickImage}
-        loading={loading}
-        error={error}
-      />
+      <CreatePlanForm />
     </ScrollView>
   );
 }

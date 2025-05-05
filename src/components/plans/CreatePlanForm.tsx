@@ -1,212 +1,239 @@
 import React from 'react';
-import { StyleSheet, Text, View, TextInput, TouchableOpacity, Image } from 'react-native';
-import { CreatePlanFormState } from '../../hooks/useCreatePlanForm';
+import { View, Text, StyleSheet, ScrollView, TextInput, TouchableOpacity, Image, Platform } from 'react-native';
+import { useCreatePlanForm } from '../../hooks/useCreatePlanForm';
 import ImageUpload from './ImageUpload';
+import DateTimePicker from '@react-native-community/datetimepicker';
+import { Ionicons } from '@expo/vector-icons';
 
-interface CreatePlanFormProps {
-  formState: CreatePlanFormState;
-  updateFormState: (field: keyof CreatePlanFormState, value: any) => void;
-  handleCreate: () => void;
-  pickImage: () => void;
-  loading: boolean;
-  error: string | null;
-}
+export const CreatePlanForm = () => {
+  const {
+    form,
+    handleChange,
+    handleCreate,
+    handleImagePick,
+    handleDateTimeChange,
+    showDatePicker,
+    setShowDatePicker,
+    handleTagsChange,
+    handleLocationChange,
+    handleCoordinatesChange,
+    showTimePicker,
+    setShowTimePicker,
+    tempDate,
+    handleDateChange,
+    handleTimeChange
+  } = useCreatePlanForm();
 
-export default function CreatePlanForm({
-  formState,
-  updateFormState,
-  handleCreate,
-  pickImage,
-  loading,
-  error
-}: CreatePlanFormProps) {
   return (
-    <View style={styles.container}>
-      <TextInput 
-        style={styles.input} 
-        placeholder="Title (required)" 
-        value={formState.title || ''} 
-        onChangeText={(value) => updateFormState('title', value)} 
-      />
-      <TextInput 
-        style={styles.input} 
-        placeholder="Description (required)" 
-        value={formState.description || ''} 
-        onChangeText={(value) => updateFormState('description', value)} 
-        multiline 
-      />
-      <TextInput 
-        style={styles.input} 
-        placeholder="Address (required)" 
-        value={formState.address || ''} 
-        onChangeText={(value) => updateFormState('address', value)} 
-      />
-      <TextInput 
-        style={styles.input} 
-        placeholder="Tags (comma separated, optional)" 
-        value={formState.tags || ''} 
-        onChangeText={(value) => updateFormState('tags', value)} 
-      />
-      <TouchableOpacity 
-        style={styles.dateButton} 
-        onPress={() => updateFormState('showDate', !formState.showDate)}
-      >
-        <Text style={styles.dateButtonText}>Date: {formState.date.toLocaleString()}</Text>
-      </TouchableOpacity>
-      {formState.showDate && (
-        <View style={styles.datePickerContainer}>
-          <Text style={styles.dateLabel}>Select Date and Time</Text>
-          <View style={styles.datePicker}>
-            <TextInput
-              style={styles.dateInput}
-              value={formState.date.toLocaleDateString()}
-              onFocus={() => updateFormState('showDate', true)}
-              placeholder="Select date"
-            />
-            <TextInput
-              style={styles.timeInput}
-              value={formState.date.toLocaleTimeString()}
-              onFocus={() => updateFormState('showDate', true)}
-              placeholder="Select time"
-            />
-          </View>
+    <ScrollView style={styles.container}>
+      <View style={styles.form}>
+        <Text style={styles.label}>Título</Text>
+        <TextInput
+          style={styles.input}
+          value={form.title}
+          onChangeText={(text) => handleChange('title', text)}
+          placeholder="Ej: Bolos en el centro con amigos"
+        />
+
+        <Text style={styles.label}>Descripción</Text>
+        <TextInput
+          style={[styles.input, styles.textArea]}
+          value={form.description}
+          onChangeText={(text) => handleChange('description', text)}
+          placeholder="Describe tu plan..."
+          multiline
+          numberOfLines={4}
+        />
+
+        <Text style={styles.label}>Ubicación</Text>
+        <TextInput
+          style={styles.input}
+          value={form.location.address}
+          onChangeText={(text) => handleLocationChange(text)}
+          placeholder="Ej: Kinepolis, Pulianas, Granada, España"
+        />
+
+        <Text style={styles.label}>Coordenadas</Text>
+        <View style={styles.coordinatesContainer}>
+          <TextInput
+            style={[styles.input, styles.coordinateInput]}
+            value={form.location.coordinates[0]?.toString()}
+            onChangeText={(text) => handleCoordinatesChange(0, parseFloat(text))}
+            placeholder="Latitud"
+            keyboardType="numeric"
+          />
+          <TextInput
+            style={[styles.input, styles.coordinateInput]}
+            value={form.location.coordinates[1]?.toString()}
+            onChangeText={(text) => handleCoordinatesChange(1, parseFloat(text))}
+            placeholder="Longitud"
+            keyboardType="numeric"
+          />
         </View>
-      )}
-      <TextInput 
-        style={styles.input} 
-        placeholder="Max Participants (required)" 
-        value={formState.maxParticipants || ''} 
-        onChangeText={(value) => updateFormState('maxParticipants', value)} 
-        keyboardType="numeric" 
-      />
-      {formState.image ? (
+
+        <Text style={styles.label}>Fecha y Hora</Text>
+        <TouchableOpacity 
+          style={styles.dateButton} 
+          onPress={() => setShowDatePicker(true)}
+        >
+          <Text style={styles.dateButtonText}>
+            {form.dateTime ? new Date(form.dateTime).toLocaleString() : 'Seleccionar fecha y hora'}
+          </Text>
+          <Ionicons name="calendar" size={24} color="#5C4D91" />
+        </TouchableOpacity>
+
+        {Platform.OS === 'ios' && showDatePicker && (
+          <DateTimePicker
+            testID="dateTimePicker"
+            value={form.dateTime ? new Date(form.dateTime) : new Date()}
+            mode="datetime"
+            display="spinner"
+            onChange={handleDateTimeChange}
+            minimumDate={new Date()}
+          />
+        )}
+        {Platform.OS === 'android' && showDatePicker && (
+          <DateTimePicker
+            testID="datePicker"
+            value={form.dateTime ? new Date(form.dateTime) : new Date()}
+            mode="date"
+            display="default"
+            onChange={handleDateChange}
+            minimumDate={new Date()}
+          />
+        )}
+        {Platform.OS === 'android' && showTimePicker && (
+          <DateTimePicker
+            testID="timePicker"
+            value={form.dateTime ? new Date(form.dateTime) : new Date()}
+            mode="time"
+            display="default"
+            onChange={handleTimeChange}
+          />
+        )}
+
+        <Text style={styles.label}>Máximo de Participantes</Text>
+        <TextInput
+          style={styles.input}
+          value={form.maxParticipants?.toString()}
+          onChangeText={(text) => handleChange('maxParticipants', parseInt(text))}
+          placeholder="Ej: 10"
+          keyboardType="numeric"
+        />
+
+        <Text style={styles.label}>Etiquetas</Text>
+        <TextInput
+          style={styles.input}
+          value={form.tags.join(', ')}
+          onChangeText={handleTagsChange}
+          placeholder="Ej: naturaleza, senderismo, deporte"
+        />
+
+        <Text style={styles.label}>Imagen</Text>
         <View style={styles.imageContainer}>
-          <Image source={{ uri: formState.image }} style={styles.imagePreview} />
-          <TouchableOpacity style={styles.changeImageButton} onPress={pickImage}>
-            <Text style={styles.changeImageText}>Change Image</Text>
-          </TouchableOpacity>
+          {form.image ? (
+            <View style={styles.imagePreview}>
+              <Image source={{ uri: form.image }} style={styles.previewImage} />
+              <TouchableOpacity style={styles.changeImageButton} onPress={handleImagePick}>
+                <Text style={styles.changeImageText}>Cambiar Imagen</Text>
+              </TouchableOpacity>
+            </View>
+          ) : (
+            <ImageUpload onPress={handleImagePick} hasImage={false} />
+          )}
         </View>
-      ) : (
-        <ImageUpload onPress={pickImage} hasImage={false} />
-      )}
-      <TextInput 
-        style={styles.input} 
-        placeholder="Status (open/cancelled, optional)" 
-        value={formState.status || ''} 
-        onChangeText={(value) => updateFormState('status', value)} 
-      />
-      {error ? <Text style={styles.error}>{error}</Text> : null}
-      <TouchableOpacity style={styles.createButton} onPress={handleCreate}>
-        <Text style={styles.createButtonText}>{loading ? 'Creating...' : 'Create Plan'}</Text>
-      </TouchableOpacity>
-    </View>
+
+        <TouchableOpacity style={styles.button} onPress={handleCreate}>
+          <Text style={styles.buttonText}>Crear Plan</Text>
+        </TouchableOpacity>
+      </View>
+    </ScrollView>
   );
-}
+};
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: '#fff',
+  },
+  form: {
     padding: 20,
-    backgroundColor: '#E6E0F8',
+  },
+  label: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#333',
+    marginBottom: 8,
   },
   input: {
-    height: 48,
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    paddingHorizontal: 16,
-    marginBottom: 16,
-    fontSize: 16,
     borderWidth: 1,
-    borderColor: '#D1C4E9',
-  },
-  dateButton: {
-    backgroundColor: '#fff',
-    borderRadius: 12,
+    borderColor: '#ddd',
+    borderRadius: 8,
     padding: 12,
     marginBottom: 16,
+    fontSize: 16,
+  },
+  textArea: {
+    height: 100,
+    textAlignVertical: 'top',
+  },
+  coordinatesContainer: {
+    flexDirection: 'row',
+    gap: 10,
+  },
+  coordinateInput: {
+    flex: 1,
+  },
+  dateButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
     borderWidth: 1,
-    borderColor: '#D1C4E9',
+    borderColor: '#ddd',
+    borderRadius: 8,
+    padding: 12,
+    marginBottom: 16,
   },
   dateButtonText: {
     fontSize: 16,
-    color: '#5C4D91',
-  },
-  datePickerContainer: {
-    marginBottom: 16,
-  },
-  dateLabel: {
-    fontSize: 16,
-    color: '#5C4D91',
-    marginBottom: 8,
-  },
-  datePicker: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-  },
-  dateInput: {
-    flex: 1,
-    height: 48,
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    paddingHorizontal: 16,
-    marginRight: 8,
-    fontSize: 16,
-    borderWidth: 1,
-    borderColor: '#D1C4E9',
-  },
-  timeInput: {
-    flex: 1,
-    height: 48,
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    paddingHorizontal: 16,
-    marginLeft: 8,
-    fontSize: 16,
-    borderWidth: 1,
-    borderColor: '#D1C4E9',
+    color: '#333',
   },
   imageContainer: {
-    width: '100%',
-    height: 200,
-    marginBottom: 16,
-    borderRadius: 12,
-    overflow: 'hidden',
-    backgroundColor: '#fff',
-    borderWidth: 1,
-    borderColor: '#D1C4E9',
+    marginBottom: 20,
   },
   imagePreview: {
+    width: '100%',
+    height: 200,
+    borderRadius: 8,
+    overflow: 'hidden',
+    position: 'relative',
+  },
+  previewImage: {
     width: '100%',
     height: '100%',
   },
   changeImageButton: {
     position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    backgroundColor: 'rgba(0,0,0,0.5)',
+    bottom: 10,
+    right: 10,
+    backgroundColor: 'rgba(0,0,0,0.7)',
     padding: 8,
-    alignItems: 'center',
+    borderRadius: 4,
   },
   changeImageText: {
     color: '#fff',
     fontSize: 14,
   },
-  createButton: {
+  button: {
     backgroundColor: '#5C4D91',
-    borderRadius: 12,
-    paddingVertical: 14,
+    padding: 16,
+    borderRadius: 8,
     alignItems: 'center',
-    marginTop: 16,
+    marginTop: 20,
   },
-  createButtonText: {
+  buttonText: {
     color: '#fff',
     fontSize: 18,
-    fontWeight: 'bold',
-  },
-  error: {
-    color: 'red',
-    marginBottom: 16,
-    textAlign: 'center',
+    fontWeight: '600',
   },
 }); 
