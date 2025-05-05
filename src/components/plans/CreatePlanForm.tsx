@@ -4,6 +4,7 @@ import { useCreatePlanForm } from '../../hooks/useCreatePlanForm';
 import ImageUpload from './ImageUpload';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { Ionicons } from '@expo/vector-icons';
+import LocationPicker from './LocationPicker';
 
 export const CreatePlanForm = () => {
   const {
@@ -16,12 +17,17 @@ export const CreatePlanForm = () => {
     setShowDatePicker,
     handleTagsChange,
     handleLocationChange,
-    handleCoordinatesChange,
     showTimePicker,
     setShowTimePicker,
     tempDate,
     handleDateChange,
-    handleTimeChange
+    handleTimeChange,
+    currentTag,
+    handleTagInputChange,
+    handleTagInputSubmit,
+    handleAddTag,
+    handleRemoveTag,
+    handleParticipantsChange
   } = useCreatePlanForm();
 
   return (
@@ -46,30 +52,13 @@ export const CreatePlanForm = () => {
         />
 
         <Text style={styles.label}>Ubicación</Text>
-        <TextInput
-          style={styles.input}
-          value={form.location.address}
-          onChangeText={(text) => handleLocationChange(text)}
-          placeholder="Ej: Kinepolis, Pulianas, Granada, España"
+        <LocationPicker
+          onLocationSelect={(location) => {
+            handleLocationChange(location.address);
+            handleChange('location', location);
+          }}
+          initialLocation={form.location}
         />
-
-        <Text style={styles.label}>Coordenadas</Text>
-        <View style={styles.coordinatesContainer}>
-          <TextInput
-            style={[styles.input, styles.coordinateInput]}
-            value={form.location.coordinates[0]?.toString()}
-            onChangeText={(text) => handleCoordinatesChange(0, parseFloat(text))}
-            placeholder="Latitud"
-            keyboardType="numeric"
-          />
-          <TextInput
-            style={[styles.input, styles.coordinateInput]}
-            value={form.location.coordinates[1]?.toString()}
-            onChangeText={(text) => handleCoordinatesChange(1, parseFloat(text))}
-            placeholder="Longitud"
-            keyboardType="numeric"
-          />
-        </View>
 
         <Text style={styles.label}>Fecha y Hora</Text>
         <TouchableOpacity 
@@ -113,21 +102,53 @@ export const CreatePlanForm = () => {
         )}
 
         <Text style={styles.label}>Máximo de Participantes</Text>
-        <TextInput
-          style={styles.input}
-          value={form.maxParticipants?.toString()}
-          onChangeText={(text) => handleChange('maxParticipants', parseInt(text))}
-          placeholder="Ej: 10"
-          keyboardType="numeric"
-        />
+        <View style={styles.participantsContainer}>
+          <TouchableOpacity 
+            style={styles.participantButton}
+            onPress={() => handleParticipantsChange(form.maxParticipants - 1)}
+            disabled={form.maxParticipants <= 2}
+          >
+            <Ionicons name="remove-circle" size={24} color={form.maxParticipants <= 2 ? "#ccc" : "#5C4D91"} />
+          </TouchableOpacity>
+          <Text style={styles.participantCount}>{form.maxParticipants}</Text>
+          <TouchableOpacity 
+            style={styles.participantButton}
+            onPress={() => handleParticipantsChange(form.maxParticipants + 1)}
+            disabled={form.maxParticipants >= 100}
+          >
+            <Ionicons name="add-circle" size={24} color={form.maxParticipants >= 100 ? "#ccc" : "#5C4D91"} />
+          </TouchableOpacity>
+        </View>
 
         <Text style={styles.label}>Etiquetas</Text>
-        <TextInput
-          style={styles.input}
-          value={form.tags.join(', ')}
-          onChangeText={handleTagsChange}
-          placeholder="Ej: naturaleza, senderismo, deporte"
-        />
+        <View style={styles.tagsContainer}>
+          <View style={styles.tagInputContainer}>
+            <TextInput
+              style={styles.tagInput}
+              value={currentTag}
+              onChangeText={handleTagInputChange}
+              onSubmitEditing={handleTagInputSubmit}
+              placeholder="Añadir etiqueta..."
+              returnKeyType="done"
+            />
+            <TouchableOpacity 
+              style={styles.addTagButton}
+              onPress={handleAddTag}
+            >
+              <Ionicons name="add-circle" size={24} color="#5C4D91" />
+            </TouchableOpacity>
+          </View>
+          <View style={styles.tagsList}>
+            {form.tags.map((tag, index) => (
+              <View key={index} style={styles.tagChip}>
+                <Text style={styles.tagText}>{tag}</Text>
+                <TouchableOpacity onPress={() => handleRemoveTag(tag)}>
+                  <Ionicons name="close-circle" size={20} color="#5C4D91" />
+                </TouchableOpacity>
+              </View>
+            ))}
+          </View>
+        </View>
 
         <Text style={styles.label}>Imagen</Text>
         <View style={styles.imageContainer}>
@@ -177,13 +198,6 @@ const styles = StyleSheet.create({
     height: 100,
     textAlignVertical: 'top',
   },
-  coordinatesContainer: {
-    flexDirection: 'row',
-    gap: 10,
-  },
-  coordinateInput: {
-    flex: 1,
-  },
   dateButton: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -197,6 +211,63 @@ const styles = StyleSheet.create({
   dateButtonText: {
     fontSize: 16,
     color: '#333',
+  },
+  participantsContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 16,
+  },
+  participantButton: {
+    padding: 8,
+  },
+  participantCount: {
+    fontSize: 24,
+    fontWeight: '600',
+    color: '#333',
+    marginHorizontal: 20,
+    minWidth: 40,
+    textAlign: 'center',
+  },
+  tagsContainer: {
+    marginBottom: 16,
+  },
+  tagInputContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  tagInput: {
+    flex: 1,
+    borderWidth: 1,
+    borderColor: '#ddd',
+    borderRadius: 8,
+    padding: 12,
+    fontSize: 16,
+    marginRight: 8,
+  },
+  addTagButton: {
+    padding: 8,
+  },
+  tagsList: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  tagChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#f0f0f0',
+    borderRadius: 16,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    marginRight: 8,
+    marginBottom: 8,
+  },
+  tagText: {
+    fontSize: 14,
+    color: '#333',
+    marginRight: 4,
   },
   imageContainer: {
     marginBottom: 20,
@@ -236,4 +307,4 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: '600',
   },
-}); 
+});

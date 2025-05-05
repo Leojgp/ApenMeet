@@ -1,18 +1,32 @@
-import { ActivityIndicator, ScrollView, StyleSheet, Text, View, TextInput, TouchableOpacity } from 'react-native'
-import React, { useState } from 'react'
+import { ActivityIndicator, ScrollView, StyleSheet, Text, View, TextInput, TouchableOpacity, RefreshControl } from 'react-native'
+import React, { useState, useCallback } from 'react'
 import PlanCard from '../components/plans/PlanCard';
 import { usePlans } from '../hooks/usePlans';
 import { useUser } from '../hooks/useUser';
 import { Ionicons } from '@expo/vector-icons';
+import { useFocusEffect } from '@react-navigation/native';
 
 interface PlansScreenProps{
     navigation: any;
 }
 
 export default function PlansScreen({navigation}:PlansScreenProps) {
-    const { plans, loading, error } = usePlans();
+    const { plans, loading, error, refresh } = usePlans();
     const { user } = useUser();
     const [search, setSearch] = useState('');
+    const [refreshing, setRefreshing] = useState(false);
+
+    const onRefresh = useCallback(async () => {
+        setRefreshing(true);
+        await refresh();
+        setRefreshing(false);
+    }, [refresh]);
+
+    useFocusEffect(
+        useCallback(() => {
+            refresh();
+        }, [refresh])
+    );
 
     let filteredPlans = plans;
     if (user?.location?.city) {
@@ -31,7 +45,18 @@ export default function PlansScreen({navigation}:PlansScreenProps) {
 
     return (
       <View style={{flex: 1}}>
-        <ScrollView contentContainerStyle={styles.container} showsVerticalScrollIndicator={false}>
+        <ScrollView 
+          contentContainerStyle={styles.container} 
+          showsVerticalScrollIndicator={false}
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={onRefresh}
+              colors={['#5C4D91']}
+              tintColor="#5C4D91"
+            />
+          }
+        >
           <View style={styles.searchBarContainer}>
             <TextInput
               style={styles.searchInput}
