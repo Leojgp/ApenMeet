@@ -1,6 +1,6 @@
 import { StyleSheet, Text, ScrollView } from 'react-native';
-import { useCreatePlanForm } from '../../hooks/useCreatePlanForm';
-import { CreatePlanForm } from '../../components/plans/CreatePlanForm';
+import { useCreatePlanForm } from '../../hooks/plans/useCreatePlanForm';
+import CreatePlanForm from '../../components/plans/forms/CreatePlanForm';
 
 export default function CreatePlanScreen() {
   const {

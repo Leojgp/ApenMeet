@@ -1,18 +1,13 @@
 import { StyleSheet} from 'react-native';
 import { createStackNavigator } from '@react-navigation/stack';
 import { NavigationContainer } from '@react-navigation/native';
-import HomeScreen from './screens/HomeScreen';
-import SignUpScreen from './screens/SignUpScreen';
-import SignInScreen from './screens/SignInScreen';
-import MainScreen from './screens/MainScreen';
-import ConfigScreen from './screens/configScreens/ConfigScreen';
-import PlansScreen from './screens/PlansScreen';
-import PlanDetailScreen from './screens/plans/PlansDetailsScreen';
-import CreatePlanScreen from './screens/plans/CreatePlanScreen';
-import EditProfileScreen from './screens/configScreens/EditProfileScreen';
+import { HomeScreen, MainScreen } from './screens/home';
+import { SignUpScreen, SignInScreen } from './screens/auth';
+import { PlansScreen, CreatePlanScreen, PlanDetailScreen } from './screens/plans';
+import { ConfigScreen, EditProfileScreen } from './screens';
 import { Provider } from 'react-redux';
 import { store } from './store';
-import { useUser } from './hooks/useUser';
+import { useUser } from './hooks/user/useUser';
 
 const Stack = createStackNavigator();
 

@@ -1,4 +1,4 @@
-import { loginUser } from '../../api/userApi';
+import { loginUser } from '../../api/user/userApi';
 
 export const login = async (email: string, password: string) => {
   try {

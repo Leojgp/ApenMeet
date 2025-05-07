@@ -1,4 +1,4 @@
-import { getPlanById, getPlans } from '../../api/plansApi';
+import { getPlanById, getPlans } from '../../api/plans/plansApi';
 import { Plan, fromApiResponse } from '../../models/Plan';
 
 export const fetchPlans = async () => {

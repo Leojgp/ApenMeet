@@ -1,6 +1,6 @@
 import React from 'react';
 import { StyleSheet, Text, View, TextInput, TouchableOpacity, Image } from 'react-native';
-import { SignUpFormState } from '../../hooks/useSignUpForm';
+import { SignUpFormState } from '../../hooks/auth/useSignUpForm';
 
 interface SignUpFormProps {
   formState: SignUpFormState;

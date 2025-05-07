@@ -1,10 +1,15 @@
 import React from 'react';
 import { View, Text, StyleSheet, ActivityIndicator, TouchableOpacity, ScrollView } from 'react-native';
-import { usePlanDetails } from '../../hooks/usePlanDetails';
-import PlanHeader from '../../components/plans/PlanHeader';
-import PlanInfoCard from '../../components/plans/PlanInfoCard';
-import PlanMap from '../../components/plans/PlanMap';
-import JoinRequestModal from '../../components/plans/JoinRequestModal';
+import { usePlanDetails } from '../../hooks/plans/usePlanDetails';
+import PlanHeader from '../../components/plans/headers/PlanHeader';
+import PlanInfoCard from '../../components/plans/cards/PlanInfoCard';
+import PlanMap from '../../components/plans/maps/PlanMap';
+import JoinRequestModal from '../../components/plans/modals/JoinRequestModal';
+
+interface Admin {
+  id: string;
+  username: string;
+}
 
 interface PlanDetailProps {
   route: any;
@@ -73,7 +78,7 @@ export default function PlanDetailScreen({ route }: PlanDetailProps) {
       />
       <PlanInfoCard
         title="Admins"
-        content={plan.admins.map(a => a.username).join(', ')}
+        content={plan.admins.map((admin: Admin) => admin.username).join(', ')}
       />
       <PlanMap
         latitude={latitude}
