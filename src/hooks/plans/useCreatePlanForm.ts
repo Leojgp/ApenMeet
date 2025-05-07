@@ -62,7 +62,7 @@ export const useCreatePlanForm = () => {
               ...prev,
               location: {
                 address: formattedAddress,
-                coordinates: [loc.coords.latitude, loc.coords.longitude]
+                coordinates: [loc.coords.longitude, loc.coords.latitude]
               }
             }));
           }
@@ -196,9 +196,8 @@ export const useCreatePlanForm = () => {
       formData.append('description', form.description);
       formData.append('location[address]', form.location.address);
       
-      // Enviamos las coordenadas en el formato que espera MongoDB
-      formData.append('location[coordinates][0]', form.location.coordinates[1].toString()); // Longitud
-      formData.append('location[coordinates][1]', form.location.coordinates[0].toString()); // Latitud
+      formData.append('location[coordinates][0]', form.location.coordinates[0].toString());
+      formData.append('location[coordinates][1]', form.location.coordinates[1].toString()); 
       
       form.tags.forEach(tag => {
         formData.append('tags[]', tag);

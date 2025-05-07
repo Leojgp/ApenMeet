@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TextInput, TouchableOpacity, Platform } from 'react-native';
+import { View, Text, StyleSheet, TextInput, TouchableOpacity, Platform, Alert, Linking } from 'react-native';
 import MapView, { Marker, PROVIDER_GOOGLE } from 'react-native-maps';
 import * as Location from 'expo-location';
 import { Ionicons } from '@expo/vector-icons';
@@ -18,44 +18,101 @@ export default function LocationPicker({ onLocationSelect, initialLocation }: Lo
     longitudeDelta: 0.0421,
   });
   const [userLocation, setUserLocation] = useState<[number, number] | null>(null);
+  const [locationPermissionDenied, setLocationPermissionDenied] = useState(false);
 
   useEffect(() => {
-    getCurrentLocation();
+    checkLocationPermission();
   }, []);
 
-  const getCurrentLocation = async () => {
+  const checkLocationPermission = async () => {
+    try {
+      const { status } = await Location.getForegroundPermissionsAsync();
+      if (status === 'granted') {
+        getCurrentLocation();
+      } else if (status === 'denied') {
+        setLocationPermissionDenied(true);
+        Alert.alert(
+          'Permiso de ubicación denegado',
+          'Para usar esta función, necesitamos acceso a tu ubicación. ¿Quieres abrir la configuración para permitir el acceso?',
+          [
+            {
+              text: 'No',
+              style: 'cancel'
+            },
+            {
+              text: 'Sí, abrir configuración',
+              onPress: () => {
+                if (Platform.OS === 'ios') {
+                  Linking.openURL('app-settings:');
+                } else {
+                  Linking.openSettings();
+                }
+              }
+            }
+          ]
+        );
+      } else {
+        requestLocationPermission();
+      }
+    } catch (error) {
+      console.log('Error checking location permission:', error);
+    }
+  };
+
+  const requestLocationPermission = async () => {
     try {
       const { status } = await Location.requestForegroundPermissionsAsync();
       if (status === 'granted') {
-        const location = await Location.getCurrentPositionAsync({
-          accuracy: Location.Accuracy.Balanced
-        });
-        const coords: [number, number] = [location.coords.longitude, location.coords.latitude];
-        setUserLocation(coords);
-        
-        setRegion(prev => ({
-          ...prev,
-          latitude: location.coords.latitude,
-          longitude: location.coords.longitude,
-        }));
-
-        const [address] = await Location.reverseGeocodeAsync({
-          latitude: location.coords.latitude,
-          longitude: location.coords.longitude
-        });
-
-        const formattedAddress = address ? 
-          `${address.street}, ${address.city}, ${address.region}, ${address.country}` :
-          `${location.coords.latitude.toFixed(6)}, ${location.coords.longitude.toFixed(6)}`;
-
-        setSearchQuery(formattedAddress);
-        onLocationSelect({
-          address: formattedAddress,
-          coordinates: coords
-        });
+        getCurrentLocation();
+      } else {
+        setLocationPermissionDenied(true);
+        Alert.alert(
+          'Permiso de ubicación requerido',
+          'Para usar esta función, necesitamos acceso a tu ubicación.',
+          [{ text: 'OK' }]
+        );
       }
     } catch (error) {
+      console.log('Error requesting location permission:', error);
+    }
+  };
+
+  const getCurrentLocation = async () => {
+    try {
+      const location = await Location.getCurrentPositionAsync({
+        accuracy: Location.Accuracy.Balanced
+      });
+      const coords: [number, number] = [location.coords.longitude, location.coords.latitude];
+      setUserLocation(coords);
+      setLocationPermissionDenied(false);
+      
+      setRegion(prev => ({
+        ...prev,
+        latitude: location.coords.latitude,
+        longitude: location.coords.longitude,
+      }));
+
+      const [address] = await Location.reverseGeocodeAsync({
+        latitude: location.coords.latitude,
+        longitude: location.coords.longitude
+      });
+
+      const formattedAddress = address ? 
+        `${address.street}, ${address.city}, ${address.region}, ${address.country}` :
+        `${location.coords.latitude.toFixed(6)}, ${location.coords.longitude.toFixed(6)}`;
+
+      setSearchQuery(formattedAddress);
+      onLocationSelect({
+        address: formattedAddress,
+        coordinates: coords
+      });
+    } catch (error) {
       console.log('Error getting location:', error);
+      Alert.alert(
+        'Error de ubicación',
+        'No se pudo obtener tu ubicación. Por favor, asegúrate de tener el GPS activado.',
+        [{ text: 'OK' }]
+      );
     }
   };
 
@@ -114,8 +171,11 @@ export default function LocationPicker({ onLocationSelect, initialLocation }: Lo
         <TouchableOpacity style={styles.searchButton} onPress={handleSearch}>
           <Ionicons name="search" size={24} color="#5C4D91" />
         </TouchableOpacity>
-        <TouchableOpacity style={styles.locationButton} onPress={getCurrentLocation}>
-          <Ionicons name="locate" size={24} color="#5C4D91" />
+        <TouchableOpacity 
+          style={[styles.locationButton, locationPermissionDenied && styles.locationButtonDisabled]} 
+          onPress={locationPermissionDenied ? checkLocationPermission : getCurrentLocation}
+        >
+          <Ionicons name="locate" size={24} color={locationPermissionDenied ? "#999" : "#5C4D91"} />
         </TouchableOpacity>
       </View>
       <MapView
@@ -176,6 +236,9 @@ const styles = StyleSheet.create({
   },
   locationButton: {
     padding: 8,
+  },
+  locationButtonDisabled: {
+    opacity: 0.5,
   },
   map: {
     flex: 1,
