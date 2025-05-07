@@ -33,18 +33,31 @@ export const createPlan = async (req: Request, res: Response): Promise<void> => 
 
     let imageUrl = 'https://st4.depositphotos.com/14953852/24787/v/450/depositphotos_247872612-stock-illustration-no-image-available-icon-vector.jpg';
     if (req.file) {
-      imageUrl = `/uploads/${req.file.filename}`;
+      imageUrl = (req.file as any).path;
+      console.log('URL de la imagen subida:', imageUrl);
     }
 
+    const coordinates = Array.isArray(location.coordinates) ? 
+      location.coordinates :
+      [0, 0];
+
     const newPlan = new Plan({
-      ...req.body,
+      title,
+      description,
+      location: {
+        address: location.address,
+        coordinates: coordinates
+      },
+      dateTime,
+      maxParticipants,
       creatorId: authenticatedUser._id,
       participants: [authenticatedUser._id],
       admins: [authenticatedUser._id],
       origin: 'user',
       createdAt: new Date(),
       status: 'open',
-      imageUrl
+      imageUrl,
+      tags: req.body.tags || []
     });
 
     await newPlan.save();
@@ -203,20 +216,22 @@ export const updatePlan = async (req: Request, res: Response): Promise<void> => 
       return;
     }
 
+    const updateData: any = { ...req.body };
 
     if (req.file) {
       if (plan.imageUrl && !plan.imageUrl.includes('depositphotos')) {
-        const oldImagePath = path.join(__dirname, '..', '..', '..', plan.imageUrl);
-        if (fs.existsSync(oldImagePath)) {
-          fs.unlinkSync(oldImagePath);
-        }
       }
-      req.body.imageUrl = `/uploads/${req.file.filename}`;
+      updateData.imageUrl = (req.file as any).path;
+      console.log('URL de la imagen actualizada:', updateData.imageUrl);
+    }
+
+    if (updateData.location && updateData.location.coordinates) {
+      updateData.location.coordinates = updateData.location.coordinates;
     }
 
     const updatedPlan = await Plan.findByIdAndUpdate(
       id,
-      { $set: req.body },
+      { $set: updateData },
       { new: true }
     )
       .populate('creatorId', 'username profileImage')

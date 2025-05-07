@@ -79,7 +79,7 @@ export const registerUser = async (req: Request, res: Response): Promise<void> =
 
     let profileImage = '';
     if (req.file) {
-      profileImage = `/uploads/${req.file.filename}`;
+      profileImage = (req.file as any).path;
     }
 
     const newUser = new User({
@@ -244,7 +244,7 @@ export const updateUserData = async (req: Request, res: Response): Promise<void>
     if (interests) user.interests = Array.isArray(interests) ? interests : interests.split(',').map((i:string) => i.trim());
 
     if (req.file) {
-      user.profileImage = `/uploads/${req.file.filename}`;
+      user.profileImage = (req.file as any).path;
     }
 
     if (password) {

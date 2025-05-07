@@ -2,6 +2,7 @@ import express from 'express';
 import mongoose from 'mongoose';
 import dotenv from 'dotenv';
 import http from 'http';
+import path from 'path';
 import userRoutes from './src/api/routing/userRoutes';
 import reviewRoutes from './src/api/routing/reviewRoutes';
 import planRoutes from './src/api/routing/planRoutes';
@@ -18,6 +19,9 @@ app.use(cors());
 
 
 app.use(express.json());
+
+// Servir archivos estáticos desde el directorio uploads
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 const server = http.createServer(app);
 const chatServer = new SocketServer(server);
