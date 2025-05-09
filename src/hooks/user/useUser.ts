@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { setUser } from '../../store/userSlice';
 import { getCurrentUser } from '../../api/user/userApi';
@@ -7,9 +7,12 @@ import { RootState } from '../../store';
 export const useUser = () => {
   const dispatch = useDispatch();
   const user = useSelector((state: RootState) => state.user);
+  const isInitialized = useRef(false);
 
   useEffect(() => {
     const loadUserData = async () => {
+      if (isInitialized.current) return;
+      
       try {
         const data = await getCurrentUser();
         dispatch(setUser({
@@ -21,6 +24,7 @@ export const useUser = () => {
           interests: data.user.interests || [],
           profileImage: data.user.profileImage || null,
         }));
+        isInitialized.current = true;
       } catch (error) {
         console.error('Error loading user data:', error);
       }

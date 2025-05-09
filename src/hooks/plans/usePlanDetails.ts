@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useJoinPlan } from './useJoinPlan';
 import { usePlansById } from './usePlansById';
 import { getCurrentUser } from '../../api/user/userApi';
@@ -10,15 +10,19 @@ export const usePlanDetails = (planId: string) => {
   const [isAdmin, setIsAdmin] = useState(false);
   const [showJoinRequest, setShowJoinRequest] = useState(false);
   const [currentUser, setCurrentUser] = useState<any>(null);
+  const userFetched = useRef(false);
 
   useEffect(() => {
     const fetchCurrentUser = async () => {
+      if (userFetched.current) return;
+      
       try {
         const user = await getCurrentUser();
         setCurrentUser(user);
         if (plan && user) {
           setIsAdmin(plan.admins.some((a: any) => a._id === user._id));
         }
+        userFetched.current = true;
       } catch (err) {
         console.error('Error fetching current user:', err);
       }

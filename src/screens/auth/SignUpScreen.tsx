@@ -10,7 +10,7 @@ export default function SignUpScreen({ navigation }: any) {
     pickImage,
     loading,
     error
-  } = useSignUpForm();
+  } = useSignUpForm(navigation);
 
   return (
     <SafeAreaView style={styles.container}>

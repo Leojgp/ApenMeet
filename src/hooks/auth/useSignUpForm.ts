@@ -15,8 +15,8 @@ export interface SignUpFormState {
   profileImage: string | null;
 }
 
-export const useSignUpForm = () => {
-  const { handleRegister, loading, error } = useAuth({ navigation: null });
+export const useSignUpForm = (navigation?: any) => {
+  const { handleRegister, loading, error } = useAuth({ navigation });
 
   const [formState, setFormState] = useState<SignUpFormState>({
     username: '',
