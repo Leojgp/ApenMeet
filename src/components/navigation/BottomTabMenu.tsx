@@ -10,7 +10,7 @@ interface BottomTabMenuProps {
 const BottomTabMenu: React.FC<BottomTabMenuProps> = ({ navigation }) => {
   return (
     <View style={styles.container}>
-      <TouchableOpacity style={styles.iconButton} onPress={() => navigation.navigate('Config')}>
+      <TouchableOpacity style={styles.iconButton} onPress={() => navigation.navigate('Chat')}>
         <Ionicons name="chatbubble-outline" size={30} color="gray" />
       </TouchableOpacity>
 
@@ -24,6 +24,8 @@ const BottomTabMenu: React.FC<BottomTabMenuProps> = ({ navigation }) => {
     </View>
   );
 };
+
+export default BottomTabMenu;
 
 const styles = StyleSheet.create({
   container: {
@@ -48,7 +50,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-
   triangle: {
     position: 'absolute',
     bottom: -10, 
@@ -64,5 +65,3 @@ const styles = StyleSheet.create({
     borderTopColor: '#fff',  
   },
 });
-
-export default BottomTabMenu;

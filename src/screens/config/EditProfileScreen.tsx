@@ -4,6 +4,7 @@ import * as ImagePicker from 'expo-image-picker';
 import { getCurrentUser, updateUser } from '../../api/user/userApi';
 import { useDispatch } from 'react-redux';
 import { setUser } from '../../store/userSlice';
+import * as Location from 'expo-location';
 
 export default function EditProfileScreen({ navigation }: any) {
   const dispatch = useDispatch();
@@ -75,6 +76,7 @@ export default function EditProfileScreen({ navigation }: any) {
     setSaving(true);
     setError('');
     try {
+      console.log('Coordenadas antes de guardar:', form.location.coordinates, 'Ciudad:', form.location.city);
       const formData = new FormData();
       formData.append('username', form.username);
       formData.append('email', form.email);
@@ -95,7 +97,7 @@ export default function EditProfileScreen({ navigation }: any) {
       }
 
       const response = await updateUser(formData);
-      console.log('Update response:', response); // Para debugging
+      console.log('Update response:', response); 
 
       dispatch(setUser({
         id: form.id,
@@ -108,7 +110,7 @@ export default function EditProfileScreen({ navigation }: any) {
       }));
       navigation.goBack();
     } catch (e: any) {
-      console.error('Error saving profile:', e); // Para debugging
+      console.error('Error saving profile:', e);
       setError(
         e?.response?.data?.error ||
         e?.response?.data?.message ||
@@ -148,7 +150,24 @@ export default function EditProfileScreen({ navigation }: any) {
       <TextInput style={styles.input} placeholder="Username" value={form.username} onChangeText={v => setForm(user => ({ ...user, username: v }))} />
       <TextInput style={styles.input} placeholder="Email" value={form.email} onChangeText={v => setForm(user => ({ ...user, email: v }))} />
       <TextInput style={styles.input} placeholder="Bio" value={form.bio} onChangeText={v => setForm(user => ({ ...user, bio: v }))} multiline />
-      <TextInput style={styles.input} placeholder="City" value={form.location.city} onChangeText={v => setForm(user => ({ ...user, location: { ...user.location, city: v } }))} />
+      <TextInput style={styles.input} placeholder="City" value={form.location.city} onChangeText={async v => {
+        setForm(user => ({ ...user, location: { ...user.location, city: v } }));
+        if (v.length > 0) {
+          try {
+            const results = await Location.geocodeAsync(v);
+            if (results.length > 0) {
+              const { latitude, longitude } = results[0];
+              setForm(user => ({
+                ...user,
+                location: {
+                  ...user.location,
+                  coordinates: [longitude, latitude]
+                }
+              }));
+            }
+          } catch (e) {}
+        }
+      }} />
       <TextInput style={styles.input} placeholder="Interests (comma separated)" value={form.interests} onChangeText={v => setForm(user => ({ ...user, interests: v }))} />
       {error ? <Text style={styles.error}>{error}</Text> : null}
       <TouchableOpacity style={styles.saveButton} onPress={handleSave} disabled={saving}>

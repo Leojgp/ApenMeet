@@ -1,54 +1,54 @@
-import React from 'react';
-import { View, Text, StyleSheet, ActivityIndicator, TouchableOpacity, ScrollView } from 'react-native';
+import React, { useState } from 'react';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { usePlanDetails } from '../../hooks/plans/usePlanDetails';
-import PlanHeader from '../../components/plans/headers/PlanHeader';
-import PlanInfoCard from '../../components/plans/cards/PlanInfoCard';
-import PlanMap from '../../components/plans/maps/PlanMap';
-import JoinRequestModal from '../../components/plans/modals/JoinRequestModal';
+import { useJoinPlan } from '../../hooks/plans/useJoinPlan';
 
-interface Admin {
-  id: string;
-  username: string;
-}
+import { useUser } from '../../hooks/user/useUser';
+import { JoinRequestModal, PlanHeader, PlanInfoCard, PlanMap } from '../../components/plans';
 
 interface PlanDetailProps {
-  route: any;
+  route: {
+    params: {
+      planId: string;
+    };
+  };
+  navigation: any;
 }
 
-export default function PlanDetailScreen({ route }: PlanDetailProps) {
+export default function PlanDetailScreen({ route, navigation }: PlanDetailProps) {
   const { planId } = route.params;
-  const {
-    plan,
-    loading,
-    error,
-    mapReady,
-    setMapReady,
-    showJoinRequest,
-    handleJoin,
-    handleAcceptJoin,
-    handleRejectJoin
-  } = usePlanDetails(planId);
+  const { plan, loading, error } = usePlanDetails(planId);
+  const { user } = useUser();
+  const { join, loadingPlan: joinLoading } = useJoinPlan();
+  const [showJoinRequest, setShowJoinRequest] = useState(false);
+  const [showSuccess, setShowSuccess] = useState(false);
+  const [mapReady, setMapReady] = useState(false);
+
+  const handleJoin = async () => {
+    try {
+      await join(planId);
+      setShowSuccess(true);
+      setTimeout(() => {
+        setShowSuccess(false);
+      }, 3000);
+    } catch (error) {
+      console.error('Error joining plan:', error);
+    }
+  };
 
   if (loading) {
     return (
       <View style={styles.centered}>
-        <ActivityIndicator size="large" color="#5C4D91" />
+        <Text>Loading...</Text>
       </View>
     );
   }
 
-  if (error) {
+  if (error || !plan) {
     return (
       <View style={styles.centered}>
-        <Text style={styles.error}>{error}</Text>
-      </View>
-    );
-  }
-
-  if (!plan) {
-    return (
-      <View style={styles.centered}>
-        <Text>Plan not found</Text>
+        <Text style={styles.error}>{error || 'Plan not found'}</Text>
       </View>
     );
   }
@@ -58,6 +58,11 @@ export default function PlanDetailScreen({ route }: PlanDetailProps) {
 
   return (
     <ScrollView style={styles.bg} contentContainerStyle={styles.scrollContent}>
+      {showSuccess && (
+        <View style={styles.successMessage}>
+          <Text style={styles.successText}>¡Te has unido al plan correctamente!</Text>
+        </View>
+      )}
       <PlanHeader
         title={plan.title}
         address={plan.location.address}
@@ -78,7 +83,7 @@ export default function PlanDetailScreen({ route }: PlanDetailProps) {
       />
       <PlanInfoCard
         title="Admins"
-        content={plan.admins.map((admin: Admin) => admin.username).join(', ')}
+        content={plan.admins.map((admin: any) => admin.username).join(', ')}
       />
       <PlanMap
         latitude={latitude}
@@ -88,14 +93,27 @@ export default function PlanDetailScreen({ route }: PlanDetailProps) {
         mapReady={mapReady}
         setMapReady={setMapReady}
       />
-      <TouchableOpacity style={styles.joinButton} onPress={handleJoin}>
-        <Text style={styles.joinButtonText}>Join Plan</Text>
-      </TouchableOpacity>
+      <View style={styles.buttonContainer}>
+        <TouchableOpacity 
+          style={[styles.button, styles.chatButton]} 
+          onPress={() => navigation.navigate('Chat', { planId, planTitle: plan.title })}
+        >
+          <Ionicons name="chatbubble-outline" size={24} color="#fff" />
+          <Text style={styles.buttonText}>Chat</Text>
+        </TouchableOpacity>
+        <TouchableOpacity 
+          style={[styles.button, styles.joinButton]} 
+          onPress={handleJoin}
+          disabled={joinLoading}
+        >
+          <Text style={styles.buttonText}>{joinLoading ? 'Joining...' : 'Join Plan'}</Text>
+        </TouchableOpacity>
+      </View>
       <JoinRequestModal
         visible={showJoinRequest}
-        onRequestClose={handleRejectJoin}
-        onAccept={handleAcceptJoin}
-        onReject={handleRejectJoin}
+        onRequestClose={() => setShowJoinRequest(false)}
+        onAccept={handleJoin}
+        onReject={() => setShowJoinRequest(false)}
       />
     </ScrollView>
   );
@@ -120,17 +138,42 @@ const styles = StyleSheet.create({
     marginBottom: 10,
     textAlign: 'center',
   },
-  joinButton: {
-    backgroundColor: '#5C4D91',
+  buttonContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 16,
+    gap: 12,
+  },
+  button: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
     borderRadius: 14,
     paddingVertical: 16,
-    alignItems: 'center',
-    marginTop: 8,
-    marginBottom: 16,
+    gap: 8,
   },
-  joinButtonText: {
+  chatButton: {
+    backgroundColor: '#4CAF50',
+  },
+  joinButton: {
+    backgroundColor: '#5C4D91',
+  },
+  buttonText: {
     color: '#fff',
     fontSize: 18,
     fontWeight: 'bold',
+  },
+  successMessage: {
+    backgroundColor: '#4CAF50',
+    padding: 12,
+    borderRadius: 8,
+    marginBottom: 16,
+  },
+  successText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: 'bold',
+    textAlign: 'center',
   },
 });
