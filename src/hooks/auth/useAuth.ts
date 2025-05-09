@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigation } from '@react-navigation/native';
 import { loginUser, registerUser } from '../../api/user/userApi';
 import { saveToken } from '../../utils/tokenStorage';
+import { getCurrentUser } from '../../api/user/userApi';
 
 interface useAuthProps {
     navigation: any
@@ -45,6 +46,8 @@ export const useAuth = ({ navigation }: useAuthProps) => {
             const response = await loginUser(email, password);
             await saveToken('accessToken', response.accessToken);
             await saveToken('refreshToken', response.refreshToken);
+
+            const userData = await getCurrentUser();
             navigation.navigate('Main');
         } catch (err: any) {
             setError(err.message || 'Ocurrió un error. Intenta nuevamente.');

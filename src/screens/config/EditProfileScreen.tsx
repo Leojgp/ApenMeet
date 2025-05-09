@@ -24,6 +24,10 @@ export default function EditProfileScreen({ navigation }: any) {
     setLoading(true);
     getCurrentUser()
       .then((data) => {
+        console.log('User data received:', data.user); 
+        const profileImage = data.user.profileImage || 'https://res.cloudinary.com/dbfh8wmqt/image/upload/v1746636109/apenmeet/dljiilozwzcmyinqaaeo.jpg';
+        console.log('Setting profile image to:', profileImage);
+        
         setForm({
           id: data.user._id || data.user.id || '',
           username: data.user.username || '',
@@ -31,7 +35,7 @@ export default function EditProfileScreen({ navigation }: any) {
           bio: data.user.bio || '',
           location: data.user.location || { city: '', coordinates: [0, 0] },
           interests: Array.isArray(data.user.interests) ? data.user.interests.join(', ') : (data.user.interests || ''),
-          profileImage: data.user.profileImage || null,
+          profileImage: profileImage,
         });
         dispatch(setUser({
           id: data.user._id || data.user.id || '',
@@ -40,10 +44,13 @@ export default function EditProfileScreen({ navigation }: any) {
           bio: data.user.bio || '',
           location: data.user.location || { city: '', coordinates: [0, 0] },
           interests: Array.isArray(data.user.interests) ? data.user.interests : [],
-          profileImage: data.user.profileImage || null,
+          profileImage: profileImage,
         }));
       })
-      .catch(() => setError('Error loading user data'))
+      .catch((err) => {
+        console.error('Error loading user data:', err);
+        setError('Error loading user data');
+      })
       .finally(() => setLoading(false));
   }, [dispatch]);
 
@@ -76,6 +83,7 @@ export default function EditProfileScreen({ navigation }: any) {
       formData.append('location[coordinates][]', String(form.location.coordinates[0]));
       formData.append('location[coordinates][]', String(form.location.coordinates[1]));
       formData.append('interests', form.interests);
+      
       if (form.profileImage && form.profileImage.startsWith('file')) {
         const uriParts = form.profileImage.split('.');
         const fileType = uriParts[uriParts.length - 1];
@@ -85,7 +93,10 @@ export default function EditProfileScreen({ navigation }: any) {
           type: `image/${fileType}`,
         } as any);
       }
-      await updateUser(formData);
+
+      const response = await updateUser(formData);
+      console.log('Update response:', response); // Para debugging
+
       dispatch(setUser({
         id: form.id,
         username: form.username,
@@ -93,10 +104,11 @@ export default function EditProfileScreen({ navigation }: any) {
         bio: form.bio,
         location: { city: form.location.city, coordinates: [form.location.coordinates[0], form.location.coordinates[1]] as [number, number] },
         interests: form.interests.split(',').map(i => i.trim()),
-        profileImage: form.profileImage,
+        profileImage: response.user.profileImage || form.profileImage,
       }));
       navigation.goBack();
     } catch (e: any) {
+      console.error('Error saving profile:', e); // Para debugging
       setError(
         e?.response?.data?.error ||
         e?.response?.data?.message ||
@@ -115,7 +127,18 @@ export default function EditProfileScreen({ navigation }: any) {
       <Text style={styles.title}>Edit Profile</Text>
       <TouchableOpacity style={styles.imageContainer} onPress={pickImage}>
         {form.profileImage ? (
-          <Image source={{ uri: form.profileImage }} style={styles.profileImage} />
+          <Image 
+            source={{ uri: form.profileImage }} 
+            style={styles.profileImage}
+            onError={(e) => {
+              console.log('Error loading image:', e.nativeEvent.error);
+              console.log('Image URL:', form.profileImage);
+              setForm(prev => ({
+                ...prev,
+                profileImage: 'https://res.cloudinary.com/dbfh8wmqt/image/upload/v1746636109/apenmeet/dljiilozwzcmyinqaaeo.jpg'
+              }));
+            }}
+          />
         ) : (
           <View style={styles.placeholderImage}>
             <Text style={styles.placeholderText}>Add Photo</Text>
@@ -138,7 +161,13 @@ export default function EditProfileScreen({ navigation }: any) {
 const styles = StyleSheet.create({
   bg: { backgroundColor: '#E6E0F8' },
   container: { padding: 24, paddingTop: 40 },
-  title: { fontSize: 28, fontWeight: 'bold', color: '#5C4D91', marginBottom: 24 },
+  title: { 
+    fontSize: 28, 
+    fontWeight: 'bold', 
+    color: '#5C4D91', 
+    marginBottom: 24,
+    textAlign: 'center'
+  },
   imageContainer: { alignSelf: 'center', marginBottom: 20 },
   profileImage: { width: 100, height: 100, borderRadius: 50 },
   placeholderImage: { width: 100, height: 100, borderRadius: 50, backgroundColor: '#fff', alignItems: 'center', justifyContent: 'center' },

@@ -53,9 +53,11 @@ export const updateUser = async (formData: FormData) => {
                 'Content-Type': 'multipart/form-data',
             },
         });
+        console.log('Response from update user:', response.data); // Para debugging
         return response.data;
     } catch (error: any) {
         if (error.response) {
+            console.error('Error response:', error.response.data); // Para debugging
             throw new Error(error.response.data.message || 'Error desconocido');
         } else {
             throw new Error('Error al actualizar usuario: ' + error.message);
