@@ -63,14 +63,11 @@ export default function PlansScreen({navigation}: PlansScreenProps) {
 
   const uniquePlans = Object.values(filteredPlans.reduce((acc, plan) => {
     const key = plan.title + '_' + plan.admins.map((admin: Admin) => admin.id).join(',');
-    console.log('Unique key:', key);
     if (!acc[key]) {
       acc[key] = plan;
     }
     return acc;
   }, {} as Record<string, Plan>));
-
-  console.log('Final unique plans:', uniquePlans);
 
   return (
     <View style={{flex: 1}}>

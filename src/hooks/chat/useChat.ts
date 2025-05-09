@@ -1,48 +1,104 @@
 import { useState, useEffect, useCallback } from 'react';
 import WebSocketService from '../../services/websocketService';
 import { useUser } from '../user/useUser';
+import api from '../../api/config/axiosInstance';
 
 interface ChatUser {
   id: string;
+  _id: string;
   username: string;
 }
 
 interface Message {
   id: string;
+  _id?: string;
   content: string;
   sender: ChatUser;
+  senderId?: string;
   timestamp: string;
+  createdAt?: string;
 }
 
 export const useChat = (planId: string) => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [isConnected, setIsConnected] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isParticipant, setIsParticipant] = useState(false);
   const { user } = useUser();
   const wsService = WebSocketService.getInstance();
 
+  const checkParticipation = useCallback(async () => {
+    try {
+      console.log('Checking participation for plan:', planId);
+      const response = await api.get('plans/participating');
+      const participatingPlans = response.data;
+      const isParticipating = participatingPlans.some((plan: any) => plan._id === planId);
+      console.log('Is participating:', isParticipating);
+      setIsParticipant(isParticipating);
+      return isParticipating;
+    } catch (err) {
+      console.error('Error checking participation:', err);
+      setIsParticipant(false);
+      return false;
+    }
+  }, [planId]);
+
   const connect = useCallback(async () => {
     try {
+      const isParticipating = await checkParticipation();
+      if (!isParticipating) {
+        console.log('User is not a participant of this plan');
+        setIsConnected(false);
+        return;
+      }
+
+      console.log('Connecting to WebSocket for plan:', planId);
       const socket = await wsService.connect(planId);
       
-      socket.on('message', (message: Message) => {
-        setMessages(prev => [...prev, message]);
+      socket.on('receive-message', (message: Message) => {
+        console.log('Received message:', message);
+        setMessages(prev => {
+          // Verificar si el mensaje ya existe
+          const messageExists = prev.some(m => 
+            m.id === message._id || 
+            m.id === message.id || 
+            (m.content === message.content && m.sender.id === message.senderId)
+          );
+          
+          if (messageExists) {
+            console.log('Message already exists, skipping...');
+            return prev;
+          }
+
+          return [...prev, {
+            id: message._id || message.id,
+            content: message.content,
+            sender: {
+              id: message.senderId || message.sender.id,
+              _id: message.senderId || message.sender._id,
+              username: message.sender?.username || 'Unknown'
+            },
+            timestamp: message.createdAt || message.timestamp
+          }];
+        });
       });
 
-      socket.on('userJoined', (user: ChatUser) => {
+      socket.on('user-joined', (user: ChatUser) => {
+        console.log('User joined:', user);
         setMessages(prev => [...prev, {
           id: Date.now().toString(),
           content: `${user.username} joined the chat`,
-          sender: { id: 'system', username: 'System' },
+          sender: { id: 'system', _id: 'system', username: 'System' },
           timestamp: new Date().toISOString()
         }]);
       });
 
-      socket.on('userLeft', (user: ChatUser) => {
+      socket.on('user-left', (user: ChatUser) => {
+        console.log('User left:', user);
         setMessages(prev => [...prev, {
           id: Date.now().toString(),
           content: `${user.username} left the chat`,
-          sender: { id: 'system', username: 'System' },
+          sender: { id: 'system', _id: 'system', username: 'System' },
           timestamp: new Date().toISOString()
         }]);
       });
@@ -50,10 +106,11 @@ export const useChat = (planId: string) => {
       setIsConnected(true);
       setError(null);
     } catch (err: any) {
+      console.error('Error connecting to chat:', err);
       setError(err.message);
       setIsConnected(false);
     }
-  }, [planId]);
+  }, [planId, checkParticipation]);
 
   const disconnect = useCallback(() => {
     wsService.disconnect();
@@ -61,21 +118,25 @@ export const useChat = (planId: string) => {
   }, []);
 
   const sendMessage = useCallback((content: string) => {
-    if (!isConnected || !user) return;
+    if (!isConnected || !user || !isParticipant) {
+      console.log('Cannot send message:', { isConnected, hasUser: !!user, isParticipant });
+      return;
+    }
     
     const message: Message = {
       id: Date.now().toString(),
       content,
       sender: {
         id: user.id,
+        _id: user.id,
         username: user.username
       },
       timestamp: new Date().toISOString()
     };
     
+    console.log('Sending message:', message);
     wsService.sendMessage(message);
-    setMessages(prev => [...prev, message]);
-  }, [isConnected, user]);
+  }, [isConnected, user, isParticipant]);
 
   useEffect(() => {
     if (planId) {
@@ -91,6 +152,7 @@ export const useChat = (planId: string) => {
     isConnected,
     error,
     sendMessage,
-    user
+    user,
+    isParticipant
   };
 }; 

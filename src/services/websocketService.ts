@@ -17,7 +17,7 @@ interface ChatMessage {
 class WebSocketService {
   private socket: ReturnType<typeof io> | null = null;
   private static instance: WebSocketService;
-  private planId: string = '';
+  private currentPlanId: string = '';
 
   private constructor() {}
 
@@ -30,24 +30,48 @@ class WebSocketService {
 
   async connect(planId: string): Promise<ReturnType<typeof io>> {
     try {
+      console.log('Attempting to connect to WebSocket...');
       const token = await SecureStore.getItemAsync('accessToken');
       if (!token) throw new Error('No authentication token found');
 
-      this.socket = io(`http://${IP_ADDRESS}:3000`, {
+      this.currentPlanId = planId;
+      const WS_URL = `http://${IP_ADDRESS}:3000`;
+      console.log('Connecting to:', WS_URL);
+      this.socket = io(WS_URL, {
         auth: {
           token
         },
         query: {
           planId
-        }
+        },
+        transports: ['websocket'],
+        reconnection: true,
+        reconnectionAttempts: 5,
+        reconnectionDelay: 1000,
+        timeout: 10000,
+        forceNew: true
       });
 
       this.socket.on('connect', () => {
-        console.log('Connected to WebSocket server');
+        console.log('Successfully connected to WebSocket server');
+        console.log('Socket ID:', this.socket?.id);
+        this.socket?.emit('join-plan', this.currentPlanId);
       });
 
       this.socket.on('connect_error', (error: Error) => {
         console.error('WebSocket connection error:', error);
+        console.log('Connection state:', this.socket?.connected ? 'connected' : 'disconnected');
+        if (this.socket) {
+          this.socket.disconnect();
+          this.socket = null;
+          console.log('Attempting to reconnect in 2 seconds...');
+          setTimeout(() => this.connect(this.currentPlanId), 2000);
+        }
+      });
+
+      this.socket.on('disconnect', (reason: string) => {
+        console.log('Disconnected from WebSocket:', reason);
+        this.socket?.emit('leave-plan', this.currentPlanId);
       });
 
       this.socket.on('error', (error: { message: string }) => {
@@ -69,26 +93,42 @@ class WebSocketService {
   }
 
   sendMessage(message: ChatMessage): void {
-    if (this.socket) {
-      this.socket.emit('message', message);
+    if (this.socket && this.socket.connected) {
+      console.log('Sending message to server:', message);
+      console.log('Current plan ID:', this.currentPlanId);
+      this.socket.emit('send-message', {
+        planId: this.currentPlanId,
+        content: message.content
+      }, (response: any) => {
+        if (response && response.error) {
+          console.error('Error sending message:', response.error);
+        } else {
+          console.log('Message sent successfully:', response);
+        }
+      });
+    } else {
+      console.error('Cannot send message: Socket not connected');
+      if (this.socket) {
+        this.socket.connect();
+      }
     }
   }
 
   onMessage(callback: (message: ChatMessage) => void): void {
     if (this.socket) {
-      this.socket.on('message', callback);
+      this.socket.on('receive-message', callback);
     }
   }
 
   onUserJoined(callback: (user: ChatUser) => void): void {
     if (this.socket) {
-      this.socket.on('userJoined', callback);
+      this.socket.on('user-joined', callback);
     }
   }
 
   onUserLeft(callback: (user: ChatUser) => void): void {
     if (this.socket) {
-      this.socket.on('userLeft', callback);
+      this.socket.on('user-left', callback);
     }
   }
 

@@ -9,13 +9,13 @@ import {
   KeyboardAvoidingView,
   Platform,
   ActivityIndicator,
-  Animated,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useChat } from '../../hooks/chat/useChat';
 import { RouteProp } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { usePlanDetails } from '../../hooks/plans/usePlanDetails';
+import { useUser } from '../../hooks/user/useUser';
 
 interface ChatUser {
   id: string;
@@ -44,33 +44,20 @@ interface ChatScreenProps {
 export default function ChatScreen({ route, navigation }: ChatScreenProps) {
   const { planId, planTitle } = route.params || {};
   const [message, setMessage] = useState('');
-  const { messages, isConnected, error, sendMessage, user } = useChat(planId || '');
+  const { messages, isConnected, error, sendMessage, user, isParticipant } = useChat(planId || '');
   const { plan, loading: planLoading } = usePlanDetails(planId || '');
+  const { refreshUser } = useUser();
   const flatListRef = useRef<FlatList<Message>>(null);
-  const fadeAnim = useRef(new Animated.Value(0)).current;
-  const [showSuccess, setShowSuccess] = useState(false);
-  const [wasParticipant, setWasParticipant] = useState(false);
 
-  const isParticipant = plan?.participants.includes(user?.id || '');
+  useEffect(() => {
+    refreshUser();
+  }, []);
 
   useEffect(() => {
     if (messages.length > 0) {
       flatListRef.current?.scrollToEnd({ animated: true });
     }
   }, [messages]);
-
-  useEffect(() => {
-    if (isParticipant && !wasParticipant) {
-      setShowSuccess(true);
-      const timer = setTimeout(() => {
-        setShowSuccess(false);
-      }, 3000);
-      setWasParticipant(true);
-      return () => clearTimeout(timer);
-    } else if (!isParticipant) {
-      setWasParticipant(false);
-    }
-  }, [isParticipant, wasParticipant]);
 
   const handleSend = () => {
     if (message.trim() && isConnected && isParticipant) {
@@ -136,11 +123,6 @@ export default function ChatScreen({ route, navigation }: ChatScreenProps) {
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
     >
-      {showSuccess && (
-        <View style={styles.successMessage}>
-          <Text style={styles.successText}>¡Te has unido al plan correctamente!</Text>
-        </View>
-      )}
       <View style={styles.header}>
         <Text style={styles.title}>{planTitle || 'Chat'}</Text>
         {!isConnected && <ActivityIndicator size="small" color="#5C4D91" />}
@@ -310,16 +292,6 @@ const styles = StyleSheet.create({
     borderRadius: 8,
   },
   joinButtonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
-  successMessage: {
-    backgroundColor: '#4CAF50',
-    padding: 12,
-    alignItems: 'center',
-  },
-  successText: {
     color: '#fff',
     fontSize: 16,
     fontWeight: 'bold',
