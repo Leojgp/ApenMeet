@@ -29,6 +29,8 @@ export default function PlansScreen({navigation}: PlansScreenProps) {
   const { user } = useUser();
   const [search, setSearch] = useState('');
   const [refreshing, setRefreshing] = useState(false);
+  const [filterByCity, setFilterByCity] = useState(false);
+
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
@@ -43,19 +45,32 @@ export default function PlansScreen({navigation}: PlansScreenProps) {
   );
 
   let filteredPlans = plans;
-  if (user?.location?.city) {
+
+  if (filterByCity && user?.location?.city) {
     const userCity = user.location.city;
-    filteredPlans = filteredPlans.filter(plan => plan.location && plan.location.address && plan.location.address.toLowerCase().includes(userCity.toLowerCase()));
+    filteredPlans = filteredPlans.filter(plan => {
+      const matches = plan.location && plan.location.address && plan.location.address.toLowerCase().includes(userCity.toLowerCase());
+      return matches;
+    });
   }
+
   if (search) {
-    filteredPlans = filteredPlans.filter(plan => plan.title.toLowerCase().includes(search.toLowerCase()));
+    filteredPlans = filteredPlans.filter(plan => {
+      const matches = plan.title.toLowerCase().includes(search.toLowerCase());
+      return matches;
+    });
   }
+
   const uniquePlans = Object.values(filteredPlans.reduce((acc, plan) => {
-    if (!acc[plan.title + '_' + plan.admins.map((admin: Admin) => admin.id).join(',')]) {
-      acc[plan.title + '_' + plan.admins.map((admin: Admin) => admin.id).join(',')] = plan;
+    const key = plan.title + '_' + plan.admins.map((admin: Admin) => admin.id).join(',');
+    console.log('Unique key:', key);
+    if (!acc[key]) {
+      acc[key] = plan;
     }
     return acc;
   }, {} as Record<string, Plan>));
+
+  console.log('Final unique plans:', uniquePlans);
 
   return (
     <View style={{flex: 1}}>
@@ -80,6 +95,14 @@ export default function PlansScreen({navigation}: PlansScreenProps) {
             onChangeText={setSearch}
             returnKeyType="search"
           />
+          {user?.location?.city && (
+            <TouchableOpacity 
+              style={[styles.filterButton, filterByCity && styles.filterButtonActive]} 
+              onPress={() => setFilterByCity(!filterByCity)}
+            >
+              <Ionicons name="location" size={24} color={filterByCity ? "#fff" : "#5C4D91"} />
+            </TouchableOpacity>
+          )}
         </View>
         {loading && <ActivityIndicator size="small" color="#5C4D91" style={{marginBottom: 16}} />}
         {error && <Text style={styles.notFound}>{error}</Text>}
@@ -119,6 +142,20 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#E6E0F8',
     marginRight: 8,
+  },
+  filterButton: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: '#F7F5FF',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#E6E0F8',
+  },
+  filterButtonActive: {
+    backgroundColor: '#5C4D91',
+    borderColor: '#5C4D91',
   },
   notFound: {
     color: '#f44336',

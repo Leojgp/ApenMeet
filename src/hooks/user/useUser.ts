@@ -3,6 +3,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { setUser } from '../../store/userSlice';
 import { getCurrentUser } from '../../api/user/userApi';
 import { RootState } from '../../store';
+import { User } from '../../models/User';
 
 export const useUser = () => {
   const dispatch = useDispatch();

@@ -5,6 +5,7 @@ export interface Plan {
   title: string;
   description: string;
   creatorId: string;
+  creatorUsername?: string;
   imageUrl: string;
   location: {
     address: string;
@@ -26,7 +27,8 @@ export const fromApiResponse = (data: any): Plan => ({
   id: data._id || data.id,
   title: data.title,
   description: data.description,
-  creatorId: data.creatorId,
+  creatorId: typeof data.creatorId === 'object' ? data.creatorId._id : data.creatorId,
+  creatorUsername: typeof data.creatorId === 'object' ? data.creatorId.username : undefined,
   imageUrl: data.imageUrl,
   location: data.location,
   tags: data.tags,

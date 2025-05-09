@@ -1,8 +1,9 @@
 import io from 'socket.io-client';
 import * as SecureStore from 'expo-secure-store';
+import { IP_ADDRESS } from '@env';
 
 interface ChatUser {
-  id: string;
+  _id: string;
   username: string;
 }
 
@@ -16,6 +17,7 @@ interface ChatMessage {
 class WebSocketService {
   private socket: ReturnType<typeof io> | null = null;
   private static instance: WebSocketService;
+  private planId: string = '';
 
   private constructor() {}
 
@@ -31,7 +33,7 @@ class WebSocketService {
       const token = await SecureStore.getItemAsync('accessToken');
       if (!token) throw new Error('No authentication token found');
 
-      this.socket = io('http://172.20.10.2:3000', {
+      this.socket = io(`http://${IP_ADDRESS}:3000`, {
         auth: {
           token
         },
@@ -46,6 +48,10 @@ class WebSocketService {
 
       this.socket.on('connect_error', (error: Error) => {
         console.error('WebSocket connection error:', error);
+      });
+
+      this.socket.on('error', (error: { message: string }) => {
+        console.error('WebSocket error:', error.message);
       });
 
       return this.socket;
@@ -83,6 +89,12 @@ class WebSocketService {
   onUserLeft(callback: (user: ChatUser) => void): void {
     if (this.socket) {
       this.socket.on('userLeft', callback);
+    }
+  }
+
+  onError(callback: (error: { message: string }) => void): void {
+    if (this.socket) {
+      this.socket.on('error', callback);
     }
   }
 }
