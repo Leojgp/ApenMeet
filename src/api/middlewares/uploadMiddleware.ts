@@ -14,7 +14,8 @@ const storage = new CloudinaryStorage({
   params: {
     folder: 'apenmeet',
     allowed_formats: ['jpg', 'jpeg', 'png', 'gif'],
-    transformation: [{ width: 1000, height: 1000, crop: 'limit' }]
+    transformation: [{ width: 1000, height: 1000, crop: 'limit' }],
+    resource_type: 'auto'
   } as any
 });
 
@@ -30,7 +31,7 @@ export const upload = multer({
   storage: storage,
   fileFilter: fileFilter,
   limits: {
-    fileSize: 10 * 1024 * 1024 
+    fileSize: 10 * 1024 * 1024
   }
 });
 

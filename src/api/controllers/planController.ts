@@ -112,6 +112,28 @@ export const getPlansByUsername = async (req: Request, res: Response): Promise<v
   }
 };
 
+export const getUserParticipatingPlans = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const authenticatedUser = (req as any).user;
+    if (!authenticatedUser) {
+      res.status(401).json({ error: 'Usuario no autenticado' });
+      return;
+    }
+
+    const plans = await Plan.find({
+      participants: authenticatedUser._id,
+      status: { $ne: 'cancelled' }
+    })
+    .populate('creatorId', 'username')
+    .populate('participants', 'username')
+    .populate('admins', 'username');
+
+    res.json(plans);
+  } catch (err) {
+    res.status(500).json({ error: 'Error al obtener los planes del usuario' });
+  }
+};
+
 export const joinPlan = async (req: Request, res: Response): Promise<void> => {
   try {
     const authenticatedUser = (req as any).user;

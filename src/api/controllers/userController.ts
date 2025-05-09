@@ -40,8 +40,15 @@ export const getUserData = async (req: Request, res: Response): Promise<void> =>
     res.status(200).json({
       success: true,
       user: {
+        _id: user._id,
         username: user.username,
         email: user.email,
+        bio: user.bio,
+        location: user.location,
+        interests: user.interests,
+        profileImage: user.profileImage,
+        rating: user.rating,
+        isVerified: user.isVerified
       },
     });
   } catch (err) {
