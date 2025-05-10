@@ -16,6 +16,7 @@ export interface IPlan extends Document {
   participants: {
     id: mongoose.Types.ObjectId;
     username: string;
+    joinedAt: Date;
   }[];
   admins: {
     id: mongoose.Types.ObjectId;
@@ -44,7 +45,8 @@ const PlanSchema: Schema = new Schema({
   maxParticipants: { type: Number, required: true },
   participants: [{
     id: { type: Schema.Types.ObjectId, ref: 'User' },
-    username: { type: String }
+    username: { type: String },
+    joinedAt: { type: Date, default: Date.now }
   }],
   admins: [{
     id: { type: Schema.Types.ObjectId, ref: 'User' },

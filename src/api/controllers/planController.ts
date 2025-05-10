@@ -7,7 +7,9 @@ import fs from 'fs';
 
 export const getAllPlans = async (_req: Request, res: Response) => {
   try {
-    const plans = await Plan.find().populate('creatorId', 'username').populate('participants', 'username');
+    const plans = await Plan.find()
+      .populate('creatorId', 'username')
+      .populate('participants.id', 'username');
     res.json(plans);
   } catch (err) {
     res.status(500).json({ error: 'Error al obtener los planes' });
@@ -89,8 +91,8 @@ export const getPlanById = async (req: Request, res: Response): Promise<void> =>
   try {
     const plan = await Plan.findById(req.params.id)
       .populate('creatorId', 'username')
-      .populate('participants', 'username')
-      .populate('admins', 'username');
+      .populate('participants.id', 'username')
+      .populate('admins.id', 'username');
     if (!plan) {
       res.status(404).json({ error: 'Plan no encontrado' });
       return;
@@ -185,7 +187,8 @@ export const joinPlan = async (req: Request, res: Response): Promise<void> => {
 
     plan.participants.push({
       id: new mongoose.Types.ObjectId(authenticatedUser._id),
-      username: user.username
+      username: user.username,
+      joinedAt: new Date()
     });
     await plan.save();
 
@@ -265,7 +268,7 @@ export const updatePlan = async (req: Request, res: Response): Promise<void> => 
       return;
     }
 
-    if (!plan.admins.includes(authenticatedUser._id)) {
+    if (!plan.admins.some(admin => admin.id.toString() === authenticatedUser._id)) {
       res.status(403).json({ error: 'No tienes permisos para actualizar este plan' });
       return;
     }

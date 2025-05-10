@@ -60,7 +60,7 @@ export class SocketServer {
       console.log('Evento send-message recibido:', data);
       const { planId, content } = data;
 
-      const receiverObjectId = mongoose.Types.ObjectId.isValid(planId)
+      const planObjectId = mongoose.Types.ObjectId.isValid(planId)
         ? new mongoose.Types.ObjectId(planId)
         : null;
 
@@ -68,28 +68,27 @@ export class SocketServer {
         ? new mongoose.Types.ObjectId(userId)
         : null;
 
-      if (!senderObjectId || !receiverObjectId) {
+      if (!senderObjectId || !planObjectId) {
         return socket.emit('error', { message: 'ID no válido' });
       }
 
       const newMessage = new Message({
-        senderId: senderObjectId,
-        receiverId: receiverObjectId,
         content,
-        createdAt: new Date(),
-        isGroup: true,
-        readBy: [senderObjectId],
+        sender: {
+          id: senderObjectId,
+          username: user.username
+        },
+        planId: planObjectId,
+        createdAt: new Date()
       });
 
       await newMessage.save();
 
       const messagePayload = {
         _id: newMessage._id,
-        senderId: senderObjectId,
-        receiverId: receiverObjectId,
-        content,
-        createdAt: newMessage.createdAt,
-        isGroup: true,
+        content: newMessage.content,
+        sender: newMessage.sender,
+        createdAt: newMessage.createdAt
       };
 
       this.io.to(planId).emit('receive-message', messagePayload);

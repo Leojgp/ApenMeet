@@ -6,6 +6,7 @@ import path from 'path';
 import userRoutes from './src/api/routing/userRoutes';
 import reviewRoutes from './src/api/routing/reviewRoutes';
 import planRoutes from './src/api/routing/planRoutes';
+import messageRoutes from './src/api/routing/messageRoutes';
 import { SocketServer } from './src/websocket/chat';
 
 
@@ -29,6 +30,7 @@ const chatServer = new SocketServer(server);
 app.use('/api/users', userRoutes);
 app.use('/api/reviews', reviewRoutes);
 app.use('/api/plans', planRoutes);
+app.use('/api/messages', messageRoutes);
 
 mongoose.connect(process.env.DB_KEY!)
   .then(() => {

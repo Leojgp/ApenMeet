@@ -20,8 +20,6 @@ export function authenticateToken(req: Request, res: Response, next: NextFunctio
         res.status(403).json({ message: 'Token no válido', error: err.message });
         return;
       }
-
-      console.log('Payload del token:', user);
   
       (req as any).user = user;
       next();

@@ -13,10 +13,13 @@ export const getUserParticipatingPlans = async (req: AuthRequest, res: Response)
 
     const plans = await Plan.find({
       $or: [
-        { participants: userId },
-        { creator: userId }
+        { 'participants.id': userId },
+        { creatorId: userId }
       ]
-    }).populate('creator', 'username');
+    })
+    .populate('creatorId', 'username')
+    .populate('participants.id', 'username')
+    .populate('admins.id', 'username');
 
     res.json(plans);
   } catch (error) {
