@@ -10,7 +10,7 @@ interface BottomTabMenuProps {
 const BottomTabMenu: React.FC<BottomTabMenuProps> = ({ navigation }) => {
   return (
     <View style={styles.container}>
-      <TouchableOpacity style={styles.iconButton} onPress={() => navigation.navigate('Chat')}>
+      <TouchableOpacity style={styles.iconButton} onPress={() => navigation.navigate('Chats')}>
         <Ionicons name="chatbubble-outline" size={30} color="gray" />
       </TouchableOpacity>
 

@@ -5,7 +5,7 @@ import { HomeScreen, MainScreen } from './screens/home';
 import { SignUpScreen, SignInScreen } from './screens/auth';
 import { PlansScreen, CreatePlanScreen, PlanDetailScreen } from './screens/plans';
 import { ConfigScreen, EditProfileScreen } from './screens';
-import { ChatScreen } from './screens/chat';
+import { ChatScreen, ChatsScreen } from './screens/chat';
 import { Provider } from 'react-redux';
 import { store } from './store';
 import { useUser } from './hooks/user/useUser';
@@ -21,6 +21,7 @@ type RootStackParamList = {
   CreatePlan: undefined;
   EditProfileScreen: undefined;
   Chat: { planId: string; planTitle: string };
+  Chats: undefined;
 };
 
 const Stack = createStackNavigator<RootStackParamList>();
@@ -57,6 +58,17 @@ function AppContent() {
             },
             headerTintColor: '#fff',
           })}
+        />
+        <Stack.Screen 
+          name="Chats" 
+          component={ChatsScreen}
+          options={{
+            title: 'Chats',
+            headerStyle: {
+              backgroundColor: '#5C4D91',
+            },
+            headerTintColor: '#fff',
+          }}
         />
       </Stack.Navigator>
     </NavigationContainer>
