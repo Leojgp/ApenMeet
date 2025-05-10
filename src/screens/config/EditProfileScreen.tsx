@@ -26,7 +26,7 @@ export default function EditProfileScreen({ navigation }: any) {
     getCurrentUser()
       .then((data) => {
         console.log('User data received:', data.user); 
-        const profileImage = data.user.profileImage || 'https://res.cloudinary.com/dbfh8wmqt/image/upload/v1746636109/apenmeet/dljiilozwzcmyinqaaeo.jpg';
+        const profileImage = data.user.profileImage || 'https://res.cloudinary.com/dbfh8wmqt/image/upload/v1746874674/default_Profile_Image_oiw2nt.webp';
         console.log('Setting profile image to:', profileImage);
         
         setForm({

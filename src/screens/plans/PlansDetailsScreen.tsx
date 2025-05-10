@@ -53,8 +53,8 @@ export default function PlanDetailScreen({ route, navigation }: PlanDetailProps)
     );
   }
 
-  const latitude = plan.location.coordinates[0];
-  const longitude = plan.location.coordinates[1];
+  const latitude = plan.location.coordinates[1];
+  const longitude = plan.location.coordinates[0];
 
   return (
     <ScrollView style={styles.bg} contentContainerStyle={styles.scrollContent}>
@@ -66,7 +66,7 @@ export default function PlanDetailScreen({ route, navigation }: PlanDetailProps)
       <PlanHeader
         title={plan.title}
         address={plan.location.address}
-        imageUrl={plan.imageUrl}
+        imageUrl={plan.imageUrl || 'https://res.cloudinary.com/dbfh8wmqt/image/upload/v1746874867/noImagePlan_rfm46c.webp'}
       />
       <PlanInfoCard
         title="Description"

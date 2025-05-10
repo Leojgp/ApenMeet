@@ -3,7 +3,6 @@ import * as SecureStore from 'expo-secure-store';
 import { IP_ADDRESS } from '@env';
 import { refreshAccessToken } from '../auth/tokenApi';
 
-
 const api = axios.create({
     baseURL: `http://${IP_ADDRESS}:3000/api`,
   });

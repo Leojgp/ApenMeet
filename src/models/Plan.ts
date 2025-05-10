@@ -2,20 +2,27 @@ import { User } from './User';
 
 export interface Plan {
   id: string;
+  _id?: string;
   title: string;
   description: string;
   creatorId: string;
   creatorUsername?: string;
-  imageUrl: string;
+  imageUrl?: string;
   location: {
     address: string;
     coordinates: [number, number];
   };
   tags: string[];
-  dateTime: Date;
+  dateTime: string;
   maxParticipants: number;
-  participants: string[];
-  admins: User[];
+  participants: {
+    id: string;
+    username: string;
+  }[];
+  admins: {
+    id: string;
+    username: string;
+  }[];
   origin: string;
   createdAt: Date;
   status: string;
@@ -32,7 +39,7 @@ export const fromApiResponse = (data: any): Plan => ({
   imageUrl: data.imageUrl,
   location: data.location,
   tags: data.tags,
-  dateTime: new Date(data.dateTime),
+  dateTime: data.dateTime,
   maxParticipants: data.maxParticipants,
   participants: data.participants,
   admins: data.admins,
