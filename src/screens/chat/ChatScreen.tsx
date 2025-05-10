@@ -206,8 +206,9 @@ const styles = StyleSheet.create({
   },
   senderName: {
     fontSize: 12,
-    color: '#666',
+    color: '#E6E0F8',
     marginBottom: 4,
+    fontWeight: '600',
   },
   messageText: {
     fontSize: 16,
@@ -216,15 +217,15 @@ const styles = StyleSheet.create({
     color: '#fff',
   },
   otherMessageText: {
-    color: '#333',
+    color: '#E6E0F8',
   },
   systemMessageText: {
-    color: '#666',
+    color: '#F7F5FF',
     fontStyle: 'italic',
   },
   timestamp: {
     fontSize: 10,
-    color: '#999',
+    color: '#F7F5FF',
     marginTop: 4,
     alignSelf: 'flex-end',
   },

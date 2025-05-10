@@ -2,6 +2,8 @@ import { useState, useEffect, useCallback } from 'react';
 import WebSocketService from '../../services/websocketService';
 import { useUser } from '../user/useUser';
 import api from '../../api/config/axiosInstance';
+import { useSelector } from 'react-redux';
+import { RootState } from '../../store';
 
 interface ChatUser {
   id: string;
@@ -26,6 +28,7 @@ export const useChat = (planId: string) => {
   const [isParticipant, setIsParticipant] = useState(false);
   const { user } = useUser();
   const wsService = WebSocketService.getInstance();
+  const currentUser = useSelector((state: RootState) => state.user);
 
   const checkParticipation = useCallback(async () => {
     try {
@@ -76,7 +79,7 @@ export const useChat = (planId: string) => {
             sender: {
               id: message.senderId || message.sender.id,
               _id: message.senderId || message.sender._id,
-              username: message.sender?.username || 'Unknown'
+              username: message.sender?.username || currentUser.username || 'Usuario'
             },
             timestamp: message.createdAt || message.timestamp
           }];

@@ -20,19 +20,17 @@ export const useUser = () => {
         return;
       }
 
-      if (currentToken !== lastTokenRef.current) {
-        lastTokenRef.current = currentToken;
-        const data = await getCurrentUser();
-        dispatch(setUser({
-          id: data.user._id || data.user.id,
-          username: data.user.username,
-          email: data.user.email,
-          bio: data.user.bio || '',
-          location: data.user.location || { city: '', coordinates: [0, 0] },
-          interests: data.user.interests || [],
-          profileImage: data.user.profileImage || null,
-        }));
-      }
+      const data = await getCurrentUser();
+      dispatch(setUser({
+        id: data.user._id || data.user.id,
+        username: data.user.username,
+        email: data.user.email,
+        bio: data.user.bio || '',
+        location: data.user.location || { city: '', coordinates: [0, 0] },
+        interests: data.user.interests || [],
+        profileImage: data.user.profileImage || null,
+      }));
+      lastTokenRef.current = currentToken;
     } catch (error) {
       console.error('Error loading user data:', error);
       dispatch(clearUser());

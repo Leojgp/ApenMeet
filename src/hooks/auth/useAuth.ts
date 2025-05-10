@@ -3,6 +3,8 @@ import { useNavigation } from '@react-navigation/native';
 import { loginUser, registerUser } from '../../api/user/userApi';
 import { saveToken } from '../../utils/tokenStorage';
 import { getCurrentUser } from '../../api/user/userApi';
+import { useDispatch } from 'react-redux';
+import { setUser } from '../../store/userSlice';
 
 interface useAuthProps {
     navigation: any
@@ -12,6 +14,7 @@ export const useAuth = ({ navigation }: useAuthProps) => {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const nav = useNavigation();
+    const dispatch = useDispatch();
 
     const handleRegister = async (formData: FormData) => {
         try {
@@ -48,6 +51,15 @@ export const useAuth = ({ navigation }: useAuthProps) => {
             await saveToken('refreshToken', response.refreshToken);
 
             const userData = await getCurrentUser();
+            dispatch(setUser({
+                id: userData.user._id || userData.user.id,
+                username: userData.user.username,
+                email: userData.user.email,
+                bio: userData.user.bio || '',
+                location: userData.user.location || { city: '', coordinates: [0, 0] },
+                interests: userData.user.interests || [],
+                profileImage: userData.user.profileImage || null,
+            }));
             navigation.navigate('Main');
         } catch (err: any) {
             setError(err.message || 'Ocurrió un error. Intenta nuevamente.');
