@@ -4,6 +4,7 @@ export interface IPlan extends Document {
   title: string;
   description: string;
   creatorId: mongoose.Types.ObjectId;
+  creatorUsername?: string;
   imageUrl: string;
   location: {
     address: string;
@@ -12,8 +13,14 @@ export interface IPlan extends Document {
   tags: string[];
   dateTime: Date;
   maxParticipants: number;
-  participants: mongoose.Types.ObjectId[];
-  admins: mongoose.Types.ObjectId[];
+  participants: {
+    id: mongoose.Types.ObjectId;
+    username: string;
+  }[];
+  admins: {
+    id: mongoose.Types.ObjectId;
+    username: string;
+  }[];
   origin: string;
   createdAt: Date;
   status: string;
@@ -23,6 +30,7 @@ const PlanSchema: Schema = new Schema({
   title: { type: String, required: true },
   description: { type: String, required: true },
   creatorId: { type: Schema.Types.ObjectId, ref: 'User', required: true },
+  creatorUsername: { type: String },
   imageUrl: {
     type: String,
     default: 'https://st4.depositphotos.com/14953852/24787/v/450/depositphotos_247872612-stock-illustration-no-image-available-icon-vector.jpg'
@@ -34,8 +42,14 @@ const PlanSchema: Schema = new Schema({
   tags: [{ type: String }],
   dateTime: { type: Date, required: true },
   maxParticipants: { type: Number, required: true },
-  participants: [{ type: Schema.Types.ObjectId, ref: 'User' }],
-  admins: [{ type: Schema.Types.ObjectId, ref: 'User' }],
+  participants: [{
+    id: { type: Schema.Types.ObjectId, ref: 'User' },
+    username: { type: String }
+  }],
+  admins: [{
+    id: { type: Schema.Types.ObjectId, ref: 'User' },
+    username: { type: String }
+  }],
   origin: { type: String, default: 'user' },
   createdAt: { type: Date, default: Date.now },
   status: { type: String, default: 'open' },

@@ -37,9 +37,10 @@ export const createPlan = async (req: Request, res: Response): Promise<void> => 
       console.log('URL de la imagen subida:', imageUrl);
     }
 
-    const coordinates = Array.isArray(location.coordinates) ? 
-      location.coordinates :
-      [0, 0];
+    let coordinates = [0, 0];
+    if (location.coordinates && Array.isArray(location.coordinates)) {
+      coordinates = location.coordinates;
+    }
 
     const newPlan = new Plan({
       title,
@@ -51,8 +52,15 @@ export const createPlan = async (req: Request, res: Response): Promise<void> => 
       dateTime,
       maxParticipants,
       creatorId: authenticatedUser._id,
-      participants: [authenticatedUser._id],
-      admins: [authenticatedUser._id],
+      creatorUsername: user.username,
+      participants: [{
+        id: new mongoose.Types.ObjectId(authenticatedUser._id),
+        username: user.username
+      }],
+      admins: [{
+        id: new mongoose.Types.ObjectId(authenticatedUser._id),
+        username: user.username
+      }],
       origin: 'user',
       createdAt: new Date(),
       status: 'open',
@@ -64,8 +72,8 @@ export const createPlan = async (req: Request, res: Response): Promise<void> => 
 
     const populatedPlan = await Plan.findById(newPlan._id)
       .populate('creatorId', 'username profileImage')
-      .populate('participants', 'username profileImage')
-      .populate('admins', 'username profileImage');
+      .populate('participants.id', 'username profileImage')
+      .populate('admins.id', 'username profileImage');
 
     res.status(201).json({
       message: 'Plan creado con éxito',
@@ -121,15 +129,19 @@ export const getUserParticipatingPlans = async (req: Request, res: Response): Pr
     }
 
     const plans = await Plan.find({
-      participants: authenticatedUser._id,
+      $or: [
+        { 'participants.id': authenticatedUser._id },
+        { 'admins.id': authenticatedUser._id }
+      ],
       status: { $ne: 'cancelled' }
     })
     .populate('creatorId', 'username')
-    .populate('participants', 'username')
-    .populate('admins', 'username');
+    .populate('participants.id', 'username')
+    .populate('admins.id', 'username');
 
     res.json(plans);
   } catch (err) {
+    console.error('Error al obtener los planes del usuario:', err);
     res.status(500).json({ error: 'Error al obtener los planes del usuario' });
   }
 };
@@ -160,23 +172,34 @@ export const joinPlan = async (req: Request, res: Response): Promise<void> => {
       return;
     }
 
-    if (plan.participants.some(p => p.toString() === authenticatedUser._id)) {
+    if (plan.participants.some(p => p.id.toString() === authenticatedUser._id)) {
       res.status(400).json({ error: 'Ya eres participante de este plan' });
       return;
     }
 
-    plan.participants.push(new mongoose.Types.ObjectId(authenticatedUser._id));
+    const user = await User.findById(authenticatedUser._id);
+    if (!user) {
+      res.status(404).json({ error: 'Usuario no encontrado' });
+      return;
+    }
+
+    plan.participants.push({
+      id: new mongoose.Types.ObjectId(authenticatedUser._id),
+      username: user.username
+    });
     await plan.save();
 
     const updatedPlan = await Plan.findById(id)
       .populate('creatorId', 'username profileImage')
-      .populate('participants', 'username profileImage');
+      .populate('participants.id', 'username profileImage')
+      .populate('admins.id', 'username profileImage');
 
     res.status(200).json({
       message: 'Te has unido al plan con éxito',
       plan: updatedPlan
     });
   } catch (error) {
+    console.error('Error al unirse al plan:', error);
     res.status(500).json({ error: 'Error al unirse al plan' });
   }
 };
@@ -198,8 +221,8 @@ export const leavePlan = async (req: Request, res: Response): Promise<void> => {
       return;
     }
 
-    if (!plan.participants.some(p => p.toString() === authenticatedUser._id.toString())) {
-      res.status(400).json({ error: `No eres participante de este plan ${authenticatedUser._id}` });
+    if (!plan.participants.some(p => p.id.toString() === authenticatedUser._id)) {
+      res.status(400).json({ error: 'No eres participante de este plan' });
       return;
     }
 
@@ -208,11 +231,20 @@ export const leavePlan = async (req: Request, res: Response): Promise<void> => {
       return;
     }
 
-    plan.participants = plan.participants.filter(p => p.toString() !== authenticatedUser._id);
+    plan.participants = plan.participants.filter(p => p.id.toString() !== authenticatedUser._id);
     await plan.save();
 
-    res.status(200).json({ message: 'Has abandonado el plan con éxito' });
+    const updatedPlan = await Plan.findById(id)
+      .populate('creatorId', 'username profileImage')
+      .populate('participants.id', 'username profileImage')
+      .populate('admins.id', 'username profileImage');
+
+    res.status(200).json({
+      message: 'Has abandonado el plan con éxito',
+      plan: updatedPlan
+    });
   } catch (error) {
+    console.error('Error al abandonar el plan:', error);
     res.status(500).json({ error: 'Error al abandonar el plan' });
   }
 };
@@ -305,49 +337,42 @@ export const addAdmin = async (req: Request, res: Response): Promise<void> => {
     const { planId, userId } = req.params;
     const authenticatedUser = (req as any).user;
 
+    if (!mongoose.Types.ObjectId.isValid(planId) || !mongoose.Types.ObjectId.isValid(userId)) {
+      res.status(400).json({ error: 'IDs inválidos' });
+      return;
+    }
+
     const plan = await Plan.findById(planId);
     if (!plan) {
       res.status(404).json({ error: 'Plan no encontrado' });
       return;
     }
 
-    if (!plan.admins.some(adminId => adminId.toString() === authenticatedUser._id.toString())) {
-      res.status(403).json({ error: 'No tienes permisos para realizar esta acción' });
+    if (!plan.admins.some(admin => admin.id.toString() === authenticatedUser._id)) {
+      res.status(403).json({ error: 'No tienes permisos para añadir administradores' });
       return;
     }
 
-    const user = await User.findById(userId);
-    if (!user || !user._id) {
-      res.status(404).json({ error: 'Usuario no encontrado' });
-      return;
-    }
-
-    const userIdString = user._id.toString();
-    if (!plan.participants.some(participantId => participantId.toString() === userIdString)) {
-      res.status(400).json({ error: 'El usuario debe ser participante del plan' });
-      return;
-    }
-
-    if (plan.admins.some(adminId => adminId.toString() === userIdString)) {
+    if (plan.admins.some(admin => admin.id.toString() === userId)) {
       res.status(400).json({ error: 'El usuario ya es administrador' });
       return;
     }
 
-    plan.admins.push(new mongoose.Types.ObjectId(userIdString));
+    const user = await User.findById(userId);
+    if (!user) {
+      res.status(404).json({ error: 'Usuario no encontrado' });
+      return;
+    }
+
+    plan.admins.push({
+      id: new mongoose.Types.ObjectId(userId),
+      username: user.username
+    });
     await plan.save();
 
-    const populatedPlan = await Plan.findById(plan._id)
-      .populate('creatorId', 'username profileImage')
-      .populate('participants', 'username profileImage')
-      .populate('admins', 'username profileImage');
-
-    res.json({
-      message: 'Administrador añadido con éxito',
-      plan: populatedPlan
-    });
+    res.status(200).json({ message: 'Administrador añadido con éxito' });
   } catch (error) {
-    console.error('Error al añadir administrador:', error);
-    res.status(400).json({ error: 'Error al añadir administrador' });
+    res.status(500).json({ error: 'Error al añadir administrador' });
   }
 };
 
