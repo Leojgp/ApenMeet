@@ -37,6 +37,13 @@ class WebSocketService {
       this.currentPlanId = planId;
       const WS_URL = `http://${IP_ADDRESS}:3000`;
       console.log('Connecting to:', WS_URL);
+      
+      if (this.socket) {
+        console.log('Disconnecting existing socket...');
+        this.socket.disconnect();
+        this.socket = null;
+      }
+
       this.socket = io(WS_URL, {
         auth: {
           token
@@ -71,7 +78,9 @@ class WebSocketService {
 
       this.socket.on('disconnect', (reason: string) => {
         console.log('Disconnected from WebSocket:', reason);
-        this.socket?.emit('leave-plan', this.currentPlanId);
+        if (this.socket) {
+          this.socket.emit('leave-plan', this.currentPlanId);
+        }
       });
 
       this.socket.on('error', (error: { message: string }) => {
@@ -87,6 +96,8 @@ class WebSocketService {
 
   disconnect(): void {
     if (this.socket) {
+      console.log('Disconnecting WebSocket...');
+      this.socket.emit('leave-plan', this.currentPlanId);
       this.socket.disconnect();
       this.socket = null;
     }
@@ -109,6 +120,7 @@ class WebSocketService {
     } else {
       console.error('Cannot send message: Socket not connected');
       if (this.socket) {
+        console.log('Attempting to reconnect socket...');
         this.socket.connect();
       }
     }

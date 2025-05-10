@@ -19,6 +19,7 @@ import { useUser } from '../../hooks/user/useUser';
 
 interface ChatUser {
   id: string;
+  _id?: string;
   username: string;
 }
 
@@ -70,7 +71,31 @@ export default function ChatScreen({ route, navigation }: ChatScreenProps) {
     return (
       <View style={styles.centered}>
         <Ionicons name="chatbubble-outline" size={64} color="#5C4D91" style={styles.emptyIcon} />
-        <Text style={styles.emptyTitle}>No hay chat activo</Text>
+        <Text style={styles.emptyTitle}>No tienes chats activos</Text>
+        <Text style={styles.emptyText}>Únete a un plan para empezar a chatear</Text>
+        <TouchableOpacity 
+          style={styles.joinButton}
+          onPress={() => navigation.navigate('Plans')}
+        >
+          <Text style={styles.joinButtonText}>Ver Planes</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  }
+
+  if (typeof isParticipant === 'undefined') {
+    return (
+      <View style={styles.centered}>
+        <ActivityIndicator size="large" color="#5C4D91" />
+      </View>
+    );
+  }
+
+  if (!isParticipant) {
+    return (
+      <View style={styles.centered}>
+        <Ionicons name="chatbubble-outline" size={64} color="#5C4D91" style={styles.emptyIcon} />
+        <Text style={styles.emptyTitle}>No tienes chats activos</Text>
         <Text style={styles.emptyText}>Únete a un plan para empezar a chatear</Text>
         <TouchableOpacity 
           style={styles.joinButton}
@@ -83,7 +108,10 @@ export default function ChatScreen({ route, navigation }: ChatScreenProps) {
   }
 
   const renderMessage = ({ item }: { item: Message }) => {
-    const isOwnMessage = item.sender.id === user?.id;
+    const userId = String(user?.id);
+    const senderId = String(item.sender.id);
+    const sender_Id = String(item.sender._id);
+    const isOwnMessage = senderId === userId || sender_Id === userId;
     const isSystemMessage = item.sender.id === 'system';
 
     return (
@@ -93,7 +121,12 @@ export default function ChatScreen({ route, navigation }: ChatScreenProps) {
         isSystemMessage && styles.systemMessage
       ]}>
         {!isSystemMessage && (
-          <Text style={styles.senderName}>{item.sender.username}</Text>
+          <Text style={[
+            styles.senderName,
+            isOwnMessage ? styles.ownSenderName : styles.otherSenderName
+          ]}>
+            {item.sender.username}
+          </Text>
         )}
         <Text style={[
           styles.messageText,
@@ -102,7 +135,10 @@ export default function ChatScreen({ route, navigation }: ChatScreenProps) {
         ]}>
           {item.content}
         </Text>
-        <Text style={styles.timestamp}>
+        <Text style={[
+          styles.timestamp,
+          isOwnMessage ? styles.ownTimestamp : styles.otherTimestamp
+        ]}>
           {new Date(item.timestamp).toLocaleTimeString()}
         </Text>
       </View>
@@ -296,5 +332,17 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 16,
     fontWeight: 'bold',
+  },
+  ownSenderName: {
+    color: '#E6E0F8',
+  },
+  otherSenderName: {
+    color: '#5C4D91',
+  },
+  ownTimestamp: {
+    color: '#E6E0F8',
+  },
+  otherTimestamp: {
+    color: '#5C4D91',
   },
 }); 

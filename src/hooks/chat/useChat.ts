@@ -25,7 +25,7 @@ export const useChat = (planId: string) => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [isConnected, setIsConnected] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [isParticipant, setIsParticipant] = useState(false);
+  const [isParticipant, setIsParticipant] = useState<boolean | undefined>(undefined);
   const { user } = useUser();
   const wsService = WebSocketService.getInstance();
   const currentUser = useSelector((state: RootState) => state.user);
@@ -46,6 +46,35 @@ export const useChat = (planId: string) => {
     }
   }, [planId]);
 
+  const loadMessages = useCallback(async () => {
+    try {
+      console.log('Loading messages for plan:', planId);
+      const response = await api.get(`/messages/${planId}`);
+      console.log('Messages loaded:', response.data);
+      const messages = response.data;
+      const formattedMessages = messages.map((message: any) => {
+        let senderId = message.sender.id;
+        if (senderId && typeof senderId === 'object') {
+          senderId = senderId._id || senderId.id || '';
+        }
+        return {
+          id: message._id,
+          content: message.content,
+          sender: {
+            id: senderId,
+            _id: senderId,
+            username: message.sender.username
+          },
+          timestamp: message.createdAt
+        };
+      });
+      console.log('Formatted messages:', formattedMessages);
+      setMessages(formattedMessages);
+    } catch (err) {
+      console.error('Error loading messages:', err);
+    }
+  }, [planId]);
+
   const connect = useCallback(async () => {
     try {
       const isParticipating = await checkParticipation();
@@ -55,17 +84,18 @@ export const useChat = (planId: string) => {
         return;
       }
 
+      await loadMessages();
+
       console.log('Connecting to WebSocket for plan:', planId);
       const socket = await wsService.connect(planId);
       
       socket.on('receive-message', (message: Message) => {
         console.log('Received message:', message);
         setMessages(prev => {
-          // Verificar si el mensaje ya existe
           const messageExists = prev.some(m => 
             m.id === message._id || 
             m.id === message.id || 
-            (m.content === message.content && m.sender.id === message.senderId)
+            (m.content === message.content && m.sender.id === message.sender.id)
           );
           
           if (messageExists) {
@@ -73,16 +103,19 @@ export const useChat = (planId: string) => {
             return prev;
           }
 
-          return [...prev, {
+          const senderId = message.sender.id || message.sender._id;
+          const newMessage = {
             id: message._id || message.id,
             content: message.content,
             sender: {
-              id: message.senderId || message.sender.id,
-              _id: message.senderId || message.sender._id,
-              username: message.sender?.username || currentUser.username || 'Usuario'
+              id: senderId,
+              _id: senderId,
+              username: message.sender.username
             },
             timestamp: message.createdAt || message.timestamp
-          }];
+          };
+          console.log('Adding new message:', newMessage);
+          return [...prev, newMessage];
         });
       });
 
@@ -113,7 +146,7 @@ export const useChat = (planId: string) => {
       setError(err.message);
       setIsConnected(false);
     }
-  }, [planId, checkParticipation]);
+  }, [planId, checkParticipation, loadMessages]);
 
   const disconnect = useCallback(() => {
     wsService.disconnect();
