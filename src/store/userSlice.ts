@@ -1,28 +1,38 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { User } from '../models/User';
 
+
 type UserState = User;
 
 const initialState: UserState = {
-  id: '',
+  _id: '',
   username: '',
   email: '',
   bio: '',
-  location: { city: '', coordinates: [0, 0] },
+  location: {
+    city: '',
+    country: '',
+    coordinates: [0, 0],
+    formattedAddress: '',
+    postalCode: '',
+    region: '',
+    timezone: ''
+  },
   interests: [],
-  profileImage: null,
+  profileImage: '',
+  rating: 0,
+  joinedAt: '',
+  isVerified: false
 };
 
 const userSlice = createSlice({
   name: 'user',
   initialState,
   reducers: {
-    setUser(state, action: PayloadAction<UserState>) {
-      return { ...state, ...action.payload };
+    setUser: (state, action: PayloadAction<UserState>) => {
+      return action.payload;
     },
-    clearUser() {
-      return initialState;
-    },
+    clearUser: () => initialState,
     updateUser(state, action: PayloadAction<Partial<UserState>>) {
       return { ...state, ...action.payload };
     },

@@ -13,7 +13,15 @@ export default function EditProfileScreen({ navigation }: any) {
     username: '',
     email: '',
     bio: '',
-    location: { city: '', coordinates: [0, 0] },
+    location: { 
+      city: '', 
+      country: 'Spain',
+      coordinates: [0, 0] as [number, number],
+      formattedAddress: '',
+      postalCode: '',
+      region: '',
+      timezone: ''
+    },
     interests: '',
     profileImage: null as string | null,
   });
@@ -39,13 +47,16 @@ export default function EditProfileScreen({ navigation }: any) {
           profileImage: profileImage,
         });
         dispatch(setUser({
-          id: data.user._id || data.user.id || '',
+          _id: data.user._id || data.user.id || '',
           username: data.user.username || '',
           email: data.user.email || '',
           bio: data.user.bio || '',
-          location: data.user.location || { city: '', coordinates: [0, 0] },
+          location: data.user.location || { city: '', country: '', coordinates: [0, 0], formattedAddress: '', postalCode: '', region: '', timezone: '' },
           interests: Array.isArray(data.user.interests) ? data.user.interests : [],
           profileImage: profileImage,
+          rating: data.user.rating || 0,
+          joinedAt: data.user.joinedAt || '',
+          isVerified: data.user.isVerified || false
         }));
       })
       .catch((err) => {
@@ -77,13 +88,32 @@ export default function EditProfileScreen({ navigation }: any) {
     setError('');
     try {
       console.log('Coordenadas antes de guardar:', form.location.coordinates, 'Ciudad:', form.location.city);
+      
+      if (form.location.coordinates[0] === 0 && form.location.coordinates[1] === 0) {
+        try {
+          const results = await Location.geocodeAsync(form.location.city);
+          if (results.length > 0) {
+            const { latitude, longitude } = results[0];
+            form.location.coordinates = [longitude, latitude];
+            console.log('Nuevas coordenadas obtenidas:', [longitude, latitude]);
+          }
+        } catch (geoError) {
+          console.error('Error al obtener coordenadas:', geoError);
+        }
+      }
+
       const formData = new FormData();
       formData.append('username', form.username);
       formData.append('email', form.email);
       formData.append('bio', form.bio);
       formData.append('location[city]', form.location.city);
+      formData.append('location[country]', form.location.country);
       formData.append('location[coordinates][]', String(form.location.coordinates[0]));
       formData.append('location[coordinates][]', String(form.location.coordinates[1]));
+      formData.append('location[formattedAddress]', form.location.formattedAddress || '');
+      formData.append('location[postalCode]', form.location.postalCode || '');
+      formData.append('location[region]', form.location.region || '');
+      formData.append('location[timezone]', form.location.timezone || '');
       formData.append('interests', form.interests);
       
       if (form.profileImage && form.profileImage.startsWith('file')) {
@@ -100,13 +130,24 @@ export default function EditProfileScreen({ navigation }: any) {
       console.log('Update response:', response); 
 
       dispatch(setUser({
-        id: form.id,
+        _id: form.id,
         username: form.username,
         email: form.email,
         bio: form.bio,
-        location: { city: form.location.city, coordinates: [form.location.coordinates[0], form.location.coordinates[1]] as [number, number] },
+        location: { 
+          city: form.location.city,
+          country: form.location.country,
+          coordinates: form.location.coordinates,
+          formattedAddress: form.location.formattedAddress,
+          postalCode: form.location.postalCode,
+          region: form.location.region,
+          timezone: form.location.timezone
+        },
         interests: form.interests.split(',').map(i => i.trim()),
         profileImage: response.user.profileImage || form.profileImage,
+        rating: response.user.rating || 0,
+        joinedAt: response.user.joinedAt || '',
+        isVerified: response.user.isVerified || false
       }));
       navigation.goBack();
     } catch (e: any) {

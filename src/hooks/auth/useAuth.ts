@@ -16,20 +16,18 @@ export const useAuth = ({ navigation }: useAuthProps) => {
     const nav = useNavigation();
     const dispatch = useDispatch();
 
-    const handleRegister = async (formData: FormData) => {
+    const handleRegister = async (formData: any) => {
         try {
             setLoading(true);
             setError(null);
 
-            const username = formData.get('username') as string;
-            const email = formData.get('email') as string;
-            const password = formData.get('password') as string;
-            const location = formData.get('location') as string;
-            const interests = formData.get('interests') as string;
-            const city = location ? JSON.parse(location).city : '';
-            const interestsArray = interests ? interests.split(',').map(i => i.trim()) : [];
+            const username = formData.username;
+            const email = formData.email;
+            const password = formData.password;
+            const interests = formData.interests;
+            const interestsArray = interests ? interests.split(',').map((i: string) => i.trim()) : [];
 
-            await registerUser(username, email, password, city, interestsArray);
+            await registerUser(formData);
 
             if (navigation) {
                 navigation.navigate('SignIn');
@@ -52,13 +50,16 @@ export const useAuth = ({ navigation }: useAuthProps) => {
 
             const userData = await getCurrentUser();
             dispatch(setUser({
-                id: userData.user._id || userData.user.id,
+                _id: userData.user._id || userData.user.id,
                 username: userData.user.username,
                 email: userData.user.email,
                 bio: userData.user.bio || '',
-                location: userData.user.location || { city: '', coordinates: [0, 0] },
+                location: userData.user.location || { city: '', country: '', coordinates: [0, 0], formattedAddress: '', postalCode: '', region: '', timezone: '' },
                 interests: userData.user.interests || [],
-                profileImage: userData.user.profileImage || null,
+                profileImage: userData.user.profileImage || '',
+                rating: userData.user.rating || 0,
+                joinedAt: userData.user.joinedAt || '',
+                isVerified: userData.user.isVerified || false
             }));
             navigation.navigate('Main');
         } catch (err: any) {

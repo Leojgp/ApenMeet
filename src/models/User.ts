@@ -1,12 +1,20 @@
 export interface User {
-  id: string;
+  _id: string;
   username: string;
   email: string;
-  bio?: string;
-  location?: {
+  bio: string;
+  location: {
     city: string;
+    country: string;
     coordinates: [number, number];
+    formattedAddress: string;
+    postalCode?: string;
+    region?: string;
+    timezone?: string;
   };
-  interests?: string[];
-  profileImage?: string | null;
+  interests: string[];
+  profileImage: string;
+  rating: number;
+  joinedAt: string;
+  isVerified: boolean;
 } 

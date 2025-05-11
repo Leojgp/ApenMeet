@@ -22,13 +22,16 @@ export const useUser = () => {
 
       const data = await getCurrentUser();
       dispatch(setUser({
-        id: data.user._id || data.user.id,
+        _id: data.user._id || data.user.id,
         username: data.user.username,
         email: data.user.email,
         bio: data.user.bio || '',
-        location: data.user.location || { city: '', coordinates: [0, 0] },
+        location: data.user.location || { city: '', country: '', coordinates: [0, 0], formattedAddress: '', postalCode: '', region: '', timezone: '' },
         interests: data.user.interests || [],
-        profileImage: data.user.profileImage || null,
+        profileImage: data.user.profileImage || '',
+        rating: data.user.rating || 0,
+        joinedAt: data.user.joinedAt || '',
+        isVerified: data.user.isVerified || false
       }));
       lastTokenRef.current = currentToken;
     } catch (error) {

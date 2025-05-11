@@ -27,15 +27,9 @@ export const getCurrentUser = async () => {
   }
 };
 
-export const registerUser = async (username: string, email: string, password: string, city: string, interests: string[]) => {
+export const registerUser = async (userData: any) => {
     try {
-        const response = await api.post('users/register', {
-            username,
-            email,
-            password,
-            location: { city, coordinates: [0, 0] },
-            interests
-        });
+        const response = await api.post('users/register', userData);
         return response.data;
     } catch (error: any) {
         if (error.response) {
