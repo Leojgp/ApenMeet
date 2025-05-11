@@ -8,6 +8,7 @@ import reviewRoutes from './src/api/routing/reviewRoutes';
 import planRoutes from './src/api/routing/planRoutes';
 import messageRoutes from './src/api/routing/messageRoutes';
 import { SocketServer } from './src/websocket/chat';
+import scrapingRoutes from './src/api/routing/scrapingRoutes';
 
 
 dotenv.config();
@@ -21,8 +22,6 @@ app.use(cors());
 
 app.use(express.json());
 
-// Servir archivos estáticos desde el directorio uploads
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 const server = http.createServer(app);
 const chatServer = new SocketServer(server);
@@ -31,6 +30,7 @@ app.use('/api/users', userRoutes);
 app.use('/api/reviews', reviewRoutes);
 app.use('/api/plans', planRoutes);
 app.use('/api/messages', messageRoutes);
+app.use('/api/scraping', scrapingRoutes);
 
 mongoose.connect(process.env.DB_KEY!)
   .then(() => {

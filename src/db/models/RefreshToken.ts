@@ -6,12 +6,14 @@ dotenv.config();
 export interface IRefreshToken extends Document {
   token: string;
   userId: mongoose.Types.ObjectId;
+  username: string;
   createdAt: Date;
 }
 
 const RefreshTokenSchema = new Schema<IRefreshToken>({
   token: { type: String, required: true, unique: true },
   userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+  username: { type: String, required: true },
   createdAt: { type: Date, default: Date.now, expires: process.env.REFRESH_TOKEN_EXPIRATION}, 
 });
 

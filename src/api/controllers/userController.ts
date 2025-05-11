@@ -137,13 +137,14 @@ export const loginUser = async (req: Request, res: Response): Promise<void> => {
     }
 
     const user = await User.findOne({ email });
+
     if (!user) {
-      res.status(401).json({ message: 'Usuario no encontrado' });
+      res.status(401).json({ message: 'Credenciales inválidas' });
       return;
     }
 
-    const passwordMatch = await bcrypt.compare(password, user.passwordHash);
-    if (!passwordMatch) {
+    const validPassword = await bcrypt.compare(password, user.passwordHash);
+    if (!validPassword) {
       res.status(401).json({ message: 'Credenciales inválidas' });
       return;
     }
@@ -152,6 +153,7 @@ export const loginUser = async (req: Request, res: Response): Promise<void> => {
       _id: user._id,
       username: user.username,
       email: user.email,
+      profileImage: user.profileImage
     };
 
     await RefreshToken.deleteMany({ userId: user._id });
@@ -159,56 +161,66 @@ export const loginUser = async (req: Request, res: Response): Promise<void> => {
     const accessToken = generateAccesToken(userResponse, false);
     const refreshToken = jwt.sign(userResponse, process.env.REFRESH_TOKEN_SECRET || '');
 
-    const tokenDoc = new RefreshToken({ token: refreshToken, userId: user._id });
-    await tokenDoc.save();
+    const newTokenDoc = new RefreshToken({ 
+      token: refreshToken, 
+      userId: user._id,
+      username: user.username 
+    });
+    await newTokenDoc.save();
 
     res.status(200).json({
       message: 'Inicio de sesión exitoso',
+      user: userResponse,
       accessToken,
-      refreshToken,
+      refreshToken
     });
   } catch (error) {
-    console.error('Error al iniciar sesión:', error);
+    console.error('Error en login:', error);
     res.status(500).json({ message: 'Error interno del servidor' });
   }
 };
 
 
 export const getToken = async (req: Request, res: Response): Promise<void> => {
-  const refreshToken = req.body.token;
+  try {
+    const refreshToken = req.body.token;
 
-  if (!refreshToken) {
-    res.sendStatus(401);
-    return;
-  }
-
-  const tokenExists = await RefreshToken.findOne({ token: refreshToken });
-  if (!tokenExists) {
-    res.sendStatus(403);
-    return;
-  }
-
-  jwt.verify(refreshToken, process.env.REFRESH_TOKEN_SECRET || '', async (err:Error, userData: any) => {
-    if (err) {
-      res.sendStatus(403);
+    if (!refreshToken) {
+      res.status(401).json({ message: 'Token no proporcionado' });
       return;
     }
 
-    const user = await User.findById(userData._id);
-    if (!user) {
-      res.sendStatus(403);
+    const tokenExists = await RefreshToken.findOne({ token: refreshToken });
+    if (!tokenExists) {
+      res.status(403).json({ message: 'Token inválido' });
       return;
     }
 
-    const userForToken = {
-      _id: user._id,
-      username: user.username,
-      email: user.email
-    };
+    jwt.verify(refreshToken, process.env.REFRESH_TOKEN_SECRET || '', async (err: Error, userData: any) => {
+      if (err) {
+        res.status(403).json({ message: 'Token inválido' });
+        return;
+      }
 
-    const accessToken = generateAccesToken(userForToken, true);
-    res.json({ accessToken });
-  });
+      const user = await User.findById(userData._id);
+      if (!user) {
+        res.status(404).json({ message: 'Usuario no encontrado' });
+        return;
+      }
+
+      const userForToken = {
+        _id: user._id,
+        username: user.username,
+        email: user.email
+      };
+
+      const accessToken = generateAccesToken(userForToken, true);
+      res.json({ accessToken });
+    });
+  } catch (error) {
+    console.error('Error al renovar token:', error);
+    res.status(500).json({ message: 'Error interno del servidor' });
+  }
 };
 
 function generateAccesToken(user: any,isRefreshToken: boolean){
