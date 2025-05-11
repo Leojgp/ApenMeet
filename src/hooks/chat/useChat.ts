@@ -4,22 +4,8 @@ import { useUser } from '../user/useUser';
 import api from '../../api/config/axiosInstance';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../store';
-
-interface ChatUser {
-  id: string;
-  _id: string;
-  username: string;
-}
-
-interface Message {
-  id: string;
-  _id?: string;
-  content: string;
-  sender: ChatUser;
-  senderId?: string;
-  timestamp: string;
-  createdAt?: string;
-}
+import { ChatUser } from '../../models/ChatUser';
+import { Message } from '../../models/Message';
 
 export const useChat = (planId: string) => {
   const [messages, setMessages] = useState<Message[]>([]);
@@ -57,12 +43,13 @@ export const useChat = (planId: string) => {
         if (senderId && typeof senderId === 'object') {
           senderId = senderId._id || senderId.id || '';
         }
+        senderId = senderId || '';
         return {
           id: message._id,
           content: message.content,
           sender: {
-            id: senderId,
-            _id: senderId,
+            id: String(senderId),
+            _id: String(senderId),
             username: message.sender.username
           },
           timestamp: message.createdAt
@@ -108,8 +95,8 @@ export const useChat = (planId: string) => {
             id: message._id || message.id,
             content: message.content,
             sender: {
-              id: senderId,
-              _id: senderId,
+              id: String(senderId),
+              _id: String(senderId),
               username: message.sender.username
             },
             timestamp: message.createdAt || message.timestamp
@@ -163,15 +150,21 @@ export const useChat = (planId: string) => {
       id: Date.now().toString(),
       content,
       sender: {
-        id: user.id,
-        _id: user.id,
+        id: String(user.id),
+        _id: String(user.id),
         username: user.username
       },
       timestamp: new Date().toISOString()
     };
     
     console.log('Sending message:', message);
-    wsService.sendMessage(message);
+    wsService.sendMessage({
+      ...message,
+      sender: {
+        ...message.sender,
+        _id: String(message.sender._id)
+      }
+    });
   }, [isConnected, user, isParticipant]);
 
   useEffect(() => {
