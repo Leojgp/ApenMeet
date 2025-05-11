@@ -6,6 +6,7 @@ import { SignUpScreen, SignInScreen } from './screens/auth';
 import { PlansScreen, CreatePlanScreen, PlanDetailScreen } from './screens/plans';
 import { ConfigScreen, EditProfileScreen } from './screens';
 import { ChatScreen, ChatsScreen } from './screens/chat';
+import EventDetailsScreen from './screens/home/EventDetailsScreen';
 import { Provider } from 'react-redux';
 import { store } from './store';
 import { useUser } from './hooks/user/useUser';
@@ -22,6 +23,7 @@ type RootStackParamList = {
   EditProfileScreen: undefined;
   Chat: { planId: string; planTitle: string };
   Chats: undefined;
+  EventDetails: { event: any };
 };
 
 const Stack = createStackNavigator<RootStackParamList>();
@@ -64,6 +66,17 @@ function AppContent() {
           component={ChatsScreen}
           options={{
             title: 'Chats',
+            headerStyle: {
+              backgroundColor: '#5C4D91',
+            },
+            headerTintColor: '#fff',
+          }}
+        />
+        <Stack.Screen 
+          name="EventDetails" 
+          component={EventDetailsScreen}
+          options={{
+            title: 'Detalles del Evento',
             headerStyle: {
               backgroundColor: '#5C4D91',
             },
