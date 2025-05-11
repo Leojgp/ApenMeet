@@ -102,7 +102,7 @@ export default function PlansScreen({navigation}: PlansScreenProps) {
           )}
         </View>
         {loading && <ActivityIndicator size="small" color="#5C4D91" style={{marginBottom: 16}} />}
-        {error && <Text style={styles.notFound}>{error}</Text>}
+        {error && uniquePlans.length === 0 && !loading && <Text style={styles.notFound}>{error}</Text>}
         {uniquePlans.length === 0 && !loading && <Text style={styles.notFound}>No plan found</Text>}
         {uniquePlans.map((plan: any) => (
           <PlanCard key={plan.id} plan={plan} navigation={navigation} />

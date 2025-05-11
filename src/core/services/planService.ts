@@ -3,10 +3,32 @@ import { Plan, fromApiResponse } from '../../models/Plan';
 
 export const fetchPlans = async () => {
   try {
-    const data = await getPlans();  
-    return data.map((plan: any) => fromApiResponse(plan));  
+    console.log('Fetching plans...');
+    const data = await getPlans();
+    
+    if (!data || !Array.isArray(data)) {
+      console.error('Invalid plans data received:', data);
+      throw new Error('Formato de datos inválido');
+    }
+
+    if (data.length === 0) {
+      console.log('No plans found');
+      return [];
+    }
+
+    const plans = data.map((plan: any) => {
+      try {
+        return fromApiResponse(plan);
+      } catch (error) {
+        console.warn('Warning transforming plan:', plan, error);
+        return null;
+      }
+    }).filter(Boolean);
+    
+    return plans;
   } catch (error: any) {
-    throw new Error(error.response?.data?.message || 'Error desconocido');
+    console.error('Error in fetchPlans:', error);
+    throw new Error(error.response?.data?.message || 'Error al obtener los planes');
   }
 };
 

@@ -6,10 +6,16 @@ export interface SignUpFormState {
   username: string;
   email: string;
   password: string;
+  confirmPassword: string;
   bio: string;
   location: {
     city: string;
+    country: string;
     coordinates: [number, number];
+    formattedAddress: string;
+    postalCode?: string;
+    region?: string;
+    timezone?: string;
   };
   interests: string;
   profileImage: string | null;
@@ -22,10 +28,13 @@ export const useSignUpForm = (navigation?: any) => {
     username: '',
     email: '',
     password: '',
+    confirmPassword: '',
     bio: '',
     location: {
       city: '',
-      coordinates: [0, 0]
+      country: '',
+      coordinates: [0, 0],
+      formattedAddress: '',
     },
     interests: '',
     profileImage: null
@@ -60,27 +69,8 @@ export const useSignUpForm = (navigation?: any) => {
     }
   };
 
-  const handleSubmit = async () => {
-    const formData = new FormData();
-    formData.append('username', formState.username);
-    formData.append('email', formState.email);
-    formData.append('password', formState.password);
-    formData.append('bio', formState.bio);
-    formData.append('location', JSON.stringify(formState.location));
-    formData.append('interests', formState.interests);
-
-    if (formState.profileImage) {
-      const uriParts = formState.profileImage.split('.');
-      const fileType = uriParts[uriParts.length - 1];
-
-      formData.append('profileImage', {
-        uri: formState.profileImage,
-        name: `photo.${fileType}`,
-        type: `image/${fileType}`,
-      } as any);
-    }
-
-    await handleRegister(formData);
+  const handleSubmit = async (userData: any) => {
+    await handleRegister(userData);
   };
 
   return {
