@@ -4,20 +4,20 @@ import ScrapedSource from '../../db/models/ScrapedSource';
 
 export const scrapeUrl = async (req: Request, res: Response): Promise<void> => {
   try {
-    const { url } = req.body;
+    const { city, country } = req.body;
     
-    if (!url) {
-      res.status(400).json({ error: 'URL is required' });
+    if (!city || !country) {
+      res.status(400).json({ error: 'City and country are required' });
       return;
     }
 
-    const scrapedData = await scrapingService.scrapeEventPage(url);
+    const scrapedData = await scrapingService.scrapeEventPage(city, country);
     const savedData = await Promise.all(scrapedData.map(data => scrapingService.saveScrapedData(data)));
 
     res.status(200).json(savedData);
   } catch (error) {
     console.error('Error in scraping controller:', error);
-    res.status(500).json({ error: 'Error scraping the provided URL' });
+    res.status(500).json({ error: 'Error scraping the provided location' });
   }
 };
 

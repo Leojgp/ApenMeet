@@ -1,5 +1,6 @@
 import { chromium, Browser, Page } from 'playwright';
 import ScrapedSource, { IScrapedSource } from '../db/models/ScrapedSource';
+import { getCountryCode } from './countryService';
 
 class ScrapingService {
   private browser: Browser | null = null;
@@ -11,14 +12,21 @@ class ScrapingService {
     return this.browser;
   }
 
-  async scrapeEventPage(url: string): Promise<Partial<IScrapedSource>[]> {
+  private getFeverUrl(city: string, country: string): string {
+    const countryCode = getCountryCode(country.toLowerCase().trim());
+    const formattedCity = city.toLowerCase().trim().replace(/\s+/g, '-');
+    return `https://feverup.com/${countryCode}/${formattedCity}`;
+  }
+
+  async scrapeEventPage(city: string, country: string): Promise<Partial<IScrapedSource>[]> {
+    const url = this.getFeverUrl(city, country);
     console.log('Iniciando scraping de:', url);
     const browser = await this.initBrowser();
     const page = await browser.newPage();
     try {
       console.log('Navegando a la página...');
       await page.goto(url, { waitUntil: 'networkidle', timeout: 30000 });
-      return await this.scrapeFeverGranada(page, url);
+      return await this.scrapeFeverEvents(page, url);
     } catch (error) {
       console.error('Error en scrapeEventPage:', error);
       throw error;
@@ -27,7 +35,7 @@ class ScrapingService {
     }
   }
 
-  private async scrapeFeverGranada(page: Page, url: string): Promise<Partial<IScrapedSource>[]> {
+  private async scrapeFeverEvents(page: Page, url: string): Promise<Partial<IScrapedSource>[]> {
     try {
       await page.waitForSelector('ul.fv-plan-carousel__feed > li.fv-plan-carousel__item', { timeout: 10000 });
       const activities = await page.$$eval(
@@ -50,7 +58,6 @@ class ScrapingService {
             const titleElement = card.querySelector('h3.fv-plan-preview-card__name');
             const title = titleElement?.textContent?.trim() || '';
             
-
             const locationElement = card.querySelector('.fv-location__name');
             const location = locationElement?.textContent?.trim() || '';
             
@@ -109,8 +116,8 @@ class ScrapingService {
 
       return validActivities;
     } catch (error) {
-      console.error('Error scraping Fever Granada:', error);
-      throw new Error(`Error al extraer actividades de Fever Granada: ${(error as Error).message}`);
+      console.error('Error scraping Fever:', error);
+      throw new Error(`Error al extraer actividades de Fever: ${(error as Error).message}`);
     }
   }
 
