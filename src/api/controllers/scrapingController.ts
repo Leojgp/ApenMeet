@@ -12,7 +12,7 @@ export const scrapeUrl = async (req: Request, res: Response): Promise<void> => {
     }
 
     const scrapedData = await scrapingService.scrapeEventPage(url);
-    const savedData = await scrapingService.saveScrapedData(scrapedData);
+    const savedData = await Promise.all(scrapedData.map(data => scrapingService.saveScrapedData(data)));
 
     res.status(200).json(savedData);
   } catch (error) {

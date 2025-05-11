@@ -7,7 +7,7 @@ export interface IScrapedSource extends Document {
   title: string;
   description: string;
   location?: string;
-  date?: Date;
+  date?: string;
   price?: string;
   imageUrl?: string;
   sourceUrl: string;
@@ -22,7 +22,7 @@ const ScrapedSourceSchema: Schema = new Schema({
   title: { type: String, required: true },
   description: { type: String, required: true },
   location: { type: String },
-  date: { type: Date },
+  date: { type: String },
   price: { type: String },
   imageUrl: { type: String },
   sourceUrl: { type: String, required: true },
