@@ -9,7 +9,7 @@ router.get('/', getAllUsers);
 router.get('/me', authenticateToken, getUserData);
 router.patch('/me', authenticateToken, upload.single('profileImage'), handleMulterError, updateUserData);
 router.post('/login', loginUser);
-router.post('/register', upload.single('profileImage'), handleMulterError, registerUser);
+router.post('/register', registerUser);
 router.post('/token', getToken);
 router.delete('/logout', deleteRefreshToken);
 

@@ -60,16 +60,26 @@ export const getUserData = async (req: Request, res: Response): Promise<void> =>
 // Registro
 export const registerUser = async (req: Request, res: Response): Promise<void> => {
   try {
+    console.log('Request body completo:', req.body);
+    console.log('Location fields:', {
+      city: req.body['location[city]'],
+      country: req.body['location[country]'],
+      coordinates: req.body['location[coordinates][]'],
+      formattedAddress: req.body['location[formattedAddress]'],
+      postalCode: req.body['location[postalCode]'],
+      region: req.body['location[region]'],
+      timezone: req.body['location[timezone]']
+    });
+
     const { 
       username, 
       email, 
       password, 
       bio, 
-      location, 
       interests 
     } = req.body;
 
-    if (!username || !email || !password || !location || !interests) {
+    if (!username || !email || !password) {
       res.status(400).json({ message: 'Faltan campos obligatorios' });
       return;
     }
@@ -80,7 +90,7 @@ export const registerUser = async (req: Request, res: Response): Promise<void> =
       return;
     }
 
-// Encriptación de la contraseña porque no puedo guardarla en texto plano
+    // Encriptación de la contraseña
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password, salt);
 
@@ -89,15 +99,34 @@ export const registerUser = async (req: Request, res: Response): Promise<void> =
       profileImage = (req.file as any).path;
     }
 
+    // Leer los campos de ubicación como propiedades planas
+    const city = req.body.city || '';
+    const country = req.body.country || '';
+    const formattedAddress = req.body.formattedAddress || '';
+    const postalCode = req.body.postalCode || '';
+    const region = req.body.region || '';
+    const timezone = req.body.timezone || '';
+    const coordinates = req.body.coordinates || [0, 0];
+
+    const locationObj = {
+      city,
+      country,
+      coordinates,
+      formattedAddress,
+      postalCode,
+      region,
+      timezone
+    };
+
+    console.log('Request body completo:', req.body);
+    console.log('Location object constructed:', locationObj);
+
     const newUser = new User({
       username,
       email,
       passwordHash: hashedPassword,
       bio: bio || '',
-      location: {
-        city: location.city || '',
-        coordinates: location.coordinates || [0, 0],
-      },
+      location: locationObj,
       interests: Array.isArray(interests) ? interests : interests.split(',').map((i: string) => i.trim()),
       profileImage,
       rating: 0,

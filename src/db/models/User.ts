@@ -7,7 +7,12 @@ export interface IUser extends Document {
   bio: string;
   location: {
     city: string;
+    country: string;
     coordinates: [number, number];
+    formattedAddress: string;
+    postalCode?: string;
+    region?: string;
+    timezone?: string;
   };
   interests: string[];
   profileImage: string;
@@ -23,7 +28,12 @@ const UserSchema: Schema = new Schema({
   bio: { type: String, default: '' },
   location: {
     city: { type: String, default: '' },
+    country: { type: String },
     coordinates: { type: [Number], index: '2dsphere' },
+    formattedAddress: { type: String, default: '' },
+    postalCode: { type: String },
+    region: { type: String },
+    timezone: { type: String }
   },
   interests: [{ type: String }],
   profileImage: { type: String, default: '' },
@@ -31,6 +41,5 @@ const UserSchema: Schema = new Schema({
   joinedAt: { type: Date, default: Date.now },
   isVerified: { type: Boolean, default: false },
 });
-
 
 export const User = mongoose.model<IUser>('User', UserSchema);
