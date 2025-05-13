@@ -38,23 +38,15 @@ export const useChat = (planId: string) => {
       const response = await api.get(`/messages/${planId}`);
       console.log('Messages loaded:', response.data);
       const messages = response.data;
-      const formattedMessages = messages.map((message: any) => {
-        let senderId = message.sender.id;
-        if (senderId && typeof senderId === 'object') {
-          senderId = senderId._id || senderId.id || '';
-        }
-        senderId = senderId || '';
-        return {
-          id: message._id,
-          content: message.content,
-          sender: {
-            id: String(senderId),
-            _id: String(senderId),
-            username: message.sender.username
-          },
-          timestamp: message.createdAt
-        };
-      });
+      const formattedMessages = messages.map((message: any) => ({
+        id: message._id,
+        content: message.content,
+        sender: {
+          _id: message.sender._id || message.sender.id,
+          username: message.sender.username
+        },
+        timestamp: message.createdAt
+      }));
       console.log('Formatted messages:', formattedMessages);
       setMessages(formattedMessages);
     } catch (err) {
@@ -79,28 +71,30 @@ export const useChat = (planId: string) => {
       socket.on('receive-message', (message: Message) => {
         console.log('Received message:', message);
         setMessages(prev => {
-          const messageExists = prev.some(m => 
-            m.id === message._id || 
-            m.id === message.id || 
-            (m.content === message.content && m.sender.id === message.sender.id)
-          );
+          const messageExists = prev.some(m => {
+            if (m.id && message.id && m.id === message.id) return true;
+            
+            const timeDiff = Math.abs(new Date(m.timestamp).getTime() - new Date(message.timestamp).getTime());
+            return m.content === message.content && 
+                   String(m.sender._id) === String(message.sender._id) &&
+                   timeDiff < 2000;
+          });
           
           if (messageExists) {
-            console.log('Message already exists, skipping...');
+            console.log('Message already exists, skipping');
             return prev;
           }
 
-          const senderId = message.sender.id || message.sender._id;
-          const newMessage = {
-            id: message._id || message.id,
+          const newMessage: Message = {
+            id: message._id || message.id || `${message.sender._id}-${Date.now()}`,
             content: message.content,
             sender: {
-              id: String(senderId),
-              _id: String(senderId),
+              _id: String(message.sender._id),
               username: message.sender.username
             },
-            timestamp: message.createdAt || message.timestamp
+            timestamp: message.createdAt || message.timestamp || new Date().toISOString()
           };
+
           console.log('Adding new message:', newMessage);
           return [...prev, newMessage];
         });
@@ -111,7 +105,7 @@ export const useChat = (planId: string) => {
         setMessages(prev => [...prev, {
           id: Date.now().toString(),
           content: `${user.username} joined the chat`,
-          sender: { id: 'system', _id: 'system', username: 'System' },
+          sender: { _id: 'system', username: 'System' },
           timestamp: new Date().toISOString()
         }]);
       });
@@ -121,7 +115,7 @@ export const useChat = (planId: string) => {
         setMessages(prev => [...prev, {
           id: Date.now().toString(),
           content: `${user.username} left the chat`,
-          sender: { id: 'system', _id: 'system', username: 'System' },
+          sender: { _id: 'system', username: 'System' },
           timestamp: new Date().toISOString()
         }]);
       });
@@ -150,21 +144,14 @@ export const useChat = (planId: string) => {
       id: Date.now().toString(),
       content,
       sender: {
-        id: String(user.id),
-        _id: String(user.id),
+        _id: user._id,
         username: user.username
       },
       timestamp: new Date().toISOString()
     };
     
     console.log('Sending message:', message);
-    wsService.sendMessage({
-      ...message,
-      sender: {
-        ...message.sender,
-        _id: String(message.sender._id)
-      }
-    });
+    wsService.sendMessage(message);
   }, [isConnected, user, isParticipant]);
 
   useEffect(() => {

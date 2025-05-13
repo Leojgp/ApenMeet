@@ -62,10 +62,47 @@ export default function ChatScreen({ route, navigation }: ChatScreenProps) {
 
   const handleSend = () => {
     if (message.trim() && isConnected && isParticipant) {
+      const newMessage = {
+        content: message.trim(),
+        sender: {
+          _id: user?._id,
+          username: user?.username
+        },
+        timestamp: new Date().toISOString()
+      };
+      console.log('Sending message:', newMessage);
       sendMessage(message.trim());
       setMessage('');
     }
   };
+
+  useEffect(() => {
+    const validMessages = messages.filter(msg => {
+      if (!msg.id || !msg.timestamp) {
+        console.log('Invalid message received:', msg);
+
+        if (msg.sender && msg.content) {
+          const fixedMessage = {
+            ...msg,
+            id: msg.id || `${msg.sender._id}-${Date.now()}`,
+            timestamp: msg.timestamp || new Date().toISOString()
+          };
+          console.log('Fixed message:', fixedMessage);
+          return true;
+        }
+        return false;
+      }
+      return true;
+    });
+    
+    if (validMessages.length !== messages.length) {
+      console.log('Message validation:', {
+        total: messages.length,
+        valid: validMessages.length,
+        invalid: messages.length - validMessages.length
+      });
+    }
+  }, [messages]);
 
   if (!planId) {
     return (
@@ -108,11 +145,25 @@ export default function ChatScreen({ route, navigation }: ChatScreenProps) {
   }
 
   const renderMessage = ({ item }: { item: Message }) => {
-    const userId = String(user?.id);
-    const senderId = String(item.sender.id);
-    const sender_Id = String(item.sender._id);
-    const isOwnMessage = senderId === userId || sender_Id === userId;
-    const isSystemMessage = item.sender.id === 'system';
+
+    const message = {
+      ...item,
+      id: item.id || `${item.sender._id}-${Date.now()}`,
+      timestamp: item.timestamp || new Date().toISOString()
+    };
+
+    const getIdString = (id: any) => {
+      if (!id) return '';
+      if (typeof id === 'string') return id;
+      if (typeof id === 'object' && '$oid' in id) return id.$oid;
+      if (typeof id === 'object' && '_id' in id) return getIdString(id._id);
+      return String(id);
+    };
+    const userId = getIdString(user?._id);
+    const senderId = getIdString(message?.sender?._id);
+    const isOwnMessage = userId && senderId && userId === senderId;
+    const isSystemMessage = String(message?.sender?._id) === 'system';
+    
 
     return (
       <View style={[
@@ -125,7 +176,7 @@ export default function ChatScreen({ route, navigation }: ChatScreenProps) {
             styles.senderName,
             isOwnMessage ? styles.ownSenderName : styles.otherSenderName
           ]}>
-            {item.sender.username}
+            {message.sender.username}
           </Text>
         )}
         <Text style={[
@@ -133,13 +184,13 @@ export default function ChatScreen({ route, navigation }: ChatScreenProps) {
           isOwnMessage ? styles.ownMessageText : styles.otherMessageText,
           isSystemMessage && styles.systemMessageText
         ]}>
-          {item.content}
+          {message.content}
         </Text>
         <Text style={[
           styles.timestamp,
           isOwnMessage ? styles.ownTimestamp : styles.otherTimestamp
         ]}>
-          {new Date(item.timestamp).toLocaleTimeString()}
+          {new Date(message.timestamp).toString() === 'Invalid Date' ? '' : new Date(message.timestamp).toLocaleTimeString()}
         </Text>
       </View>
     );
@@ -166,9 +217,9 @@ export default function ChatScreen({ route, navigation }: ChatScreenProps) {
 
       <FlatList
         ref={flatListRef}
-        data={messages}
+        data={messages.filter(msg => msg.id && msg.timestamp) as Message[]}
         renderItem={renderMessage}
-        keyExtractor={(item) => item.id}
+        keyExtractor={(item) => item.id || `${item.sender._id}-${Date.now()}`}
         contentContainerStyle={styles.messagesList}
         onContentSizeChange={() => flatListRef.current?.scrollToEnd({ animated: true })}
       />
