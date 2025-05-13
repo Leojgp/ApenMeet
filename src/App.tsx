@@ -3,7 +3,7 @@ import { createStackNavigator } from '@react-navigation/stack';
 import { NavigationContainer } from '@react-navigation/native';
 import { HomeScreen, MainScreen } from './screens/home';
 import { SignUpScreen, SignInScreen } from './screens/auth';
-import { PlansScreen, CreatePlanScreen, PlanDetailScreen } from './screens/plans';
+import { PlansScreen, CreatePlanScreen, PlanDetailScreen, EditPlanScreen } from './screens/plans';
 import { ConfigScreen, EditProfileScreen } from './screens';
 import { ChatScreen, ChatsScreen } from './screens/chat';
 import EventDetailsScreen from './screens/home/EventDetailsScreen';
@@ -20,6 +20,7 @@ type RootStackParamList = {
   Plans: undefined;
   PlanDetail: { planId: string };
   CreatePlan: undefined;
+  EditPlan: { planId: string };
   EditProfileScreen: undefined;
   Chat: { planId: string; planTitle: string };
   Chats: undefined;
@@ -49,6 +50,7 @@ function AppContent() {
         <Stack.Screen name="Plans" component={PlansScreen}/>
         <Stack.Screen name="PlanDetail" component={PlanDetailScreen}/>
         <Stack.Screen name="CreatePlan" component={CreatePlanScreen}/>
+        <Stack.Screen name="EditPlan" component={EditPlanScreen}/>
         <Stack.Screen name="EditProfileScreen" component={EditProfileScreen}/>
         <Stack.Screen 
           name="Chat" 

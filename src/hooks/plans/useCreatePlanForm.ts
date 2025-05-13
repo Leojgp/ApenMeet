@@ -5,22 +5,23 @@ import * as ImagePicker from 'expo-image-picker';
 import * as Location from 'expo-location';
 import { Alert, Platform } from 'react-native';
 import { DateTimePickerEvent } from '@react-native-community/datetimepicker';
-import { createPlan } from '../../api';
+import { createPlan, editPlan } from '../../api/plans/plansApi';
 
-interface CreatePlanFormState {
+export interface CreatePlanFormState {
   title: string;
   description: string;
+  dateTime: Date;
   location: {
     address: string;
     coordinates: [number, number];
   };
   tags: string[];
-  dateTime: string;
-  maxParticipants: number;
-  image: string | null;
+  image: ImagePicker.ImagePickerResult['assets'][0] | null;
+  imageUrl?: string;
+  maxParticipants?: number;
 }
 
-export const useCreatePlanForm = () => {
+export const useCreatePlanForm = (isEditing: boolean = false) => {
   const navigation = useNavigation();
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [showTimePicker, setShowTimePicker] = useState(false);
@@ -30,19 +31,19 @@ export const useCreatePlanForm = () => {
   const [form, setForm] = useState<CreatePlanFormState>({
     title: '',
     description: '',
+    dateTime: new Date(),
     location: {
       address: '',
-      coordinates: [0, 0]
+      coordinates: [0, 0],
     },
     tags: [],
-    dateTime: '',
-    maxParticipants: 2,
-    image: null
+    image: null,
+    maxParticipants: 10,
   });
 
   useEffect(() => {
     const getLocation = async () => {
-      if (initialLocationSet) return;
+      if (isEditing || initialLocationSet) return;
       
       try {
         const { status } = await Location.requestForegroundPermissionsAsync();
@@ -84,23 +85,20 @@ export const useCreatePlanForm = () => {
       }
     };
     getLocation();
-  }, [initialLocationSet]);
+  }, [initialLocationSet, isEditing]);
 
   const handleChange = (field: keyof CreatePlanFormState, value: any) => {
     setForm(prev => ({
       ...prev,
-      [field]: value
+      [field]: value,
     }));
   };
 
-  const handleLocationChange = (address: string, coordinates?: [number, number]) => {
+  const handleLocationChange = (location: { address: string; coordinates: [number, number] }) => {
     setInitialLocationSet(true);
     setForm(prev => ({
       ...prev,
-      location: {
-        address,
-        coordinates: coordinates || prev.location.coordinates
-      }
+      location,
     }));
   };
 
@@ -117,11 +115,10 @@ export const useCreatePlanForm = () => {
     }));
   };
 
-  const handleTagsChange = (text: string) => {
-    const tags = text.split(',').map(tag => tag.trim()).filter(tag => tag);
+  const handleTagsChange = (tags: string[]) => {
     setForm(prev => ({
       ...prev,
-      tags
+      tags,
     }));
   };
 
@@ -141,96 +138,99 @@ export const useCreatePlanForm = () => {
       finalDate.setMinutes(selectedTime.getMinutes());
       setForm(prev => ({
         ...prev,
-        dateTime: finalDate.toISOString()
+        dateTime: finalDate,
       }));
       setTempDate(null);
     }
   };
 
-  const handleDateTimeChange = (event: DateTimePickerEvent, selectedDate?: Date) => {
-    if (event && event.type === 'set' && selectedDate) {
+  const handleDateTimeChange = (event: any, selectedDate?: Date) => {
+    setShowDatePicker(false);
+    if (selectedDate) {
       setForm(prev => ({
         ...prev,
-        dateTime: selectedDate.toISOString()
+        dateTime: selectedDate,
       }));
     }
-    setShowDatePicker(false);
   };
 
   const handleImagePick = async () => {
-    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (status !== 'granted') {
-      Alert.alert('Error', 'Se necesitan permisos para acceder a la galería');
-      return;
-    }
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      allowsEditing: true,
-      aspect: [16, 9],
-      quality: 0.8,
-    });
+    try {
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        aspect: [16, 9],
+        quality: 0.8,
+      });
 
-    if (!result.cancelled && result.assets && result.assets.length > 0) {
-      setForm(prev => ({
-        ...prev,
-        image: result.assets[0].uri
-      }));
+      if (!result.cancelled && result.assets && result.assets.length > 0) {
+        setForm(prev => ({
+          ...prev,
+          image: result.assets[0],
+        }));
+      }
+    } catch (error) {
+      Alert.alert('Error', 'No se pudo seleccionar la imagen');
     }
   };
 
-  const handleCreate = async () => {
+  const handleCreate = async (planId?: string) => {
     try {
-      if (!form.title || !form.description || !form.location.address || !form.dateTime || !form.maxParticipants) {
-        Alert.alert('Error', 'Por favor completa todos los campos requeridos');
-        return;
-      }
-
-      if (form.location.coordinates[0] === 0 && form.location.coordinates[1] === 0) {
-        Alert.alert(
-          'Error de ubicación',
-          'No se pudo obtener tu ubicación. Por favor, asegúrate de tener el GPS activado y aceptar los permisos de ubicación.',
-          [{ text: 'OK' }]
-        );
-        return;
-      }
-
       const formData = new FormData();
       formData.append('title', form.title);
       formData.append('description', form.description);
-      formData.append('location[address]', form.location.address);
-      
-      formData.append('location[coordinates][0]', form.location.coordinates[0].toString());
-      formData.append('location[coordinates][1]', form.location.coordinates[1].toString()); 
+      formData.append('dateTime', form.dateTime.toISOString());
+      formData.append('location', JSON.stringify({
+        address: form.location.address,
+        coordinates: form.location.coordinates
+      }));
       
       form.tags.forEach(tag => {
         formData.append('tags[]', tag);
       });
-      
-      formData.append('dateTime', form.dateTime);
-      formData.append('maxParticipants', form.maxParticipants.toString());
+
+      if (form.maxParticipants) {
+        formData.append('maxParticipants', form.maxParticipants.toString());
+      }
+
       if (form.image) {
-        const imageUri = form.image;
-        const filename = imageUri.split('/').pop();
-        const match = /\.(\w+)$/.exec(filename || '');
-        const type = match ? `image/${match[1]}` : 'image';
+        const imageUri = form.image.uri;
+        const imageName = imageUri.split('/').pop();
+        const imageType = `image/${imageUri.split('.').pop()}`;
+
         formData.append('image', {
           uri: imageUri,
-          name: filename,
-          type
+          name: imageName,
+          type: imageType,
         } as any);
       }
-      await createPlan(formData);
+
+      console.log('Enviando datos:', {
+        title: form.title,
+        description: form.description,
+        dateTime: form.dateTime.toISOString(),
+        location: form.location,
+        tags: form.tags,
+        maxParticipants: form.maxParticipants
+      });
+
+      if (planId) {
+        await editPlan(planId, formData);
+      } else {
+        await createPlan(formData);
+      }
       navigation.goBack();
-    } catch (error) {
-      Alert.alert('Error', 'No se pudo crear el plan');
+    } catch (error: any) {
+      Alert.alert('Error', error.message || 'Error al crear el plan');
+      throw error;
     }
   };
 
   const handleAddTag = () => {
-    if (currentTag.trim()) {
+    if (currentTag.trim() && !form.tags.includes(currentTag.trim())) {
       setForm(prev => ({
         ...prev,
-        tags: [...prev.tags, currentTag.trim()]
+        tags: [...prev.tags, currentTag.trim()],
       }));
       setCurrentTag('');
     }
@@ -239,7 +239,7 @@ export const useCreatePlanForm = () => {
   const handleRemoveTag = (tagToRemove: string) => {
     setForm(prev => ({
       ...prev,
-      tags: prev.tags.filter(tag => tag !== tagToRemove)
+      tags: prev.tags.filter(tag => tag !== tagToRemove),
     }));
   };
 
@@ -262,6 +262,7 @@ export const useCreatePlanForm = () => {
 
   return {
     form,
+    setForm,
     handleChange,
     handleCreate,
     handleImagePick,

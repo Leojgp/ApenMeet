@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TextInput, TouchableOpacity, Image, Platform } from 'react-native';
 import { useCreatePlanForm } from '../../../hooks/plans/useCreatePlanForm';
 import ImageUpload from './ImageUpload';
@@ -6,7 +6,13 @@ import DateTimePicker from '@react-native-community/datetimepicker';
 import { Ionicons } from '@expo/vector-icons';
 import LocationPicker from '../maps/LocationPicker';
 
-export default function CreatePlanForm() {
+interface CreatePlanFormProps {
+  onSubmit?: (form: any) => Promise<void>;
+  initialValues?: any;
+  isEditing?: boolean;
+}
+
+export default function CreatePlanForm({ onSubmit, initialValues, isEditing = false }: CreatePlanFormProps) {
   const {
     form,
     handleChange,
@@ -22,13 +28,28 @@ export default function CreatePlanForm() {
     tempDate,
     handleDateChange,
     handleTimeChange,
-    currentTag,
+    setForm,
     handleTagInputChange,
     handleTagInputSubmit,
     handleAddTag,
     handleRemoveTag,
-    handleParticipantsChange
-  } = useCreatePlanForm();
+    currentTag,
+  } = useCreatePlanForm(isEditing);
+
+  useEffect(() => {
+    if (initialValues) {
+      console.log('Setting initial values:', initialValues);
+      setForm(initialValues);
+    }
+  }, [initialValues]);
+
+  const handleSubmit = async () => {
+    if (onSubmit) {
+      await onSubmit(form);
+    } else {
+      await handleCreate();
+    }
+  };
 
   return (
     <ScrollView style={styles.container}>
@@ -37,27 +58,24 @@ export default function CreatePlanForm() {
         <TextInput
           style={styles.input}
           value={form.title}
-          onChangeText={(text) => handleChange('title', text)}
-          placeholder="Ej: Bolos en el centro con amigos"
+          onChangeText={(text) => {
+            console.log('Title changed:', text);
+            handleChange('title', text);
+          }}
+          placeholder="Título del plan"
         />
 
         <Text style={styles.label}>Descripción</Text>
         <TextInput
           style={[styles.input, styles.textArea]}
           value={form.description}
-          onChangeText={(text) => handleChange('description', text)}
-          placeholder="Describe tu plan..."
+          onChangeText={(text) => {
+            console.log('Description changed:', text);
+            handleChange('description', text);
+          }}
+          placeholder="Descripción del plan"
           multiline
           numberOfLines={4}
-        />
-
-        <Text style={styles.label}>Ubicación</Text>
-        <LocationPicker
-          onLocationSelect={(location) => {
-            handleLocationChange(location.address);
-            handleChange('location', location);
-          }}
-          initialLocation={form.location}
         />
 
         <Text style={styles.label}>Fecha y Hora</Text>
@@ -101,24 +119,14 @@ export default function CreatePlanForm() {
           />
         )}
 
-        <Text style={styles.label}>Máximo de Participantes</Text>
-        <View style={styles.participantsContainer}>
-          <TouchableOpacity 
-            style={styles.participantButton}
-            onPress={() => handleParticipantsChange(form.maxParticipants - 1)}
-            disabled={form.maxParticipants <= 2}
-          >
-            <Ionicons name="remove-circle" size={24} color={form.maxParticipants <= 2 ? "#ccc" : "#5C4D91"} />
-          </TouchableOpacity>
-          <Text style={styles.participantCount}>{form.maxParticipants}</Text>
-          <TouchableOpacity 
-            style={styles.participantButton}
-            onPress={() => handleParticipantsChange(form.maxParticipants + 1)}
-            disabled={form.maxParticipants >= 100}
-          >
-            <Ionicons name="add-circle" size={24} color={form.maxParticipants >= 100 ? "#ccc" : "#5C4D91"} />
-          </TouchableOpacity>
-        </View>
+        <Text style={styles.label}>Ubicación</Text>
+        <LocationPicker
+          onLocationSelect={(location) => {
+            console.log('Location changed:', location);
+            handleLocationChange(location);
+          }}
+          initialLocation={form.location}
+        />
 
         <Text style={styles.label}>Etiquetas</Text>
         <View style={styles.tagsContainer}>
@@ -154,7 +162,14 @@ export default function CreatePlanForm() {
         <View style={styles.imageContainer}>
           {form.image ? (
             <View style={styles.imagePreview}>
-              <Image source={{ uri: form.image }} style={styles.previewImage} />
+              <Image source={{ uri: form.image.uri }} style={styles.previewImage} />
+              <TouchableOpacity style={styles.changeImageButton} onPress={handleImagePick}>
+                <Text style={styles.changeImageText}>Cambiar Imagen</Text>
+              </TouchableOpacity>
+            </View>
+          ) : form.imageUrl ? (
+            <View style={styles.imagePreview}>
+              <Image source={{ uri: form.imageUrl }} style={styles.previewImage} />
               <TouchableOpacity style={styles.changeImageButton} onPress={handleImagePick}>
                 <Text style={styles.changeImageText}>Cambiar Imagen</Text>
               </TouchableOpacity>
@@ -164,8 +179,8 @@ export default function CreatePlanForm() {
           )}
         </View>
 
-        <TouchableOpacity style={styles.button} onPress={handleCreate}>
-          <Text style={styles.buttonText}>Crear Plan</Text>
+        <TouchableOpacity style={styles.button} onPress={handleSubmit}>
+          <Text style={styles.buttonText}>{onSubmit ? 'Guardar Cambios' : 'Crear Plan'}</Text>
         </TouchableOpacity>
       </View>
     </ScrollView>
