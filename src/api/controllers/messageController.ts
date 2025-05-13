@@ -40,7 +40,7 @@ export const getMessagesByPlan = async (req: Request, res: Response): Promise<vo
     }
 
     const messages = await Message.find(query)
-      .populate('sender.id', 'username')
+      .populate('sender._id', 'username')
       .sort({ createdAt: 1 });
 
     res.json(messages);

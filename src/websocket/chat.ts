@@ -75,7 +75,7 @@ export class SocketServer {
       const newMessage = new Message({
         content,
         sender: {
-          id: senderObjectId,
+          _id: senderObjectId,
           username: user.username
         },
         planId: planObjectId,
@@ -87,7 +87,10 @@ export class SocketServer {
       const messagePayload = {
         _id: newMessage._id,
         content: newMessage.content,
-        sender: newMessage.sender,
+        sender: {
+          _id: newMessage.sender._id.toString(),
+          username: newMessage.sender.username
+        },
         createdAt: newMessage.createdAt
       };
 
