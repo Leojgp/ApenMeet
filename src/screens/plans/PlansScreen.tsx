@@ -1,23 +1,16 @@
-import { ActivityIndicator, ScrollView, StyleSheet, Text, View, TextInput, TouchableOpacity, RefreshControl } from 'react-native'
+import { ActivityIndicator, StyleSheet, Text, View, TextInput, TouchableOpacity, RefreshControl, FlatList } from 'react-native'
 import React, { useState, useCallback } from 'react'
 import PlanCard from '../../components/plans/cards/PlanCard';
 import { usePlans } from '../../hooks/plans/usePlans';
 import { useUser } from '../../hooks/user/useUser';
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import { Plan } from '../../models/Plan';
 
 interface Admin {
-  id: string;
+  _id: string;
   username: string;
-}
-
-interface Plan {
-  id: string;
-  title: string;
-  location: {
-    address: string;
-  };
-  admins: Admin[];
 }
 
 interface PlansScreenProps {
@@ -30,7 +23,6 @@ export default function PlansScreen({navigation}: PlansScreenProps) {
   const [search, setSearch] = useState('');
   const [refreshing, setRefreshing] = useState(false);
   const [filterByCity, setFilterByCity] = useState(false);
-
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
@@ -62,58 +54,75 @@ export default function PlansScreen({navigation}: PlansScreenProps) {
   }
 
   const uniquePlans = Object.values(filteredPlans.reduce((acc, plan) => {
-    const key = plan.title + '_' + plan.admins.map((admin: Admin) => admin.id).join(',');
+    const key = plan.title + '_' + plan.admins.map((admin: Admin) => admin._id).join(',');
     if (!acc[key]) {
       acc[key] = plan;
     }
     return acc;
   }, {} as Record<string, Plan>));
 
-  return (
-    <View style={{flex: 1}}>
-      <ScrollView 
-        contentContainerStyle={styles.container} 
-        showsVerticalScrollIndicator={false}
-        refreshControl={
-          <RefreshControl
-            refreshing={refreshing}
-            onRefresh={onRefresh}
-            colors={['#5C4D91']}
-            tintColor="#5C4D91"
-          />
-        }
-      >
-        <View style={styles.searchBarContainer}>
-          <TextInput
-            style={styles.searchInput}
-            placeholder="Search by name"
-            placeholderTextColor="#A9A9A9"
-            value={search}
-            onChangeText={setSearch}
-            returnKeyType="search"
-          />
-          {user?.location?.city && (
-            <TouchableOpacity 
-              style={[styles.filterButton, filterByCity && styles.filterButtonActive]} 
-              onPress={() => setFilterByCity(!filterByCity)}
-            >
-              <Ionicons name="location" size={24} color={filterByCity ? "#fff" : "#5C4D91"} />
-            </TouchableOpacity>
-          )}
-        </View>
-        {loading && <ActivityIndicator size="small" color="#5C4D91" style={{marginBottom: 16}} />}
-        {error && uniquePlans.length === 0 && !loading && <Text style={styles.notFound}>{error}</Text>}
-        {uniquePlans.length === 0 && !loading && <Text style={styles.notFound}>No plan found</Text>}
-        {uniquePlans.map((plan: any) => (
-          <PlanCard key={plan.id} plan={plan} navigation={navigation} />
-        ))}
-      </ScrollView>
-      <TouchableOpacity style={styles.fab} onPress={() => navigation.navigate('CreatePlan')}>
-        <Ionicons name="add" size={36} color="#fff" />
-      </TouchableOpacity>
+  const renderHeader = () => (
+    <View style={styles.searchBarContainer}>
+      <TextInput
+        style={styles.searchInput}
+        placeholder="Search by name"
+        placeholderTextColor="#A9A9A9"
+        value={search}
+        onChangeText={setSearch}
+        returnKeyType="search"
+      />
+      {user?.location?.city && (
+        <TouchableOpacity 
+          style={[styles.filterButton, filterByCity && styles.filterButtonActive]} 
+          onPress={() => setFilterByCity(!filterByCity)}
+        >
+          <Ionicons name="location" size={24} color={filterByCity ? "#fff" : "#5C4D91"} />
+        </TouchableOpacity>
+      )}
     </View>
   );
-};
+
+  const renderItem = ({ item: plan }: { item: Plan }) => (
+    <PlanCard 
+      key={plan.id} 
+      plan={plan} 
+      navigation={navigation} 
+      onPlanDeleted={refresh}
+    />
+  );
+
+  return (
+    <GestureHandlerRootView style={{flex: 1}}>
+      <View style={{flex: 1}}>
+        <FlatList
+          data={uniquePlans}
+          renderItem={renderItem}
+          keyExtractor={(item) => item.id}
+          contentContainerStyle={styles.container}
+          ListHeaderComponent={renderHeader}
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={onRefresh}
+              colors={['#5C4D91']}
+              tintColor="#5C4D91"
+            />
+          }
+          ListEmptyComponent={
+            <>
+              {loading && <ActivityIndicator size="small" color="#5C4D91" style={{marginBottom: 16}} />}
+              {error && !loading && <Text style={styles.notFound}>{error}</Text>}
+              {!error && !loading && <Text style={styles.notFound}>No plan found</Text>}
+            </>
+          }
+        />
+        <TouchableOpacity style={styles.fab} onPress={() => navigation.navigate('CreatePlan')}>
+          <Ionicons name="add" size={36} color="#fff" />
+        </TouchableOpacity>
+      </View>
+    </GestureHandlerRootView>
+  );
+}
 
 const styles = StyleSheet.create({
   container: {

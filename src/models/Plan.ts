@@ -16,11 +16,11 @@ export interface Plan {
   dateTime: string;
   maxParticipants: number;
   participants: {
-    id: string;
+    _id: string;
     username: string;
   }[];
   admins: {
-    id: string;
+    _id: string;
     username: string;
   }[];
   origin: string;

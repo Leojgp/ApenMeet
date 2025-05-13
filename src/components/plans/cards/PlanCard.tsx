@@ -1,44 +1,129 @@
-import React from 'react';
-import { View, Text, Image, StyleSheet, TouchableOpacity } from 'react-native';
+import React, { useRef } from 'react';
+import { View, Text, Image, StyleSheet, TouchableOpacity, Alert, Animated } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { Plan } from '../../../models/Plan';
 import { StackNavigationProp } from '@react-navigation/stack/lib/typescript/src/types';
+import { Ionicons } from '@expo/vector-icons';
+import { useUser } from '../../../hooks/user/useUser';
+import { deletePlan } from '../../../api/plans/plansApi';
+import Swipeable from 'react-native-gesture-handler/Swipeable';
+import { RectButton } from 'react-native-gesture-handler';
 
 interface PlanCardProps {
   plan: Plan;
   navigation: any;
+  onPlanDeleted?: () => void;
 }
 
 const DEFAULT_IMAGE_URL = 'https://st4.depositphotos.com/14953852/24787/v/450/depositphotos_247872612-stock-illustration-no-image-available-icon-vector.jpg';
 
-export default function PlanCard ({ plan, navigation }:PlanCardProps){
+export default function PlanCard({ plan, navigation, onPlanDeleted }: PlanCardProps) {
+  const { user } = useUser();
+  const swipeableRef = useRef<Swipeable>(null);
+  const isAdmin = plan.admins?.some(admin => admin._id === user?._id || (admin as any).id === user?._id);
+
   const handlePress = () => {
     navigation.navigate('PlanDetail', { planId: String(plan.id) });
   };
 
+  const handleEdit = () => {
+    navigation.navigate('EditPlan', { planId: String(plan.id) });
+  };
+
+  const handleDelete = async () => {
+    Alert.alert(
+      'Eliminar Plan',
+      '¿Estás seguro de que quieres eliminar este plan?',
+      [
+        { text: 'Cancelar', style: 'cancel' },
+        {
+          text: 'Eliminar',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await deletePlan(String(plan.id));
+              onPlanDeleted?.();
+            } catch (error) {
+              Alert.alert('Error', 'No se pudo eliminar el plan');
+            }
+          },
+        },
+      ]
+    );
+  };
+
+  const renderRightActions = (progress: Animated.AnimatedInterpolation<number>, dragX: Animated.AnimatedInterpolation<number>) => {
+    if (!isAdmin) return null;
+    
+    const trans = dragX.interpolate({
+      inputRange: [-100, 0],
+      outputRange: [0, 100],
+    });
+
+    return (
+      <RectButton style={styles.rightAction} onPress={handleEdit}>
+        <Animated.View style={[styles.actionContent, { transform: [{ translateX: trans }] }]}>
+          <Ionicons name="pencil" size={24} color="#fff" />
+          <Text style={styles.actionText}>Editar</Text>
+        </Animated.View>
+      </RectButton>
+    );
+  };
+
+  const renderLeftActions = (progress: Animated.AnimatedInterpolation<number>, dragX: Animated.AnimatedInterpolation<number>) => {
+    if (!isAdmin) return null;
+
+    const trans = dragX.interpolate({
+      inputRange: [0, 100],
+      outputRange: [-100, 0],
+    });
+
+    return (
+      <RectButton style={styles.leftAction} onPress={handleDelete}>
+        <Animated.View style={[styles.actionContent, { transform: [{ translateX: trans }] }]}>
+          <Ionicons name="trash" size={24} color="#fff" />
+          <Text style={styles.actionText}>Eliminar</Text>
+        </Animated.View>
+      </RectButton>
+    );
+  };
+
   return (
-    <TouchableOpacity onPress={handlePress} style={styles.cardContainer}>
-      <Image 
-        source={{ uri: plan.imageUrl || DEFAULT_IMAGE_URL }} 
-        style={styles.image} 
-        onError={(e) => {
-          console.log('Error loading image:', e.nativeEvent.error);
-        }}
-      />
-      <View style={styles.textContainer}>
-        <Text style={styles.title}>{plan.title}</Text>
-        {plan.admins && plan.admins.length > 0 && (
-          <Text style={styles.admins}>Admins: {plan.admins.map(a => a.username).join(', ')}</Text>
-        )}
-        <Text style={styles.subtitle}>{plan.description}</Text>
-        <View style={styles.badgesRow}>
-          <View style={styles.badge}><Text style={styles.badgeText}>{new Date(plan.dateTime).toLocaleDateString()}</Text></View>
-          <View style={styles.badge}><Text style={styles.badgeText}>{plan.participants.length} going</Text></View>
+    <Swipeable
+      ref={swipeableRef}
+      renderRightActions={renderRightActions}
+      renderLeftActions={renderLeftActions}
+      friction={2}
+      rightThreshold={40}
+      leftThreshold={40}
+      overshootRight={false}
+      overshootLeft={false}
+      onSwipeableOpen={() => {
+        setTimeout(() => {
+          swipeableRef.current?.close();
+        }, 2000);
+      }}
+    >
+      <TouchableOpacity onPress={handlePress} style={styles.cardContainer}>
+        <Image 
+          source={{ uri: plan.imageUrl || DEFAULT_IMAGE_URL }} 
+          style={styles.image} 
+        />
+        <View style={styles.textContainer}>
+          <Text style={styles.title}>{plan.title}</Text>
+          {plan.admins && plan.admins.length > 0 && (
+            <Text style={styles.admins}>Admins: {plan.admins.map(a => a.username).join(', ')}</Text>
+          )}
+          <Text style={styles.subtitle}>{plan.description}</Text>
+          <View style={styles.badgesRow}>
+            <View style={styles.badge}><Text style={styles.badgeText}>{new Date(plan.dateTime).toLocaleDateString()}</Text></View>
+            <View style={styles.badge}><Text style={styles.badgeText}>{plan.participants.length} going</Text></View>
+          </View>
         </View>
-      </View>
-    </TouchableOpacity>
+      </TouchableOpacity>
+    </Swipeable>
   );
-};
+}
 
 const styles = StyleSheet.create({
   cardContainer: {
@@ -82,7 +167,6 @@ const styles = StyleSheet.create({
   },
   badgesRow: {
     flexDirection: 'row',
-    gap: 8,
   },
   badge: {
     backgroundColor: '#E6E0F8',
@@ -94,6 +178,35 @@ const styles = StyleSheet.create({
   badgeText: {
     color: '#5C4D91',
     fontSize: 12,
+    fontWeight: 'bold',
+  },
+  rightAction: {
+    backgroundColor: '#4CAF50',
+    justifyContent: 'center',
+    alignItems: 'flex-end',
+    width: 100,
+    marginBottom: 20,
+    borderRadius: 18,
+  },
+  leftAction: {
+    backgroundColor: '#f44336',
+    justifyContent: 'center',
+    alignItems: 'flex-start',
+    width: 100,
+    marginBottom: 20,
+    borderRadius: 18,
+  },
+  actionContent: {
+    width: '100%',
+    height: '100%',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 12,
+  },
+  actionText: {
+    color: '#fff',
+    fontSize: 14,
+    marginTop: 4,
     fontWeight: 'bold',
   },
 });

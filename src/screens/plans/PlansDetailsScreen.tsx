@@ -37,6 +37,8 @@ export default function PlanDetailScreen({ route, navigation }: PlanDetailProps)
     }
   };
 
+  const isAdmin = plan?.admins?.some((admin: any) => admin._id === user?._id);
+
   if (loading) {
     return (
       <View style={styles.centered}>
@@ -63,11 +65,21 @@ export default function PlanDetailScreen({ route, navigation }: PlanDetailProps)
           <Text style={styles.successText}>¡Te has unido al plan correctamente!</Text>
         </View>
       )}
-      <PlanHeader
-        title={plan.title}
-        address={plan.location.address}
-        imageUrl={plan.imageUrl || 'https://res.cloudinary.com/dbfh8wmqt/image/upload/v1746874867/noImagePlan_rfm46c.webp'}
-      />
+      <View style={styles.headerContainer}>
+        <PlanHeader
+          title={plan.title}
+          address={plan.location.address}
+          imageUrl={plan.imageUrl || 'https://res.cloudinary.com/dbfh8wmqt/image/upload/v1746874867/noImagePlan_rfm46c.webp'}
+        />
+        {isAdmin && (
+          <TouchableOpacity 
+            style={styles.editButton}
+            onPress={() => navigation.navigate('EditPlan', { planId: plan._id })}
+          >
+            <Ionicons name="pencil" size={24} color="#5C4D91" />
+          </TouchableOpacity>
+        )}
+      </View>
       <PlanInfoCard
         title="Description"
         content={plan.description}
@@ -137,6 +149,17 @@ const styles = StyleSheet.create({
     color: 'red',
     marginBottom: 10,
     textAlign: 'center',
+  },
+  headerContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  editButton: {
+    padding: 8,
+    borderRadius: 20,
+    backgroundColor: '#F7F5FF',
+    marginLeft: 8,
   },
   buttonContainer: {
     flexDirection: 'row',
