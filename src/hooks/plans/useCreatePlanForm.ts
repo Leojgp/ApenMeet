@@ -26,6 +26,7 @@ export const useCreatePlanForm = () => {
   const [showTimePicker, setShowTimePicker] = useState(false);
   const [tempDate, setTempDate] = useState<Date | null>(null);
   const [currentTag, setCurrentTag] = useState('');
+  const [initialLocationSet, setInitialLocationSet] = useState(false);
   const [form, setForm] = useState<CreatePlanFormState>({
     title: '',
     description: '',
@@ -41,31 +42,32 @@ export const useCreatePlanForm = () => {
 
   useEffect(() => {
     const getLocation = async () => {
+      if (initialLocationSet) return;
+      
       try {
         const { status } = await Location.requestForegroundPermissionsAsync();
         if (status === 'granted') {
-          if (!form.location.address) {
-            const loc = await Location.getCurrentPositionAsync({
-              accuracy: Location.Accuracy.Balanced
-            });
-            
-            const [address] = await Location.reverseGeocodeAsync({
-              latitude: loc.coords.latitude,
-              longitude: loc.coords.longitude
-            });
+          const loc = await Location.getCurrentPositionAsync({
+            accuracy: Location.Accuracy.Balanced
+          });
+          
+          const [address] = await Location.reverseGeocodeAsync({
+            latitude: loc.coords.latitude,
+            longitude: loc.coords.longitude
+          });
 
-            const formattedAddress = address ? 
-              `${address.street}, ${address.city}, ${address.region}, ${address.country}` :
-              `${loc.coords.latitude.toFixed(6)}, ${loc.coords.longitude.toFixed(6)}`;
+          const formattedAddress = address ? 
+            `${address.street}, ${address.city}, ${address.region}, ${address.country}` :
+            `${loc.coords.latitude.toFixed(6)}, ${loc.coords.longitude.toFixed(6)}`;
 
-            setForm(prev => ({
-              ...prev,
-              location: {
-                address: formattedAddress,
-                coordinates: [loc.coords.longitude, loc.coords.latitude]
-              }
-            }));
-          }
+          setForm(prev => ({
+            ...prev,
+            location: {
+              address: formattedAddress,
+              coordinates: [loc.coords.longitude, loc.coords.latitude]
+            }
+          }));
+          setInitialLocationSet(true);
         } else {
           Alert.alert(
             'Permiso de ubicación',
@@ -82,7 +84,7 @@ export const useCreatePlanForm = () => {
       }
     };
     getLocation();
-  }, [form.location.address]);
+  }, [initialLocationSet]);
 
   const handleChange = (field: keyof CreatePlanFormState, value: any) => {
     setForm(prev => ({
@@ -92,6 +94,7 @@ export const useCreatePlanForm = () => {
   };
 
   const handleLocationChange = (address: string, coordinates?: [number, number]) => {
+    setInitialLocationSet(true);
     setForm(prev => ({
       ...prev,
       location: {

@@ -18,7 +18,9 @@ export default function LocationPicker({ onLocationSelect, initialLocation }: Lo
     longitudeDelta: 0.0421,
   });
   const [userLocation, setUserLocation] = useState<[number, number] | null>(null);
+  const [selectedLocation, setSelectedLocation] = useState<[number, number] | null>(null);
   const [locationPermissionDenied, setLocationPermissionDenied] = useState(false);
+  const [isInitialLoad, setIsInitialLoad] = useState(true);
 
   useEffect(() => {
     checkLocationPermission();
@@ -86,12 +88,6 @@ export default function LocationPicker({ onLocationSelect, initialLocation }: Lo
       setUserLocation(coords);
       setLocationPermissionDenied(false);
       
-      setRegion(prev => ({
-        ...prev,
-        latitude: location.coords.latitude,
-        longitude: location.coords.longitude,
-      }));
-
       const [address] = await Location.reverseGeocodeAsync({
         latitude: location.coords.latitude,
         longitude: location.coords.longitude
@@ -102,6 +98,13 @@ export default function LocationPicker({ onLocationSelect, initialLocation }: Lo
         `${location.coords.latitude.toFixed(6)}, ${location.coords.longitude.toFixed(6)}`;
 
       setSearchQuery(formattedAddress);
+      setRegion(prev => ({
+        ...prev,
+        latitude: location.coords.latitude,
+        longitude: location.coords.longitude,
+      }));
+
+      setSelectedLocation(coords);
       onLocationSelect({
         address: formattedAddress,
         coordinates: coords
@@ -129,6 +132,7 @@ export default function LocationPicker({ onLocationSelect, initialLocation }: Lo
         `${latitude.toFixed(6)}, ${longitude.toFixed(6)}`;
 
       setSearchQuery(formattedAddress);
+      setSelectedLocation([longitude, latitude]);
       onLocationSelect({
         address: formattedAddress,
         coordinates: [longitude, latitude]
@@ -148,6 +152,7 @@ export default function LocationPicker({ onLocationSelect, initialLocation }: Lo
           latitude,
           longitude,
         }));
+        setSelectedLocation([longitude, latitude]);
         onLocationSelect({
           address: searchQuery,
           coordinates: [longitude, latitude]
@@ -182,7 +187,6 @@ export default function LocationPicker({ onLocationSelect, initialLocation }: Lo
         style={styles.map}
         provider={PROVIDER_GOOGLE}
         region={region}
-        onRegionChangeComplete={setRegion}
         onPress={handleMapPress}
       >
         {userLocation && (
@@ -194,11 +198,11 @@ export default function LocationPicker({ onLocationSelect, initialLocation }: Lo
             pinColor="blue"
           />
         )}
-        {initialLocation?.coordinates && (
+        {selectedLocation && (
           <Marker
             coordinate={{
-              latitude: initialLocation.coordinates[1],
-              longitude: initialLocation.coordinates[0]
+              latitude: selectedLocation[1],
+              longitude: selectedLocation[0]
             }}
             pinColor="red"
           />
