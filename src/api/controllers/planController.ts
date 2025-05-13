@@ -44,6 +44,13 @@ export const createPlan = async (req: Request, res: Response): Promise<void> => 
       coordinates = location.coordinates;
     }
 
+    let tags: string[] = [];
+    if (req.body['tags[]']) {
+      tags = Array.isArray(req.body['tags[]']) 
+        ? req.body['tags[]'] 
+        : [req.body['tags[]']];
+    }
+
     const newPlan = new Plan({
       title,
       description,
@@ -67,7 +74,7 @@ export const createPlan = async (req: Request, res: Response): Promise<void> => 
       createdAt: new Date(),
       status: 'open',
       imageUrl,
-      tags: req.body.tags || []
+      tags
     });
 
     await newPlan.save();
@@ -273,18 +280,58 @@ export const updatePlan = async (req: Request, res: Response): Promise<void> => 
       return;
     }
 
-    const updateData: any = { ...req.body };
+    const updateData: any = {};
 
+    // Basic fields
+    if (req.body.title) updateData.title = req.body.title;
+    if (req.body.description) updateData.description = req.body.description;
+    if (req.body.dateTime) updateData.dateTime = new Date(req.body.dateTime);
+    if (req.body.maxParticipants) updateData.maxParticipants = parseInt(req.body.maxParticipants);
+
+    // Location
+    if (req.body.location) {
+      try {
+        const locationData = typeof req.body.location === 'string' 
+          ? JSON.parse(req.body.location) 
+          : req.body.location;
+
+        if (locationData.address && Array.isArray(locationData.coordinates)) {
+          updateData.location = {
+            address: locationData.address,
+            coordinates: locationData.coordinates
+          };
+        }
+      } catch (e) {
+        console.error('Error al procesar location:', e);
+        res.status(400).json({ error: 'Formato de ubicación inválido' });
+        return;
+      }
+    }
+
+    // Tags - handle the same way as in createPlan
+    console.log('Full request body:', req.body);
+    console.log('Received tags in request:', req.body['tags[]'] || req.body.tags);
+    const tagsData = req.body['tags[]'] || req.body.tags;
+    if (tagsData) {
+      console.log('Tags type:', typeof tagsData);
+      console.log('Is array?', Array.isArray(tagsData));
+      updateData.tags = Array.isArray(tagsData) 
+        ? tagsData 
+        : [tagsData];
+      console.log('Final tags to update:', updateData.tags);
+    } else {
+      console.log('No tags received in request, keeping existing tags:', plan.tags);
+    }
+
+    // Image
     if (req.file) {
       if (plan.imageUrl && !plan.imageUrl.includes('depositphotos')) {
+        // TODO: Delete old image
       }
       updateData.imageUrl = (req.file as any).path;
-      console.log('URL de la imagen actualizada:', updateData.imageUrl);
     }
 
-    if (updateData.location && updateData.location.coordinates) {
-      updateData.location.coordinates = updateData.location.coordinates;
-    }
+    console.log('Final updateData:', updateData);
 
     const updatedPlan = await Plan.findByIdAndUpdate(
       id,
@@ -292,8 +339,10 @@ export const updatePlan = async (req: Request, res: Response): Promise<void> => 
       { new: true }
     )
       .populate('creatorId', 'username profileImage')
-      .populate('participants', 'username profileImage')
-      .populate('admins', 'username profileImage');
+      .populate('participants.id', 'username profileImage')
+      .populate('admins.id', 'username profileImage');
+
+    console.log('Plan actualizado:', updatedPlan);
 
     res.json({
       message: 'Plan actualizado con éxito',
@@ -434,5 +483,35 @@ export const isAdmin = async (req: Request, res: Response): Promise<void> => {
   } catch (error) {
     console.error('Error al verificar administrador:', error);
     res.status(400).json({ error: 'Error al verificar administrador' });
+  }
+};
+
+export const deletePlan = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const authenticatedUser = (req as any).user;
+    const { id } = req.params;
+
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      res.status(400).json({ error: 'ID de plan inválido' });
+      return;
+    }
+
+    const plan = await Plan.findById(id);
+    if (!plan) {
+      res.status(404).json({ error: 'Plan no encontrado' });
+      return;
+    }
+
+    if (!plan.admins.some(admin => admin.id.toString() === authenticatedUser._id)) {
+      res.status(403).json({ error: 'No tienes permisos para eliminar este plan' });
+      return;
+    }
+
+    await Plan.findByIdAndDelete(id);
+
+    res.status(200).json({ message: 'Plan eliminado con éxito' });
+  } catch (error) {
+    console.error('Error al eliminar plan:', error);
+    res.status(500).json({ error: 'Error al eliminar el plan' });
   }
 };
