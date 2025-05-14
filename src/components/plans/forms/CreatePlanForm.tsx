@@ -6,6 +6,7 @@ import DateTimePicker from '@react-native-community/datetimepicker';
 import { Ionicons } from '@expo/vector-icons';
 import LocationPicker from '../maps/LocationPicker';
 import { useTheme } from '../../../hooks/theme/useTheme';
+import { useTranslation } from 'react-i18next';
 
 interface CreatePlanFormProps {
   onSubmit?: (form: any) => Promise<void>;
@@ -15,6 +16,7 @@ interface CreatePlanFormProps {
 
 export default function CreatePlanForm({ onSubmit, initialValues, isEditing = false }: CreatePlanFormProps) {
   const theme = useTheme();
+  const { t } = useTranslation();
   const {
     form,
     handleChange,
@@ -57,7 +59,7 @@ export default function CreatePlanForm({ onSubmit, initialValues, isEditing = fa
   return (
     <ScrollView style={[styles.container, { backgroundColor: theme.background }]}>
       <View style={styles.form}>
-        <Text style={[styles.label, { color: theme.text }]}>Título</Text>
+        <Text style={[styles.label, { color: theme.text }]}>{t('plans.create.title')}</Text>
         <TextInput
           style={[styles.input, { 
             backgroundColor: theme.card,
@@ -69,11 +71,11 @@ export default function CreatePlanForm({ onSubmit, initialValues, isEditing = fa
             console.log('Title changed:', text);
             handleChange('title', text);
           }}
-          placeholder="Título del plan"
+          placeholder={t('plans.create.titlePlaceholder')}
           placeholderTextColor={theme.placeholder}
         />
 
-        <Text style={[styles.label, { color: theme.text }]}>Descripción</Text>
+        <Text style={[styles.label, { color: theme.text }]}>{t('plans.create.description')}</Text>
         <TextInput
           style={[styles.input, styles.textArea, { 
             backgroundColor: theme.card,
@@ -85,13 +87,13 @@ export default function CreatePlanForm({ onSubmit, initialValues, isEditing = fa
             console.log('Description changed:', text);
             handleChange('description', text);
           }}
-          placeholder="Descripción del plan"
+          placeholder={t('plans.create.descriptionPlaceholder')}
           placeholderTextColor={theme.placeholder}
           multiline
           numberOfLines={4}
         />
 
-        <Text style={[styles.label, { color: theme.text }]}>Fecha y Hora</Text>
+        <Text style={[styles.label, { color: theme.text }]}>{t('plans.create.dateTime')}</Text>
         <TouchableOpacity 
           style={[styles.dateButton, { 
             backgroundColor: theme.card,
@@ -100,7 +102,7 @@ export default function CreatePlanForm({ onSubmit, initialValues, isEditing = fa
           onPress={() => setShowDatePicker(true)}
         >
           <Text style={[styles.dateButtonText, { color: theme.text }]}>
-            {form.dateTime ? new Date(form.dateTime).toLocaleString() : 'Seleccionar fecha y hora'}
+            {form.dateTime ? new Date(form.dateTime).toLocaleString() : t('plans.create.dateTimePlaceholder')}
           </Text>
           <Ionicons name="calendar" size={24} color={theme.primary} />
         </TouchableOpacity>
@@ -163,7 +165,7 @@ export default function CreatePlanForm({ onSubmit, initialValues, isEditing = fa
           </TouchableOpacity>
         </View>
 
-        <Text style={[styles.label, { color: theme.text }]}>Etiquetas</Text>
+        <Text style={[styles.label, { color: theme.text }]}>{t('plans.create.tags')}</Text>
         <View style={styles.tagsContainer}>
           <View style={styles.tagInputContainer}>
             <TextInput
@@ -175,7 +177,7 @@ export default function CreatePlanForm({ onSubmit, initialValues, isEditing = fa
               value={currentTag}
               onChangeText={handleTagInputChange}
               onSubmitEditing={handleTagInputSubmit}
-              placeholder="Añadir etiqueta..."
+              placeholder={t('plans.create.tagPlaceholder')}
               placeholderTextColor={theme.placeholder}
               returnKeyType="done"
             />
@@ -198,20 +200,20 @@ export default function CreatePlanForm({ onSubmit, initialValues, isEditing = fa
           </View>
         </View>
 
-        <Text style={[styles.label, { color: theme.text }]}>Imagen</Text>
+        <Text style={[styles.label, { color: theme.text }]}>{t('plans.create.image')}</Text>
         <View style={styles.imageContainer}>
           {form.image ? (
             <View style={styles.imagePreview}>
               <Image source={{ uri: form.image.uri }} style={styles.previewImage} />
               <TouchableOpacity style={[styles.changeImageButton, { backgroundColor: theme.primary }]} onPress={handleImagePick}>
-                <Text style={[styles.changeImageText, { color: theme.card }]}>Cambiar Imagen</Text>
+                <Text style={[styles.changeImageText, { color: theme.card }]}>{t('plans.create.changeImage')}</Text>
               </TouchableOpacity>
             </View>
           ) : form.imageUrl ? (
             <View style={styles.imagePreview}>
               <Image source={{ uri: form.imageUrl }} style={styles.previewImage} />
               <TouchableOpacity style={[styles.changeImageButton, { backgroundColor: theme.primary }]} onPress={handleImagePick}>
-                <Text style={[styles.changeImageText, { color: theme.card }]}>Cambiar Imagen</Text>
+                <Text style={[styles.changeImageText, { color: theme.card }]}>{t('plans.create.changeImage')}</Text>
               </TouchableOpacity>
             </View>
           ) : (
@@ -220,7 +222,9 @@ export default function CreatePlanForm({ onSubmit, initialValues, isEditing = fa
         </View>
 
         <TouchableOpacity style={[styles.button, { backgroundColor: theme.primary }]} onPress={handleSubmit}>
-          <Text style={[styles.buttonText, { color: theme.card }]}>{onSubmit ? 'Guardar Cambios' : 'Crear Plan'}</Text>
+          <Text style={[styles.buttonText, { color: theme.card }]}>
+            {isEditing ? t('plans.edit.save') : t('plans.create.submit')}
+          </Text>
         </TouchableOpacity>
       </View>
     </ScrollView>

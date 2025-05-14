@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { useAuth } from '../../hooks/auth/useAuth';
 import { useTheme } from '../../hooks/theme/useTheme';
+import { useTranslation } from 'react-i18next';
 
 interface SignInProps {
   navigation: any;
@@ -14,6 +15,7 @@ export default function SignInScreen({ navigation }: SignInProps) {
   const [password, setPassword] = useState('');
   const { handleLogin, loading, error } = useAuth({navigation});
   const theme = useTheme();
+  const { t } = useTranslation();
 
   const onSubmit = async () => {
     await handleLogin(email, password);
@@ -22,12 +24,12 @@ export default function SignInScreen({ navigation }: SignInProps) {
   return (
     <SafeAreaProvider>
       <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]}>
-        <Text style={[styles.title, { color: theme.primary }]}>Log In</Text>
+        <Text style={[styles.title, { color: theme.primary }]}>{t('auth.signIn.title')}</Text>
         <TextInput
           style={[styles.input, { backgroundColor: theme.card, color: theme.text, borderColor: theme.border }]}
           onChangeText={setEmail}
           value={email}
-          placeholder="Email Address"
+          placeholder={t('auth.signIn.email')}
           placeholderTextColor={theme.placeholder}
           keyboardType="email-address"
         />
@@ -35,16 +37,18 @@ export default function SignInScreen({ navigation }: SignInProps) {
           style={[styles.input, { backgroundColor: theme.card, color: theme.text, borderColor: theme.border }]}
           onChangeText={setPassword}
           value={password}
-          placeholder="Password"
+          placeholder={t('auth.signIn.password')}
           placeholderTextColor={theme.placeholder}
           secureTextEntry
         />
         {error ? <Text style={[styles.errorText, { color: theme.error }]}>{error}</Text> : null}
         <TouchableOpacity style={[styles.button, { backgroundColor: theme.primary }]} onPress={onSubmit} disabled={loading}>
-          <Text style={[styles.buttonText, { color: theme.card }]}>Log In</Text>
+          <Text style={[styles.buttonText, { color: theme.card }]}>
+            {loading ? t('auth.signIn.loading') : t('auth.signIn.submit')}
+          </Text>
         </TouchableOpacity>
         <TouchableOpacity onPress={() => navigation.navigate('SignUp')}>
-          <Text style={[styles.linkText, { color: theme.primary }]}>Don't have an account? Sign Up</Text>
+          <Text style={[styles.linkText, { color: theme.primary }]}>{t('auth.signIn.signUpLink')}</Text>
         </TouchableOpacity>
       </SafeAreaView>
     </SafeAreaProvider>

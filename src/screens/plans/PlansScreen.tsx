@@ -8,6 +8,7 @@ import { useFocusEffect } from '@react-navigation/native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { Plan } from '../../models/Plan';
 import { useTheme } from '../../hooks/theme/useTheme';
+import { useTranslation } from 'react-i18next';
 
 interface Admin {
   _id: string;
@@ -25,6 +26,7 @@ export default function PlansScreen({navigation}: PlansScreenProps) {
   const [refreshing, setRefreshing] = useState(false);
   const [filterByCity, setFilterByCity] = useState(false);
   const theme = useTheme();
+  const { t } = useTranslation();
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
@@ -67,7 +69,7 @@ export default function PlansScreen({navigation}: PlansScreenProps) {
     <View style={styles.searchBarContainer}>
       <TextInput
         style={[styles.searchInput, { backgroundColor: theme.card, color: theme.text, borderColor: theme.border }]}
-        placeholder="Search by name"
+        placeholder={t('plans.searchByName')}
         placeholderTextColor={theme.placeholder}
         value={search}
         onChangeText={setSearch}
@@ -114,7 +116,7 @@ export default function PlansScreen({navigation}: PlansScreenProps) {
             <>
               {loading && <ActivityIndicator size="small" color={theme.primary} style={{marginBottom: 16}} />}
               {error && !loading && <Text style={[styles.notFound, { color: theme.error }]}>{error}</Text>}
-              {!error && !loading && <Text style={[styles.notFound, { color: theme.text }]}>No plan found</Text>}
+              {!error && !loading && <Text style={[styles.notFound, { color: theme.text }]}>{t('plans.notFound')}</Text>}
             </>
           }
         />

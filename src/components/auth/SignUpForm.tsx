@@ -5,6 +5,7 @@ import * as Location from 'expo-location';
 import debounce from 'lodash/debounce';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../../hooks/theme/useTheme';
+import { useTranslation } from 'react-i18next';
 
 const SUPPORTED_COUNTRIES = [
   'Spain', 'France', 'Italy', 'Germany', 'United Kingdom', 'Portugal',
@@ -44,29 +45,30 @@ export default function SignUpForm({
   const [filteredCountries, setFilteredCountries] = useState(SUPPORTED_COUNTRIES);
   const [searchLocationResult, setSearchLocationResult] = useState<any>(null);
   const theme = useTheme();
+  const { t } = useTranslation();
 
   const requestLocationPermission = async () => {
     try {
       Alert.alert(
-        "Permiso de Ubicación",
-        "ApenMeet necesita acceder a tu ubicación para mostrarte eventos cercanos y conectarte con personas de tu zona. ¿Quieres permitir el acceso?",
+        t('alerts.location.title'),
+        t('alerts.location.message'),
         [
           {
-            text: "No, gracias",
+            text: t('alerts.location.deny'),
             style: "cancel",
             onPress: () => {
-              setLocationError("Puedes introducir tu ciudad manualmente");
+              setLocationError(t('location.permission.message'));
               setHasRequestedPermission(true);
             }
           },
           {
-            text: "Sí, permitir",
+            text: t('alerts.location.allow'),
             onPress: async () => {
               const { status } = await Location.requestForegroundPermissionsAsync();
               if (status === 'granted') {
                 await getCurrentLocation();
               } else {
-                setLocationError("Permiso de ubicación denegado. Puedes introducir tu ciudad manualmente");
+                setLocationError(t('location.permission.message'));
               }
               setHasRequestedPermission(true);
             }
@@ -75,7 +77,7 @@ export default function SignUpForm({
       );
     } catch (error) {
       console.error('Error requesting location permission:', error);
-      setLocationError("Error al solicitar permiso de ubicación");
+      setLocationError(t('alerts.errors.location'));
     }
   };
 
@@ -319,14 +321,14 @@ export default function SignUpForm({
     <View style={[styles.container, { backgroundColor: theme.background }]}>
       <TextInput
         style={[styles.input, { backgroundColor: theme.card, color: theme.text, borderColor: theme.border }]}
-        placeholder="Username"
+        placeholder={t('auth.signUp.username')}
         placeholderTextColor={theme.placeholder}
         value={formState.username}
         onChangeText={(text) => updateFormState('username', text)}
       />
       <TextInput
         style={[styles.input, { backgroundColor: theme.card, color: theme.text, borderColor: theme.border }]}
-        placeholder="Email"
+        placeholder={t('auth.signUp.email')}
         placeholderTextColor={theme.placeholder}
         value={formState.email}
         onChangeText={(text) => updateFormState('email', text)}
@@ -335,7 +337,7 @@ export default function SignUpForm({
       />
       <TextInput
         style={[styles.input, { backgroundColor: theme.card, color: theme.text, borderColor: theme.border }]}
-        placeholder="Password"
+        placeholder={t('auth.signUp.password')}
         placeholderTextColor={theme.placeholder}
         value={formState.password}
         onChangeText={(text) => updateFormState('password', text)}
@@ -343,7 +345,7 @@ export default function SignUpForm({
       />
       <TextInput
         style={[styles.input, { backgroundColor: theme.card, color: theme.text, borderColor: theme.border }]}
-        placeholder="Confirm Password"
+        placeholder={t('auth.signUp.confirmPassword')}
         placeholderTextColor={theme.placeholder}
         value={formState.confirmPassword}
         onChangeText={(text) => updateFormState('confirmPassword', text)}
@@ -351,7 +353,7 @@ export default function SignUpForm({
       />
       <TextInput
         style={[styles.input, styles.textArea, { backgroundColor: theme.card, color: theme.text, borderColor: theme.border }]}
-        placeholder="Bio"
+        placeholder={t('auth.signUp.bio')}
         placeholderTextColor={theme.placeholder}
         value={formState.bio}
         onChangeText={(text) => updateFormState('bio', text)}
@@ -363,7 +365,7 @@ export default function SignUpForm({
         <View style={styles.cityInputContainer}>
           <TextInput
             style={[styles.input, cityInput && styles.inputWithClear, { backgroundColor: theme.card, color: theme.text, borderColor: theme.border }]}
-            placeholder="City"
+            placeholder={t('auth.signUp.city')}
             placeholderTextColor={theme.placeholder}
             value={cityInput}
             onChangeText={handleCityChange}
@@ -383,7 +385,7 @@ export default function SignUpForm({
           onPress={() => setShowCountryModal(true)}
         >
           <Text style={[styles.countryButtonText, { color: theme.primary }]}>
-            {formState.location.country || 'Select Country'}
+            {formState.location.country || t('auth.signUp.selectCountry')}
           </Text>
         </TouchableOpacity>
 
@@ -402,7 +404,7 @@ export default function SignUpForm({
           style={[styles.locationButton, { backgroundColor: theme.card }]}
           onPress={requestLocationPermission}
         >
-          <Text style={[styles.locationButtonText, { color: theme.primary }]}>Usar mi ubicación actual</Text>
+          <Text style={[styles.locationButtonText, { color: theme.primary }]}>{t('auth.signUp.useLocation')}</Text>
         </TouchableOpacity>
       </View>
 
@@ -416,7 +418,7 @@ export default function SignUpForm({
           <View style={[styles.modalContent, { backgroundColor: theme.card }]}>
             <TextInput
               style={[styles.searchInput, { backgroundColor: theme.background, color: theme.text, borderColor: theme.border }]}
-              placeholder="Search country..."
+              placeholder={t('auth.signUp.searchCountry')}
               placeholderTextColor={theme.placeholder}
               onChangeText={filterCountries}
             />
@@ -436,7 +438,7 @@ export default function SignUpForm({
               style={[styles.closeButton, { backgroundColor: theme.primary }]}
               onPress={() => setShowCountryModal(false)}
             >
-              <Text style={[styles.closeButtonText, { color: theme.card }]}>Close</Text>
+              <Text style={[styles.closeButtonText, { color: theme.card }]}>{t('auth.signUp.close')}</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -448,10 +450,13 @@ export default function SignUpForm({
         disabled={loading || isLoadingLocation || !searchLocationResult}
       >
         <Text style={[styles.buttonText, { color: theme.card }]}>
-          {loading ? 'Signing up...' : 'Sign Up'}
+          {loading ? t('auth.signUp.loading') : t('auth.signUp.submit')}
         </Text>
       </TouchableOpacity>
       {error ? <Text style={[styles.errorText, { color: theme.error }]}>{error}</Text> : null}
+      <TouchableOpacity onPress={onNavigateToSignIn}>
+        <Text style={[styles.linkText, { color: theme.primary }]}>{t('auth.signIn.signUpLink')}</Text>
+      </TouchableOpacity>
     </View>
   );
 }

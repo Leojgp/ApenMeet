@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigation } from '@react-navigation/native';
+import { useTranslation } from 'react-i18next';
 
 import * as ImagePicker from 'expo-image-picker';
 import * as Location from 'expo-location';
@@ -22,6 +23,7 @@ export interface CreatePlanFormState {
 }
 
 export const useCreatePlanForm = (isEditing: boolean = false) => {
+  const { t } = useTranslation();
   const navigation = useNavigation();
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [showTimePicker, setShowTimePicker] = useState(false);
@@ -71,21 +73,21 @@ export const useCreatePlanForm = (isEditing: boolean = false) => {
           setInitialLocationSet(true);
         } else {
           Alert.alert(
-            'Permiso de ubicación',
-            'Necesitamos acceso a tu ubicación para crear el plan. Por favor, acepta el permiso cuando se te solicite.',
+            t('location.permission.title'),
+            t('location.permission.message'),
             [{ text: 'OK' }]
           );
         }
       } catch (error) {
         Alert.alert(
-          'Error de ubicación',
-          'No se pudo obtener tu ubicación. Por favor, asegúrate de tener el GPS activado.',
+          t('alerts.errors.location'),
+          t('api.errors.general.serverError'),
           [{ text: 'OK' }]
         );
       }
     };
     getLocation();
-  }, [initialLocationSet, isEditing]);
+  }, [initialLocationSet, isEditing, t]);
 
   const handleChange = (field: keyof CreatePlanFormState, value: any) => {
     setForm(prev => ({
@@ -170,7 +172,7 @@ export const useCreatePlanForm = (isEditing: boolean = false) => {
         }));
       }
     } catch (error) {
-      Alert.alert('Error', 'No se pudo seleccionar la imagen');
+      Alert.alert('Error', t('alerts.errors.image'));
     }
   };
 
@@ -220,7 +222,8 @@ export const useCreatePlanForm = (isEditing: boolean = false) => {
       }
       navigation.goBack();
     } catch (error: any) {
-      Alert.alert('Error', error.message || 'Error al crear el plan');
+      const errorMessage = error.response?.data?.message || error.message || t('api.errors.general.serverError');
+      Alert.alert('Error', errorMessage);
       throw error;
     }
   };

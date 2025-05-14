@@ -5,9 +5,11 @@ import { getCurrentUser, updateUser } from '../../api/user/userApi';
 import { useDispatch } from 'react-redux';
 import { setUser } from '../../store/userSlice';
 import * as Location from 'expo-location';
+import { useTranslation } from 'react-i18next';
 
 export default function EditProfileScreen({ navigation }: any) {
   const dispatch = useDispatch();
+  const { t } = useTranslation();
   const [form, setForm] = useState({
     id: '',
     username: '',
@@ -33,16 +35,13 @@ export default function EditProfileScreen({ navigation }: any) {
     setLoading(true);
     getCurrentUser()
       .then((data) => {
-        console.log('User data received:', data.user); 
         const profileImage = data.user.profileImage || 'https://res.cloudinary.com/dbfh8wmqt/image/upload/v1746874674/default_Profile_Image_oiw2nt.webp';
-        console.log('Setting profile image to:', profileImage);
-        
         setForm({
           id: data.user._id || data.user.id || '',
           username: data.user.username || '',
           email: data.user.email || '',
           bio: data.user.bio || '',
-          location: data.user.location || { city: '', coordinates: [0, 0] },
+          location: data.user.location || { city: '', country: '', coordinates: [0, 0], formattedAddress: '', postalCode: '', region: '', timezone: '' },
           interests: Array.isArray(data.user.interests) ? data.user.interests.join(', ') : (data.user.interests || ''),
           profileImage: profileImage,
         });
@@ -60,16 +59,15 @@ export default function EditProfileScreen({ navigation }: any) {
         }));
       })
       .catch((err) => {
-        console.error('Error loading user data:', err);
-        setError('Error loading user data');
+        setError(t('profile.edit.errorLoading'));
       })
       .finally(() => setLoading(false));
-  }, [dispatch]);
+  }, [dispatch, t]);
 
   const pickImage = async () => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (status !== 'granted') {
-      alert('Permission required');
+      alert(t('alerts.errors.image'));
       return;
     }
     const result = await ImagePicker.launchImageLibraryAsync({
@@ -87,21 +85,15 @@ export default function EditProfileScreen({ navigation }: any) {
     setSaving(true);
     setError('');
     try {
-      console.log('Coordenadas antes de guardar:', form.location.coordinates, 'Ciudad:', form.location.city);
-      
       if (form.location.coordinates[0] === 0 && form.location.coordinates[1] === 0) {
         try {
           const results = await Location.geocodeAsync(form.location.city);
           if (results.length > 0) {
             const { latitude, longitude } = results[0];
             form.location.coordinates = [longitude, latitude];
-            console.log('Nuevas coordenadas obtenidas:', [longitude, latitude]);
           }
-        } catch (geoError) {
-          console.error('Error al obtener coordenadas:', geoError);
-        }
+        } catch (geoError) {}
       }
-
       const formData = new FormData();
       formData.append('username', form.username);
       formData.append('email', form.email);
@@ -115,7 +107,6 @@ export default function EditProfileScreen({ navigation }: any) {
       formData.append('location[region]', form.location.region || '');
       formData.append('location[timezone]', form.location.timezone || '');
       formData.append('interests', form.interests);
-      
       if (form.profileImage && form.profileImage.startsWith('file')) {
         const uriParts = form.profileImage.split('.');
         const fileType = uriParts[uriParts.length - 1];
@@ -125,10 +116,7 @@ export default function EditProfileScreen({ navigation }: any) {
           type: `image/${fileType}`,
         } as any);
       }
-
       const response = await updateUser(formData);
-      console.log('Update response:', response); 
-
       dispatch(setUser({
         _id: form.id,
         username: form.username,
@@ -151,7 +139,6 @@ export default function EditProfileScreen({ navigation }: any) {
       }));
       navigation.goBack();
     } catch (e: any) {
-      console.error('Error saving profile:', e);
       setError(
         e?.response?.data?.error ||
         e?.response?.data?.message ||
@@ -167,15 +154,13 @@ export default function EditProfileScreen({ navigation }: any) {
 
   return (
     <ScrollView style={styles.bg} contentContainerStyle={styles.container}>
-      <Text style={styles.title}>Edit Profile</Text>
+      <Text style={styles.title}>{t('profile.edit.title')}</Text>
       <TouchableOpacity style={styles.imageContainer} onPress={pickImage}>
         {form.profileImage ? (
           <Image 
             source={{ uri: form.profileImage }} 
             style={styles.profileImage}
             onError={(e) => {
-              console.log('Error loading image:', e.nativeEvent.error);
-              console.log('Image URL:', form.profileImage);
               setForm(prev => ({
                 ...prev,
                 profileImage: 'https://res.cloudinary.com/dbfh8wmqt/image/upload/v1746636109/apenmeet/dljiilozwzcmyinqaaeo.jpg'
@@ -184,14 +169,14 @@ export default function EditProfileScreen({ navigation }: any) {
           />
         ) : (
           <View style={styles.placeholderImage}>
-            <Text style={styles.placeholderText}>Add Photo</Text>
+            <Text style={styles.placeholderText}>{t('profile.edit.addPhoto')}</Text>
           </View>
         )}
       </TouchableOpacity>
-      <TextInput style={styles.input} placeholder="Username" value={form.username} onChangeText={v => setForm(user => ({ ...user, username: v }))} />
-      <TextInput style={styles.input} placeholder="Email" value={form.email} onChangeText={v => setForm(user => ({ ...user, email: v }))} />
-      <TextInput style={styles.input} placeholder="Bio" value={form.bio} onChangeText={v => setForm(user => ({ ...user, bio: v }))} multiline />
-      <TextInput style={styles.input} placeholder="City" value={form.location.city} onChangeText={async v => {
+      <TextInput style={styles.input} placeholder={t('profile.edit.username')} value={form.username} onChangeText={v => setForm(user => ({ ...user, username: v }))} />
+      <TextInput style={styles.input} placeholder={t('profile.edit.email')} value={form.email} onChangeText={v => setForm(user => ({ ...user, email: v }))} />
+      <TextInput style={styles.input} placeholder={t('profile.edit.bio')} value={form.bio} onChangeText={v => setForm(user => ({ ...user, bio: v }))} multiline />
+      <TextInput style={styles.input} placeholder={t('profile.edit.city')} value={form.location.city} onChangeText={async v => {
         setForm(user => ({ ...user, location: { ...user.location, city: v } }));
         if (v.length > 0) {
           try {
@@ -209,10 +194,10 @@ export default function EditProfileScreen({ navigation }: any) {
           } catch (e) {}
         }
       }} />
-      <TextInput style={styles.input} placeholder="Interests (comma separated)" value={form.interests} onChangeText={v => setForm(user => ({ ...user, interests: v }))} />
+      <TextInput style={styles.input} placeholder={t('profile.edit.interests')} value={form.interests} onChangeText={v => setForm(user => ({ ...user, interests: v }))} />
       {error ? <Text style={styles.error}>{error}</Text> : null}
       <TouchableOpacity style={styles.saveButton} onPress={handleSave} disabled={saving}>
-        <Text style={styles.saveButtonText}>{saving ? 'Saving...' : 'Save'}</Text>
+        <Text style={styles.saveButtonText}>{saving ? t('profile.edit.saving') : t('profile.edit.save')}</Text>
       </TouchableOpacity>
     </ScrollView>
   );

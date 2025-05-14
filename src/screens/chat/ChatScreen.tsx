@@ -16,6 +16,8 @@ import { RouteProp } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { usePlanDetails } from '../../hooks/plans/usePlanDetails';
 import { useUser } from '../../hooks/user/useUser';
+import { useTheme } from '../../hooks/theme/useTheme';
+import { useTranslation } from 'react-i18next';
 
 interface ChatUser {
   id: string;
@@ -49,6 +51,8 @@ export default function ChatScreen({ route, navigation }: ChatScreenProps) {
   const { plan, loading: planLoading } = usePlanDetails(planId || '');
   const { refreshUser } = useUser();
   const flatListRef = useRef<FlatList<Message>>(null);
+  const theme = useTheme();
+  const { t } = useTranslation();
 
   useEffect(() => {
     refreshUser();
@@ -130,16 +134,10 @@ export default function ChatScreen({ route, navigation }: ChatScreenProps) {
 
   if (!isParticipant) {
     return (
-      <View style={styles.centered}>
-        <Ionicons name="chatbubble-outline" size={64} color="#5C4D91" style={styles.emptyIcon} />
-        <Text style={styles.emptyTitle}>No tienes chats activos</Text>
-        <Text style={styles.emptyText}>Únete a un plan para empezar a chatear</Text>
-        <TouchableOpacity 
-          style={styles.joinButton}
-          onPress={() => navigation.navigate('Plans')}
-        >
-          <Text style={styles.joinButtonText}>Ver Planes</Text>
-        </TouchableOpacity>
+      <View style={[styles.centered, { backgroundColor: theme.background }]}>
+        <Ionicons name="chatbubble-outline" size={64} color={theme.primary} style={styles.emptyIcon} />
+        <Text style={[styles.emptyTitle, { color: theme.primary }]}>{t('chat.title')}</Text>
+        <Text style={[styles.emptyText, { color: theme.text }]}>{t('chat.joinToChat')}</Text>
       </View>
     );
   }
@@ -198,15 +196,15 @@ export default function ChatScreen({ route, navigation }: ChatScreenProps) {
 
   if (error) {
     return (
-      <View style={styles.centered}>
-        <Text style={styles.errorText}>{error}</Text>
+      <View style={[styles.centered, { backgroundColor: theme.background }]}>
+        <Text style={[styles.errorText, { color: theme.error }]}>{error}</Text>
       </View>
     );
   }
 
   return (
     <KeyboardAvoidingView
-      style={styles.container}
+      style={[styles.container, { backgroundColor: theme.background }]}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
     >
@@ -219,30 +217,30 @@ export default function ChatScreen({ route, navigation }: ChatScreenProps) {
         ref={flatListRef}
         data={messages.filter(msg => msg.id && msg.timestamp) as Message[]}
         renderItem={renderMessage}
-        keyExtractor={(item) => item.id || `${item.sender._id}-${Date.now()}`}
+        keyExtractor={(item) => item.id || `${item.sender._id}-${item.timestamp}`}
         contentContainerStyle={styles.messagesList}
         onContentSizeChange={() => flatListRef.current?.scrollToEnd({ animated: true })}
       />
 
-      <View style={styles.inputContainer}>
+      <View style={[styles.inputContainer, { backgroundColor: theme.card }]}>
         <TextInput
-          style={[styles.input, !isParticipant && styles.inputDisabled]}
+          style={[styles.input, { color: theme.text }]}
           value={message}
           onChangeText={setMessage}
-          placeholder={isParticipant ? "Type a message..." : "Únete al plan para chatear"}
-          placeholderTextColor="#A9A9A9"
+          placeholder={t('chat.messagePlaceholder')}
+          placeholderTextColor={theme.placeholder}
           multiline
-          editable={isParticipant}
         />
         <TouchableOpacity
           style={[
             styles.sendButton,
-            (!message.trim() || !isConnected || !isParticipant) && styles.sendButtonDisabled
+            { backgroundColor: theme.background === '#000' ? theme.primary : '#5C4D91' },
+            (!message.trim() || !isConnected) && styles.sendButtonDisabled
           ]}
           onPress={handleSend}
-          disabled={!message.trim() || !isConnected || !isParticipant}
+          disabled={!message.trim() || !isConnected}
         >
-          <Ionicons name="send" size={24} color={message.trim() && isParticipant ? "#fff" : "#A9A9A9"} />
+          <Ionicons name="send" size={24} color={theme.card} />
         </TouchableOpacity>
       </View>
     </KeyboardAvoidingView>
@@ -252,7 +250,6 @@ export default function ChatScreen({ route, navigation }: ChatScreenProps) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
   },
   header: {
     flexDirection: 'row',
@@ -318,29 +315,21 @@ const styles = StyleSheet.create({
   },
   inputContainer: {
     flexDirection: 'row',
-    padding: 16,
+    padding: 8,
     borderTopWidth: 1,
-    borderTopColor: '#E6E0F8',
-    backgroundColor: '#fff',
+    borderTopColor: '#E0E0E0',
   },
   input: {
     flex: 1,
-    backgroundColor: '#F7F5FF',
-    borderRadius: 20,
-    paddingHorizontal: 16,
-    paddingVertical: 8,
     marginRight: 8,
+    padding: 8,
+    borderRadius: 20,
     maxHeight: 100,
-    fontSize: 16,
-  },
-  inputDisabled: {
-    backgroundColor: '#F0F0F0',
   },
   sendButton: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: '#5C4D91',
+    width: 40,
+    height: 40,
+    borderRadius: 20,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -352,10 +341,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     padding: 16,
-    backgroundColor: '#fff',
   },
   errorText: {
-    color: '#f44336',
     textAlign: 'center',
   },
   emptyIcon: {
@@ -364,12 +351,10 @@ const styles = StyleSheet.create({
   emptyTitle: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#5C4D91',
     marginBottom: 8,
   },
   emptyText: {
     fontSize: 16,
-    color: '#666',
     textAlign: 'center',
     marginBottom: 24,
   },

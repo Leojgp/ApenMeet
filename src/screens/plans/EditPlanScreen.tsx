@@ -4,6 +4,7 @@ import { usePlanDetails } from '../../hooks/plans/usePlanDetails';
 import { useEffect, useState } from 'react';
 import { editPlan } from '../../api/plans/plansApi';
 import { useTheme } from '../../hooks/theme/useTheme';
+import { useTranslation } from 'react-i18next';
 
 interface EditPlanScreenProps {
   route: {
@@ -19,6 +20,7 @@ export default function EditPlanScreen({ route, navigation }: EditPlanScreenProp
   const { plan, loading, error } = usePlanDetails(planId);
   const [formData, setFormData] = useState<any>(null);
   const theme = useTheme();
+  const { t } = useTranslation();
 
   useEffect(() => {
     if (plan) {
@@ -64,39 +66,28 @@ export default function EditPlanScreen({ route, navigation }: EditPlanScreenProp
       await editPlan(planId, formData);
       navigation.goBack();
     } catch (error: any) {
-      Alert.alert('Error', error.message || 'Error al editar el plan');
+      Alert.alert('Error', error.message || t('api.errors.plans.notFound'));
     }
   };
 
   if (loading) {
     return (
-      <ScrollView style={[styles.container, { backgroundColor: theme.background }]}> 
-        <Text style={{ color: theme.text }}>Cargando...</Text>
-      </ScrollView>
+      <View style={[styles.container, { backgroundColor: theme.background }]}>
+        <Text style={{ color: theme.text }}>{t('plans.detail.loading')}</Text>
+      </View>
     );
   }
 
-  if (error) {
+  if (error || !plan) {
     return (
-      <ScrollView style={[styles.container, { backgroundColor: theme.background }]}> 
-        <Text style={{ color: theme.error }}>Error: {error}</Text>
-      </ScrollView>
-    );
-  }
-
-  if (!formData) {
-    return (
-      <ScrollView style={[styles.container, { backgroundColor: theme.background }]}> 
-        <Text style={{ color: theme.text }}>No se encontró el plan</Text>
-      </ScrollView>
+      <View style={[styles.container, { backgroundColor: theme.background }]}>
+        <Text style={[styles.error, { color: theme.error }]}>{error || t('plans.detail.notFound')}</Text>
+      </View>
     );
   }
 
   return (
-    <ScrollView style={[styles.container, { backgroundColor: theme.background }]}> 
-      <View style={styles.header}>
-        <Text style={[styles.title, { color: theme.primary }]}>Editar Plan</Text>
-      </View>
+    <ScrollView style={[styles.container, { backgroundColor: theme.background }]}>
       <CreatePlanForm
         initialValues={formData}
         onSubmit={handleEdit}
@@ -111,11 +102,8 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: 16,
   },
-  header: {
-    marginBottom: 20,
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: 'bold',
+  error: {
+    textAlign: 'center',
+    marginTop: 20,
   },
 }); 

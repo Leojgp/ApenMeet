@@ -15,6 +15,8 @@ import { store } from './store';
 import { useTheme } from './hooks/theme/useTheme';
 import ThemeToggle from './components/theme/ThemeToggle';
 import BottomTabs from './navigation/BottomTabs';
+import { I18nextProvider } from 'react-i18next';
+import i18n from './i18n';
 
 type RootStackParamList = {
   Home: undefined;
@@ -96,7 +98,9 @@ function AppContent() {
 export default function App() {
   return (
     <Provider store={store}>
-      <AppContent />
+      <I18nextProvider i18n={i18n}>
+        <AppContent />
+      </I18nextProvider>
     </Provider>
   );
 }

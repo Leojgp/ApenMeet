@@ -2,17 +2,19 @@ import { StyleSheet, Text, View, TouchableOpacity, ScrollView } from 'react-nati
 import React from 'react';
 import { Ionicons, MaterialIcons, Feather } from '@expo/vector-icons';
 import ThemeToggle from '../../components/theme/ThemeToggle';
+import LanguageToggle from '../../components/common/LanguageToggle';
 import { useTheme } from '../../hooks/theme/useTheme';
 import { useDispatch } from 'react-redux';
 import { clearUser } from '../../store/userSlice';
 import * as SecureStore from 'expo-secure-store';
+import { useTranslation } from 'react-i18next';
 
 const options = [
-  { icon: <Ionicons name="person-circle-outline" size={30} color="#5C4D91" />, label: 'Edit Profile' },
-  { icon: <Ionicons name="notifications-outline" size={26} color="#5C4D91" />, label: 'Notifications' },
-  { icon: <Feather name="lock" size={26} color="#5C4D91" />, label: 'Privacy' },
-  { icon: <Feather name="help-circle" size={26} color="#5C4D91" />, label: 'Help' },
-  { icon: <MaterialIcons name="info-outline" size={26} color="#5C4D91" />, label: 'About' },
+  { icon: <Ionicons name="person-circle-outline" size={30} color="#5C4D91" />, label: 'config.editProfile' },
+  { icon: <Ionicons name="notifications-outline" size={26} color="#5C4D91" />, label: 'config.notifications' },
+  { icon: <Feather name="lock" size={26} color="#5C4D91" />, label: 'config.privacy' },
+  { icon: <Feather name="help-circle" size={26} color="#5C4D91" />, label: 'config.help' },
+  { icon: <MaterialIcons name="info-outline" size={26} color="#5C4D91" />, label: 'config.about' },
 ];
 
 interface ConfigScreenProps {
@@ -22,6 +24,7 @@ interface ConfigScreenProps {
 export default function ConfigScreen({ navigation }: ConfigScreenProps) {
   const theme = useTheme();
   const dispatch = useDispatch();
+  const { t } = useTranslation();
 
   const handleLogout = async () => {
     await SecureStore.deleteItemAsync('accessToken');
@@ -31,25 +34,32 @@ export default function ConfigScreen({ navigation }: ConfigScreenProps) {
 
   return (
     <ScrollView style={[styles.bg, { backgroundColor: theme.background }]} contentContainerStyle={styles.container}>
-      <Text style={[styles.title, { color: theme.text }]}>Settings</Text>
+      <Text style={[styles.title, { color: theme.text }]}>{t('config.settings')}</Text>
       <View style={styles.optionsList}>
         {options.map((opt, idx) => (
           <TouchableOpacity 
             key={opt.label} 
             style={[styles.optionRow, { backgroundColor: theme.card }]}
             onPress={() => {
-              if (opt.label === 'Edit Profile') navigation.navigate('EditProfileScreen');
+              if (opt.label === 'config.editProfile') navigation.navigate('EditProfileScreen');
             }}
           >
             {opt.icon}
-            <Text style={[styles.optionText, { color: theme.text }]}>{opt.label}</Text>
+            <Text style={[styles.optionText, { color: theme.text }]}>{t(opt.label)}</Text>
           </TouchableOpacity>
         ))}
         <View style={[styles.optionRow, { backgroundColor: theme.card }]}>
           <Ionicons name="moon-outline" size={26} color={theme.primary} />
-          <Text style={[styles.optionText, { color: theme.text }]}>Dark Mode</Text>
+          <Text style={[styles.optionText, { color: theme.text }]}>{t('config.darkMode')}</Text>
           <View style={styles.toggleContainer}>
             <ThemeToggle />
+          </View>
+        </View>
+        <View style={[styles.optionRow, { backgroundColor: theme.card }]}>
+          <Ionicons name="language-outline" size={26} color={theme.primary} />
+          <Text style={[styles.optionText, { color: theme.text }]}>{t('config.language')}</Text>
+          <View style={styles.toggleContainer}>
+            <LanguageToggle />
           </View>
         </View>
       </View>
@@ -57,7 +67,7 @@ export default function ConfigScreen({ navigation }: ConfigScreenProps) {
         onPress={handleLogout}
         style={[styles.logoutButton, { backgroundColor: theme.card }]}
       >
-        <Text style={styles.logoutText}>Log Out</Text>
+        <Text style={styles.logoutText}>{t('config.logout')}</Text>
       </TouchableOpacity>
     </ScrollView>
   );

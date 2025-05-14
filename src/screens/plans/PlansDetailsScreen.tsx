@@ -6,6 +6,8 @@ import { useJoinPlan } from '../../hooks/plans/useJoinPlan';
 import { useUser } from '../../hooks/user/useUser';
 import { JoinRequestModal, PlanHeader, PlanInfoCard, PlanMap } from '../../components/plans';
 import { useTheme } from '../../hooks/theme/useTheme';
+import { useTranslation } from 'react-i18next';
+import MapView, { Marker } from 'react-native-maps';
 
 interface PlanDetailProps {
   route: {
@@ -25,6 +27,7 @@ export default function PlanDetailScreen({ route, navigation }: PlanDetailProps)
   const [showSuccess, setShowSuccess] = useState(false);
   const [mapReady, setMapReady] = useState(false);
   const theme = useTheme();
+  const { t } = useTranslation();
 
   const handleJoin = async () => {
     try {
@@ -43,7 +46,7 @@ export default function PlanDetailScreen({ route, navigation }: PlanDetailProps)
   if (loading) {
     return (
       <View style={[styles.centered, { backgroundColor: theme.background }]}> 
-        <Text style={{ color: theme.text }}>Loading...</Text>
+        <Text style={{ color: theme.text }}>{t('plans.detail.loading')}</Text>
       </View>
     );
   }
@@ -51,7 +54,7 @@ export default function PlanDetailScreen({ route, navigation }: PlanDetailProps)
   if (error || !plan) {
     return (
       <View style={[styles.centered, { backgroundColor: theme.background }]}> 
-        <Text style={[styles.error, { color: theme.error }]}>{error || 'Plan not found'}</Text>
+        <Text style={[styles.error, { color: theme.error }]}>{error || t('plans.detail.notFound')}</Text>
       </View>
     );
   }
@@ -63,7 +66,9 @@ export default function PlanDetailScreen({ route, navigation }: PlanDetailProps)
     <ScrollView style={[styles.bg, { backgroundColor: theme.background }]} contentContainerStyle={styles.scrollContent}>
       {showSuccess && (
         <View style={[styles.successMessage, { backgroundColor: theme.primary }]}> 
-          <Text style={[styles.successText, { color: theme.card }]}>¡Te has unido al plan correctamente!</Text>
+          <Text style={[styles.successText, { color: theme.card }]}>
+          {t('api.success.plans.joined')}
+          </Text>
         </View>
       )}
       <View style={styles.headerContainer}>

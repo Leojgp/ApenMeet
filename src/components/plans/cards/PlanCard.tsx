@@ -9,6 +9,7 @@ import { deletePlan } from '../../../api/plans/plansApi';
 import Swipeable from 'react-native-gesture-handler/Swipeable';
 import { RectButton } from 'react-native-gesture-handler';
 import { useTheme } from '../../../hooks/theme/useTheme';
+import { useTranslation } from 'react-i18next';
 
 interface PlanCardProps {
   plan: Plan;
@@ -23,6 +24,7 @@ export default function PlanCard({ plan, navigation, onPlanDeleted }: PlanCardPr
   const swipeableRef = useRef<Swipeable>(null);
   const isAdmin = plan.admins?.some(admin => admin._id === user?._id || (admin as any).id === user?._id);
   const theme = useTheme();
+  const { t } = useTranslation();
 
   const handlePress = () => {
     navigation.navigate('PlanDetail', { planId: String(plan.id) });
@@ -34,19 +36,19 @@ export default function PlanCard({ plan, navigation, onPlanDeleted }: PlanCardPr
 
   const handleDelete = async () => {
     Alert.alert(
-      'Eliminar Plan',
-      '¿Estás seguro de que quieres eliminar este plan?',
+      t('alerts.deletePlan.title'),
+      t('alerts.deletePlan.message'),
       [
-        { text: 'Cancelar', style: 'cancel' },
+        { text: t('alerts.deletePlan.cancel'), style: 'cancel' },
         {
-          text: 'Eliminar',
+          text: t('alerts.deletePlan.confirm'),
           style: 'destructive',
           onPress: async () => {
             try {
               await deletePlan(String(plan.id));
               onPlanDeleted?.();
             } catch (error) {
-              Alert.alert('Error', 'No se pudo eliminar el plan');
+              Alert.alert('Error', t('alerts.errors.deletePlan'));
             }
           },
         },
@@ -66,7 +68,7 @@ export default function PlanCard({ plan, navigation, onPlanDeleted }: PlanCardPr
       <RectButton style={styles.rightAction} onPress={handleEdit}>
         <Animated.View style={[styles.actionContent, { transform: [{ translateX: trans }] }]}>
           <Ionicons name="pencil" size={24} color="#fff" />
-          <Text style={styles.actionText}>Editar</Text>
+          <Text style={styles.actionText}>{t('plans.edit.title')}</Text>
         </Animated.View>
       </RectButton>
     );

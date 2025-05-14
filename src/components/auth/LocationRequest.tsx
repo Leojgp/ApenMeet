@@ -5,15 +5,17 @@ import { updateUser } from '../../api/user/userApi';
 import { useDispatch, useSelector } from 'react-redux';
 import { setUser } from '../../store/userSlice';
 import { RootState } from '../../store';
+import { useTranslation } from 'react-i18next';
 
 interface LocationRequestProps {
-  onLocationSet: () => void;
+  onLocationSet: (location: { latitude: number; longitude: number }) => void;
 }
 
 export default function LocationRequest({ onLocationSet }: LocationRequestProps) {
   const [loading, setLoading] = useState(false);
   const dispatch = useDispatch();
   const currentUser = useSelector((state: RootState) => state.user);
+  const { t } = useTranslation();
 
   const requestLocationPermission = async () => {
     try {
@@ -78,7 +80,10 @@ export default function LocationRequest({ onLocationSet }: LocationRequestProps)
         }
       }));
 
-      onLocationSet();
+      onLocationSet({
+        latitude: location.coords.latitude,
+        longitude: location.coords.longitude
+      });
     } catch (error) {
       console.log('Error getting location:', error);
       Alert.alert('Error', 'No se pudo obtener tu ubicación');
@@ -96,17 +101,15 @@ export default function LocationRequest({ onLocationSet }: LocationRequestProps)
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Ubicación Requerida</Text>
-      <Text style={styles.message}>
-        Para mostrarte planes cercanos a ti, necesitamos acceso a tu ubicación.
-      </Text>
+      <Text style={styles.title}>{t('location.permission.title')}</Text>
+      <Text style={styles.message}>{t('location.permission.message')}</Text>
       <TouchableOpacity
         style={styles.button}
         onPress={handleRequestLocation}
         disabled={loading}
       >
         <Text style={styles.buttonText}>
-          {loading ? 'Obteniendo ubicación...' : 'Permitir acceso a ubicación'}
+          {loading ? t('location.permission.loading') : t('location.permission.allow')}
         </Text>
       </TouchableOpacity>
     </View>

@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet } from 'react-native';
 import { useTheme } from '../../hooks/theme/useTheme';
-import { useAuth } from '../../hooks';
+import { useAuth } from '../../hooks/auth/useAuth';
+import { useTranslation } from 'react-i18next';
 
 interface SignInFormProps {
   navigation: any;
@@ -12,6 +13,7 @@ export default function SignInForm({ navigation }: SignInFormProps) {
   const [password, setPassword] = useState('');
   const { handleLogin, loading, error } = useAuth({navigation});
   const theme = useTheme();
+  const { t } = useTranslation();
 
   return (
     <View style={[styles.container, { backgroundColor: theme.background }]}>
@@ -21,7 +23,7 @@ export default function SignInForm({ navigation }: SignInFormProps) {
           color: theme.text,
           borderColor: theme.border
         }]}
-        placeholder="Email"
+        placeholder={t('auth.signIn.email')}
         placeholderTextColor={theme.placeholder}
         value={email}
         onChangeText={setEmail}
@@ -34,7 +36,7 @@ export default function SignInForm({ navigation }: SignInFormProps) {
           color: theme.text,
           borderColor: theme.border
         }]}
-        placeholder="Password"
+        placeholder={t('auth.signIn.password')}
         placeholderTextColor={theme.placeholder}
         value={password}
         onChangeText={setPassword}
@@ -47,7 +49,7 @@ export default function SignInForm({ navigation }: SignInFormProps) {
         disabled={loading}
       >
         <Text style={[styles.buttonText, { color: theme.card }]}>
-          {loading ? 'Signing in...' : 'Sign In'}
+          {loading ? t('auth.signIn.loading') : t('auth.signIn.submit')}
         </Text>
       </TouchableOpacity>
     </View>

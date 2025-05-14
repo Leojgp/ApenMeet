@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useAuth } from './useAuth';
 import * as ImagePicker from 'expo-image-picker';
+import { useTranslation } from 'react-i18next';
 
 export interface SignUpFormState {
   username: string;
@@ -23,6 +24,7 @@ export interface SignUpFormState {
 
 export const useSignUpForm = (navigation?: any) => {
   const { handleRegister, loading, error } = useAuth({ navigation });
+  const { t } = useTranslation();
 
   const [formState, setFormState] = useState<SignUpFormState>({
     username: '',
@@ -50,7 +52,7 @@ export const useSignUpForm = (navigation?: any) => {
   const pickImage = async () => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (status !== 'granted') {
-      alert('Sorry, we need camera roll permissions to make this work!');
+      alert(t('alerts.errors.image'));
       return;
     }
 

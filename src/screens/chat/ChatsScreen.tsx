@@ -1,10 +1,11 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, RefreshControl, ActivityIndicator, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useParticipatingPlans } from '../../hooks/plans/useParticipatingPlans';
 import ChatListItem from '../../components/chat/ChatListItem';
 import { useFocusEffect } from '@react-navigation/native';
 import { useTheme } from '../../hooks/theme/useTheme';
+import { useTranslation } from 'react-i18next';
 
 interface ChatsScreenProps {
   navigation: any;
@@ -12,14 +13,15 @@ interface ChatsScreenProps {
 
 export default function ChatsScreen({ navigation }: ChatsScreenProps) {
   const { plans, loading, error, refresh } = useParticipatingPlans();
-  const [refreshing, setRefreshing] = React.useState(false);
+  const [refreshing, setRefreshing] = useState(false);
   const theme = useTheme();
+  const { t } = useTranslation();
 
-  const onRefresh = React.useCallback(async () => {
+  const onRefresh = async () => {
     setRefreshing(true);
     await refresh();
     setRefreshing(false);
-  }, [refresh]);
+  };
 
   useFocusEffect(
     React.useCallback(() => {
@@ -28,7 +30,10 @@ export default function ChatsScreen({ navigation }: ChatsScreenProps) {
   );
 
   const handleChatPress = (plan: any) => {
-    navigation.navigate('Chat', { planId: plan._id || plan.id, planTitle: plan.title });
+    navigation.navigate('Chat', {
+      planId: plan._id,
+      planTitle: plan.title
+    });
   };
 
   if (loading && !refreshing) {
@@ -56,13 +61,13 @@ export default function ChatsScreen({ navigation }: ChatsScreenProps) {
         {plans.length === 0 && !loading && (
           <View style={[styles.emptyContainer, { backgroundColor: theme.background }]}> 
             <Ionicons name="chatbubble-outline" size={64} color={theme.primary} style={styles.emptyIcon} />
-            <Text style={[styles.emptyTitle, { color: theme.primary }]}>No tienes chats activos</Text>
-            <Text style={[styles.emptyText, { color: theme.text }]}>Únete a un plan para empezar a chatear</Text>
+            <Text style={[styles.emptyTitle, { color: theme.primary }]}>{t('chat.title')}</Text>
+            <Text style={[styles.emptyText, { color: theme.text }]}>{t('chat.joinToChat')}</Text>
             <TouchableOpacity 
               style={[styles.joinButton, { backgroundColor: theme.primary }]}
               onPress={() => navigation.navigate('Plans')}
             >
-              <Text style={[styles.joinButtonText, { color: theme.card }]}>Ver Planes</Text>
+              <Text style={[styles.joinButtonText, { color: theme.card }]}>{t('plans.detail.join')}</Text>
             </TouchableOpacity>
           </View>
         )}

@@ -1,5 +1,6 @@
 import { getPlanById, getPlans } from '../../api/plans/plansApi';
 import { Plan, fromApiResponse } from '../../models/Plan';
+import i18next from 'i18next';
 
 export const fetchPlans = async () => {
   try {
@@ -8,7 +9,7 @@ export const fetchPlans = async () => {
     
     if (!data || !Array.isArray(data)) {
       console.error('Invalid plans data received:', data);
-      throw new Error('Formato de datos inválido');
+      throw new Error(i18next.t('api.errors.serverError'));
     }
 
     if (data.length === 0) {
@@ -28,7 +29,7 @@ export const fetchPlans = async () => {
     return plans;
   } catch (error: any) {
     console.error('Error in fetchPlans:', error);
-    throw new Error(error.response?.data?.message || 'Error al obtener los planes');
+    throw new Error(error.response?.data?.error || i18next.t('api.errors.serverError'));
   }
 };
 
@@ -37,6 +38,6 @@ export const fetchPlanById = async (PlanId:string) => {
       const data = await getPlanById(PlanId);  
       return fromApiResponse(data);  
     } catch (error: any) {
-      throw new Error(error.response?.data?.message || 'Error desconocido');
+      throw new Error(error.response?.data?.error || i18next.t('api.errors.serverError'));
     }
   };

@@ -1,4 +1,5 @@
 import api from '../config/axiosInstance';
+import i18next from 'i18next';
 
 export const getPlans = async () => {
     try {
@@ -6,10 +7,10 @@ export const getPlans = async () => {
         return response.data;
     } catch (error: any) {
         if (error.response) {
-            throw new Error(error.response.data.message || 'Error desconocido');
-          } else {
-            throw new Error('Error al obtener los planes: ' + error.message);
-          }
+            throw new Error(error.response.data.error || i18next.t('api.errors.serverError'));
+        } else {
+            throw new Error(i18next.t('api.errors.serverError'));
+        }
     }
 };
 
@@ -19,25 +20,24 @@ export const getPlanById = async (planId: string) => {
         return response.data;
     } catch (error: any) {
         if (error.response) {
-            throw new Error(error.response.data.message || 'Error desconocido');
-          } else {
-            throw new Error('Error al obtener los planes: ' + error.message);
-          }
+            throw new Error(error.response.data.error || i18next.t('api.errors.serverError'));
+        } else {
+            throw new Error(i18next.t('api.errors.serverError'));
+        }
     }
 };
 
-
 export const joinPlan = async (planId: string) => {
-    try{
+    try {
         console.log(planId)
         const response = await api.post(`plans/${planId}/join`);
         return response.data;
-    }catch (error: any) {
+    } catch (error: any) {
         if (error.response) {
-            throw new Error(error.response.data.message || 'Error desconocido');
-          } else {
-            throw new Error('Error al unirse al Plan: ' + error.message);
-          }
+            throw new Error(error.response.data.error || i18next.t('api.errors.serverError'));
+        } else {
+            throw new Error(i18next.t('api.errors.serverError'));
+        }
     }
 }
 
@@ -51,9 +51,9 @@ export const createPlan = async (plan: any) => {
         return response.data;
     } catch (error: any) {
         if (error.response) {
-            throw new Error(error.response.data.message || 'Error desconocido');
+            throw new Error(error.response.data.error || i18next.t('api.errors.serverError'));
         } else {
-            throw new Error('Error al crear el plan: ' + error.message);
+            throw new Error(i18next.t('api.errors.serverError'));
         }
     }
 };
@@ -75,13 +75,13 @@ export const editPlan = async (planId: string, planData: FormData): Promise<any>
     } catch (error: any) {
         console.error('Error in editPlan:', error);
         if (error.response) {
-            throw new Error(error.response.data.error || 'Error al editar el plan');
+            throw new Error(error.response.data.error || i18next.t('api.errors.serverError'));
         } else if (error.request) {
             console.error('No response received:', error.request);
-            throw new Error('No se recibió respuesta del servidor. Por favor, verifica tu conexión.');
+            throw new Error(i18next.t('api.errors.serverError'));
         } else {
             console.error('Request setup error:', error.message);
-            throw new Error('Error al configurar la petición: ' + error.message);
+            throw new Error(i18next.t('api.errors.serverError'));
         }
     }
 };
@@ -92,9 +92,9 @@ export const deletePlan = async (planId: string) => {
         return response.data;
     } catch (error: any) {
         if (error.response) {
-            throw new Error(error.response.data.message || 'Error desconocido');
+            throw new Error(error.response.data.error || i18next.t('api.errors.serverError'));
         } else {
-            throw new Error('Error al eliminar el plan: ' + error.message);
+            throw new Error(i18next.t('api.errors.serverError'));
         }
     }
 };
