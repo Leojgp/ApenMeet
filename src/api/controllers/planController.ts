@@ -12,45 +12,37 @@ export const getAllPlans = async (_req: Request, res: Response) => {
       .populate('participants.id', 'username');
     res.json(plans);
   } catch (err) {
-    res.status(500).json({ error: 'Error al obtener los planes' });
+    res.status(500).json({ error: 'Error getting plans' });
   }
 };
 
 export const createPlan = async (req: Request, res: Response): Promise<void> => {
   try {
     const authenticatedUser = (req as any).user;
-
     const { title, description, location, dateTime, maxParticipants } = req.body;
-
     if (!title || !description || !location || !dateTime || !maxParticipants) {
-      res.status(400).json({ error: 'Faltan campos obligatorios' });
+      res.status(400).json({ error: 'Missing required fields' });
       return;
     }
-
     const user = await User.findById(authenticatedUser._id);
     if (!user) {
-      res.status(404).json({ error: 'Usuario creador no encontrado' });
+      res.status(404).json({ error: 'User not found' });
       return;
     }
-
     let imageUrl = 'https://st4.depositphotos.com/14953852/24787/v/450/depositphotos_247872612-stock-illustration-no-image-available-icon-vector.jpg';
     if (req.file) {
       imageUrl = (req.file as any).path;
-      console.log('URL de la imagen subida:', imageUrl);
     }
-
     let coordinates = [0, 0];
     if (location.coordinates && Array.isArray(location.coordinates)) {
       coordinates = location.coordinates;
     }
-
     let tags: string[] = [];
     if (req.body['tags[]']) {
       tags = Array.isArray(req.body['tags[]']) 
         ? req.body['tags[]'] 
         : [req.body['tags[]']];
     }
-
     const newPlan = new Plan({
       title,
       description,
@@ -76,21 +68,18 @@ export const createPlan = async (req: Request, res: Response): Promise<void> => 
       imageUrl,
       tags
     });
-
     await newPlan.save();
-
     const populatedPlan = await Plan.findById(newPlan._id)
       .populate('creatorId', 'username profileImage')
       .populate('participants.id', 'username profileImage')
       .populate('admins.id', 'username profileImage');
-
     res.status(201).json({
-      message: 'Plan creado con éxito',
+      message: 'Plan created successfully',
       plan: populatedPlan
     });
   } catch (error) {
-    console.error('Error al crear plan:', error);
-    res.status(400).json({ error: 'Error al crear el plan' });
+    console.error('Error creating plan:', error);
+    res.status(400).json({ error: 'Error creating plan' });
   }
 };
 
@@ -101,12 +90,12 @@ export const getPlanById = async (req: Request, res: Response): Promise<void> =>
       .populate('participants.id', 'username')
       .populate('admins.id', 'username');
     if (!plan) {
-      res.status(404).json({ error: 'Plan no encontrado' });
+      res.status(404).json({ error: 'Plan not found' });
       return;
     }
     res.json(plan);
   } catch (err) {
-    res.status(500).json({ error: 'Error al obtener el plan' });
+    res.status(500).json({ error: 'Error getting plan' });
   }
 };
 
@@ -114,18 +103,18 @@ export const getPlansByUsername = async (req: Request, res: Response): Promise<v
   try {
     const { username } = req.params;
     if (!username) {
-      res.status(400).json({ error: 'Nombre de usuario requerido' });
+      res.status(400).json({ error: 'Username is required' });
       return;
     }
     const user = await User.findOne({ username });
     if (!user) {
-      res.status(404).json({ error: 'Usuario no encontrado' });
+      res.status(404).json({ error: 'User not found' });
       return;
     }
     const plans = await Plan.find({ creatorId: user._id });
     res.json(plans);
   } catch (err) {
-    res.status(500).json({ error: 'Error al obtener los planes del usuario' });
+    res.status(500).json({ error: 'Error getting user plans' });
   }
 };
 
@@ -133,10 +122,9 @@ export const getUserParticipatingPlans = async (req: Request, res: Response): Pr
   try {
     const authenticatedUser = (req as any).user;
     if (!authenticatedUser) {
-      res.status(401).json({ error: 'Usuario no autenticado' });
+      res.status(401).json({ error: 'User not authenticated' });
       return;
     }
-
     const plans = await Plan.find({
       $or: [
         { 'participants.id': authenticatedUser._id },
@@ -147,11 +135,10 @@ export const getUserParticipatingPlans = async (req: Request, res: Response): Pr
     .populate('creatorId', 'username')
     .populate('participants.id', 'username')
     .populate('admins.id', 'username');
-
     res.json(plans);
   } catch (err) {
-    console.error('Error al obtener los planes del usuario:', err);
-    res.status(500).json({ error: 'Error al obtener los planes del usuario' });
+    console.error('Error fetching user plans:', err);
+    res.status(500).json({ error: 'Error fetching user plans' });
   }
 };
 
@@ -159,58 +146,49 @@ export const joinPlan = async (req: Request, res: Response): Promise<void> => {
   try {
     const authenticatedUser = (req as any).user;
     const { id } = req.params;
-
     if (!mongoose.Types.ObjectId.isValid(id)) {
-      res.status(400).json({ error: 'ID de plan inválido' });
+      res.status(400).json({ error: 'Invalid plan ID' });
       return;
     }
-
     const plan = await Plan.findById(id);
     if (!plan) {
-      res.status(404).json({ error: 'Plan no encontrado' });
+      res.status(404).json({ error: 'Plan not found' });
       return;
     }
-
     if (plan.status !== 'open') {
-      res.status(400).json({ error: 'Este plan no está abierto para unirse' });
+      res.status(400).json({ error: 'This plan is not open for joining' });
       return;
     }
-
     if (plan.participants.length >= plan.maxParticipants) {
-      res.status(400).json({ error: 'Plan completo, no se permiten más participantes' });
+      res.status(400).json({ error: 'Plan is full, no more participants allowed' });
       return;
     }
-
     if (plan.participants.some(p => p.id.toString() === authenticatedUser._id)) {
-      res.status(400).json({ error: 'Ya eres participante de este plan' });
+      res.status(400).json({ error: 'You are already a participant in this plan' });
       return;
     }
-
     const user = await User.findById(authenticatedUser._id);
     if (!user) {
-      res.status(404).json({ error: 'Usuario no encontrado' });
+      res.status(404).json({ error: 'User not found' });
       return;
     }
-
     plan.participants.push({
       id: new mongoose.Types.ObjectId(authenticatedUser._id),
       username: user.username,
       joinedAt: new Date()
     });
     await plan.save();
-
     const updatedPlan = await Plan.findById(id)
       .populate('creatorId', 'username profileImage')
       .populate('participants.id', 'username profileImage')
       .populate('admins.id', 'username profileImage');
-
     res.status(200).json({
-      message: 'Te has unido al plan con éxito',
+      message: 'Successfully joined the plan',
       plan: updatedPlan
     });
   } catch (error) {
-    console.error('Error al unirse al plan:', error);
-    res.status(500).json({ error: 'Error al unirse al plan' });
+    console.error('Error joining plan:', error);
+    res.status(500).json({ error: 'Error joining plan' });
   }
 };
   
@@ -221,23 +199,23 @@ export const leavePlan = async (req: Request, res: Response): Promise<void> => {
     const { id } = req.params;
 
     if (!mongoose.Types.ObjectId.isValid(id)) {
-      res.status(400).json({ error: 'ID de plan inválido' });
+      res.status(400).json({ error: 'Invalid plan ID' });
       return;
     }
 
     const plan = await Plan.findById(id);
     if (!plan) {
-      res.status(404).json({ error: 'Plan no encontrado' });
+      res.status(404).json({ error: 'Plan not found' });
       return;
     }
 
     if (!plan.participants.some(p => p.id.toString() === authenticatedUser._id)) {
-      res.status(400).json({ error: 'No eres participante de este plan' });
+      res.status(400).json({ error: 'You are not a participant in this plan' });
       return;
     }
 
     if (plan.creatorId.toString() === authenticatedUser._id) {
-      res.status(400).json({ error: 'Eres el creador del plan. Si deseas cancelarlo, usa la función cancelar' });
+      res.status(400).json({ error: 'You are the plan creator. If you want to cancel it, use the cancel function' });
       return;
     }
 
@@ -250,12 +228,12 @@ export const leavePlan = async (req: Request, res: Response): Promise<void> => {
       .populate('admins.id', 'username profileImage');
 
     res.status(200).json({
-      message: 'Has abandonado el plan con éxito',
+      message: 'Has abandoned the plan successfully',
       plan: updatedPlan
     });
   } catch (error) {
-    console.error('Error al abandonar el plan:', error);
-    res.status(500).json({ error: 'Error al abandonar el plan' });
+    console.error('Error abandoning plan:', error);
+    res.status(500).json({ error: 'Error abandoning plan' });
   }
 };
 
@@ -263,38 +241,29 @@ export const updatePlan = async (req: Request, res: Response): Promise<void> => 
   try {
     const authenticatedUser = (req as any).user;
     const { id } = req.params;
-
     if (!mongoose.Types.ObjectId.isValid(id)) {
-      res.status(400).json({ error: 'ID de plan inválido' });
+      res.status(400).json({ error: 'Invalid plan ID' });
       return;
     }
-
     const plan = await Plan.findById(id);
     if (!plan) {
-      res.status(404).json({ error: 'Plan no encontrado' });
+      res.status(404).json({ error: 'Plan not found' });
       return;
     }
-
     if (!plan.admins.some(admin => admin.id.toString() === authenticatedUser._id)) {
-      res.status(403).json({ error: 'No tienes permisos para actualizar este plan' });
+      res.status(403).json({ error: 'You do not have permission to update this plan' });
       return;
     }
-
     const updateData: any = {};
-
-    // Basic fields
     if (req.body.title) updateData.title = req.body.title;
     if (req.body.description) updateData.description = req.body.description;
     if (req.body.dateTime) updateData.dateTime = new Date(req.body.dateTime);
     if (req.body.maxParticipants) updateData.maxParticipants = parseInt(req.body.maxParticipants);
-
-    // Location
     if (req.body.location) {
       try {
         const locationData = typeof req.body.location === 'string' 
           ? JSON.parse(req.body.location) 
           : req.body.location;
-
         if (locationData.address && Array.isArray(locationData.coordinates)) {
           updateData.location = {
             address: locationData.address,
@@ -302,37 +271,23 @@ export const updatePlan = async (req: Request, res: Response): Promise<void> => 
           };
         }
       } catch (e) {
-        console.error('Error al procesar location:', e);
-        res.status(400).json({ error: 'Formato de ubicación inválido' });
+        console.error('Error processing location:', e);
+        res.status(400).json({ error: 'Invalid location format' });
         return;
       }
     }
-
-    // Tags - handle the same way as in createPlan
-    console.log('Full request body:', req.body);
-    console.log('Received tags in request:', req.body['tags[]'] || req.body.tags);
     const tagsData = req.body['tags[]'] || req.body.tags;
     if (tagsData) {
-      console.log('Tags type:', typeof tagsData);
-      console.log('Is array?', Array.isArray(tagsData));
       updateData.tags = Array.isArray(tagsData) 
         ? tagsData 
         : [tagsData];
-      console.log('Final tags to update:', updateData.tags);
-    } else {
-      console.log('No tags received in request, keeping existing tags:', plan.tags);
     }
-
-    // Image
     if (req.file) {
       if (plan.imageUrl && !plan.imageUrl.includes('depositphotos')) {
         // TODO: Delete old image
       }
       updateData.imageUrl = (req.file as any).path;
     }
-
-    console.log('Final updateData:', updateData);
-
     const updatedPlan = await Plan.findByIdAndUpdate(
       id,
       { $set: updateData },
@@ -341,16 +296,13 @@ export const updatePlan = async (req: Request, res: Response): Promise<void> => 
       .populate('creatorId', 'username profileImage')
       .populate('participants.id', 'username profileImage')
       .populate('admins.id', 'username profileImage');
-
-    console.log('Plan actualizado:', updatedPlan);
-
     res.json({
-      message: 'Plan actualizado con éxito',
+      message: 'Plan updated successfully',
       plan: updatedPlan
     });
   } catch (error) {
-    console.error('Error al actualizar plan:', error);
-    res.status(400).json({ error: 'Error al actualizar el plan' });
+    console.error('Error updating plan:', error);
+    res.status(400).json({ error: 'Error updating plan' });
   }
 };
 
@@ -358,29 +310,24 @@ export const cancelPlan = async (req: Request, res: Response): Promise<void> => 
   try {
     const authenticatedUser = (req as any).user;
     const { id } = req.params;
-
     if (!mongoose.Types.ObjectId.isValid(id)) {
-      res.status(400).json({ error: 'ID de plan inválido' });
+      res.status(400).json({ error: 'Invalid plan ID' });
       return;
     }
-
     const plan = await Plan.findById(id);
     if (!plan) {
-      res.status(404).json({ error: 'Plan no encontrado' });
+      res.status(404).json({ error: 'Plan not found' });
       return;
     }
-
     if (plan.creatorId.toString() !== authenticatedUser._id) {
-      res.status(403).json({ error: 'No tienes permiso para cancelar este plan' });
+      res.status(403).json({ error: 'You do not have permission to cancel this plan' });
       return;
     }
-
     plan.status = 'cancelled';
     await plan.save();
-
-    res.status(200).json({ message: 'Plan cancelado con éxito' });
+    res.status(200).json({ message: 'Plan cancelled successfully' });
   } catch (error) {
-    res.status(500).json({ error: 'Error al cancelar el plan' });
+    res.status(500).json({ error: 'Error cancelling plan' });
   }
 };
 
@@ -388,43 +335,36 @@ export const addAdmin = async (req: Request, res: Response): Promise<void> => {
   try {
     const { planId, userId } = req.params;
     const authenticatedUser = (req as any).user;
-
     if (!mongoose.Types.ObjectId.isValid(planId) || !mongoose.Types.ObjectId.isValid(userId)) {
-      res.status(400).json({ error: 'IDs inválidos' });
+      res.status(400).json({ error: 'Invalid IDs' });
       return;
     }
-
     const plan = await Plan.findById(planId);
     if (!plan) {
-      res.status(404).json({ error: 'Plan no encontrado' });
+      res.status(404).json({ error: 'Plan not found' });
       return;
     }
-
     if (!plan.admins.some(admin => admin.id.toString() === authenticatedUser._id)) {
-      res.status(403).json({ error: 'No tienes permisos para añadir administradores' });
+      res.status(403).json({ error: 'You do not have permission to add administrators' });
       return;
     }
-
     if (plan.admins.some(admin => admin.id.toString() === userId)) {
-      res.status(400).json({ error: 'El usuario ya es administrador' });
+      res.status(400).json({ error: 'User is already an administrator' });
       return;
     }
-
     const user = await User.findById(userId);
     if (!user) {
-      res.status(404).json({ error: 'Usuario no encontrado' });
+      res.status(404).json({ error: 'User not found' });
       return;
     }
-
     plan.admins.push({
       id: new mongoose.Types.ObjectId(userId),
       username: user.username
     });
     await plan.save();
-
-    res.status(200).json({ message: 'Administrador añadido con éxito' });
+    res.status(200).json({ message: 'Administrator added successfully' });
   } catch (error) {
-    res.status(500).json({ error: 'Error al añadir administrador' });
+    res.status(500).json({ error: 'Error adding administrator' });
   }
 };
 
@@ -432,38 +372,32 @@ export const removeAdmin = async (req: Request, res: Response): Promise<void> =>
   try {
     const { planId, userId } = req.params;
     const authenticatedUser = (req as any).user;
-
     const plan = await Plan.findById(planId);
     if (!plan) {
-      res.status(404).json({ error: 'Plan no encontrado' });
+      res.status(404).json({ error: 'Plan not found' });
       return;
     }
-
     if (!plan.admins.some(adminId => adminId.toString() === authenticatedUser._id.toString())) {
-      res.status(403).json({ error: 'No tienes permisos para realizar esta acción' });
+      res.status(403).json({ error: 'You do not have permission to perform this action' });
       return;
     }
-
     if (plan.creatorId.toString() === userId) {
-      res.status(400).json({ error: 'No se puede eliminar al creador como administrador' });
+      res.status(400).json({ error: 'Cannot remove the creator as administrator' });
       return;
     }
-
     plan.admins = plan.admins.filter(adminId => adminId.toString() !== userId);
     await plan.save();
-
     const populatedPlan = await Plan.findById(plan._id)
       .populate('creatorId', 'username profileImage')
       .populate('participants', 'username profileImage')
       .populate('admins', 'username profileImage');
-
     res.json({
-      message: 'Administrador eliminado con éxito',
+      message: 'Administrator removed successfully',
       plan: populatedPlan
     });
   } catch (error) {
-    console.error('Error al eliminar administrador:', error);
-    res.status(400).json({ error: 'Error al eliminar administrador' });
+    console.error('Error removing administrator:', error);
+    res.status(400).json({ error: 'Error removing administrator' });
   }
 };
 
@@ -474,15 +408,15 @@ export const isAdmin = async (req: Request, res: Response): Promise<void> => {
 
     const plan = await Plan.findById(planId);
     if (!plan) {
-      res.status(404).json({ error: 'Plan no encontrado' });
+      res.status(404).json({ error: 'Plan not found' });
       return;
     }
 
     const isUserAdmin = plan.admins.some(adminId => adminId.toString() === authenticatedUser._id.toString());
     res.json({ isAdmin: isUserAdmin });
   } catch (error) {
-    console.error('Error al verificar administrador:', error);
-    res.status(400).json({ error: 'Error al verificar administrador' });
+    console.error('Error verifying administrator:', error);
+    res.status(400).json({ error: 'Error verifying administrator' });
   }
 };
 
@@ -490,28 +424,23 @@ export const deletePlan = async (req: Request, res: Response): Promise<void> => 
   try {
     const authenticatedUser = (req as any).user;
     const { id } = req.params;
-
     if (!mongoose.Types.ObjectId.isValid(id)) {
-      res.status(400).json({ error: 'ID de plan inválido' });
+      res.status(400).json({ error: 'Invalid plan ID' });
       return;
     }
-
     const plan = await Plan.findById(id);
     if (!plan) {
-      res.status(404).json({ error: 'Plan no encontrado' });
+      res.status(404).json({ error: 'Plan not found' });
       return;
     }
-
     if (!plan.admins.some(admin => admin.id.toString() === authenticatedUser._id)) {
-      res.status(403).json({ error: 'No tienes permisos para eliminar este plan' });
+      res.status(403).json({ error: 'You do not have permission to delete this plan' });
       return;
     }
-
     await Plan.findByIdAndDelete(id);
-
-    res.status(200).json({ message: 'Plan eliminado con éxito' });
+    res.status(200).json({ message: 'Plan deleted successfully' });
   } catch (error) {
-    console.error('Error al eliminar plan:', error);
-    res.status(500).json({ error: 'Error al eliminar el plan' });
+    console.error('Error deleting plan:', error);
+    res.status(500).json({ error: 'Error deleting plan' });
   }
 };

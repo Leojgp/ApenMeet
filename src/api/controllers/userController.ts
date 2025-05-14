@@ -16,7 +16,7 @@ export const getAllUsers = async (_req: Request, res: Response) => {
   }
   catch (err) {
     res.status(500).json(
-      { error: 'Error al obtener los usuarios' }
+      { error: 'Error fetching users' }
     );
   }
 };
@@ -26,14 +26,14 @@ export const getUserData = async (req: Request, res: Response): Promise<void> =>
     const authenticatedUser = (req as any).user;
 
     if (!authenticatedUser || !authenticatedUser._id) {
-      res.status(401).json({ error: 'Token inválido o no proporcionado' });
+      res.status(401).json({ error: 'Invalid or missing token' });
       return;
     }
 
     const user = await User.findById(authenticatedUser._id);
 
     if (!user) {
-      res.status(404).json({ error: 'Usuario no encontrado' });
+      res.status(404).json({ error: 'User not found' });
       return;
     }
 
@@ -52,12 +52,12 @@ export const getUserData = async (req: Request, res: Response): Promise<void> =>
       },
     });
   } catch (err) {
-    console.error('Error al obtener los datos del usuario:', err);
-    res.status(500).json({ error: 'Error interno del servidor al obtener los datos del usuario' });
+    console.error('Error fetching user data:', err);
+    res.status(500).json({ error: 'Internal server error while fetching user data' });
   }
 };
 
-// Registro
+// Registration
 export const registerUser = async (req: Request, res: Response): Promise<void> => {
   try {
     console.log('Request body completo:', req.body);
@@ -80,17 +80,17 @@ export const registerUser = async (req: Request, res: Response): Promise<void> =
     } = req.body;
 
     if (!username || !email || !password) {
-      res.status(400).json({ message: 'Faltan campos obligatorios' });
+      res.status(400).json({ message: 'Missing required fields' });
       return;
     }
 
     const existingUser = await User.findOne({ $or: [{ username }, { email }] });
     if (existingUser) {
-      res.status(409).json({ message: 'El nombre de usuario o email ya está en uso' });
+      res.status(409).json({ message: 'Username or email already in use' });
       return;
     }
 
-    // Encriptación de la contraseña
+    // Password encryption
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password, salt);
 
@@ -99,7 +99,6 @@ export const registerUser = async (req: Request, res: Response): Promise<void> =
       profileImage = (req.file as any).path;
     }
 
-    // Leer los campos de ubicación como propiedades planas
     const city = req.body.city || '';
     const country = req.body.country || '';
     const formattedAddress = req.body.formattedAddress || '';
@@ -147,34 +146,33 @@ export const registerUser = async (req: Request, res: Response): Promise<void> =
       isVerified: newUser.isVerified,
     };
 
-    res.status(201).json({ message: 'Usuario registrado con éxito', user: userResponse });
+    res.status(201).json({ message: 'User registered successfully', user: userResponse });
   } catch (error) {
-    console.error('Error al registrar usuario:', error);
-    res.status(500).json({ message: 'Error interno del servidor' });
+    console.error('Error registering user:', error);
+    res.status(500).json({ message: 'Internal server error' });
   }
 };
 
-// Inicio de sesión
-
+// Login
 export const loginUser = async (req: Request, res: Response): Promise<void> => {
   try {
     const { email, password } = req.body;
 
     if (!email || !password) {
-      res.status(400).json({ message: 'Email/usuario y contraseña son requeridos' });
+      res.status(400).json({ message: 'Email/username and password are required' });
       return;
     }
 
     const user = await User.findOne({ email });
 
     if (!user) {
-      res.status(401).json({ message: 'Credenciales inválidas' });
+      res.status(401).json({ message: 'Invalid credentials' });
       return;
     }
 
     const validPassword = await bcrypt.compare(password, user.passwordHash);
     if (!validPassword) {
-      res.status(401).json({ message: 'Credenciales inválidas' });
+      res.status(401).json({ message: 'Invalid credentials' });
       return;
     }
 
@@ -198,42 +196,41 @@ export const loginUser = async (req: Request, res: Response): Promise<void> => {
     await newTokenDoc.save();
 
     res.status(200).json({
-      message: 'Inicio de sesión exitoso',
+      message: 'Login successful',
       user: userResponse,
       accessToken,
       refreshToken
     });
   } catch (error) {
-    console.error('Error en login:', error);
-    res.status(500).json({ message: 'Error interno del servidor' });
+    console.error('Error in login:', error);
+    res.status(500).json({ message: 'Internal server error' });
   }
 };
-
 
 export const getToken = async (req: Request, res: Response): Promise<void> => {
   try {
     const refreshToken = req.body.token;
 
     if (!refreshToken) {
-      res.status(401).json({ message: 'Token no proporcionado' });
+      res.status(401).json({ message: 'Token not provided' });
       return;
     }
 
     const tokenExists = await RefreshToken.findOne({ token: refreshToken });
     if (!tokenExists) {
-      res.status(403).json({ message: 'Token inválido' });
+      res.status(403).json({ message: 'Invalid token' });
       return;
     }
 
     jwt.verify(refreshToken, process.env.REFRESH_TOKEN_SECRET || '', async (err: Error, userData: any) => {
       if (err) {
-        res.status(403).json({ message: 'Token inválido' });
+        res.status(403).json({ message: 'Invalid token' });
         return;
       }
 
       const user = await User.findById(userData._id);
       if (!user) {
-        res.status(404).json({ message: 'Usuario no encontrado' });
+        res.status(404).json({ message: 'User not found' });
         return;
       }
 
@@ -247,8 +244,8 @@ export const getToken = async (req: Request, res: Response): Promise<void> => {
       res.json({ accessToken });
     });
   } catch (error) {
-    console.error('Error al renovar token:', error);
-    res.status(500).json({ message: 'Error interno del servidor' });
+    console.error('Error refreshing token:', error);
+    res.status(500).json({ message: 'Internal server error' });
   }
 };
 
@@ -274,13 +271,13 @@ export const updateUserData = async (req: Request, res: Response): Promise<void>
   try {
     const authenticatedUser = (req as any).user;
     if (!authenticatedUser || !authenticatedUser._id) {
-      res.status(401).json({ error: 'Token inválido o no proporcionado' });
+      res.status(401).json({ error: 'Invalid or missing token' });
       return;
     }
 
     const user = await User.findById(authenticatedUser._id);
     if (!user) {
-      res.status(404).json({ error: 'Usuario no encontrado' });
+      res.status(404).json({ error: 'User not found' });
       return;
     }
 
@@ -316,8 +313,8 @@ export const updateUserData = async (req: Request, res: Response): Promise<void>
       },
     });
   } catch (err) {
-    console.error('Error al actualizar los datos del usuario:', err);
-    res.status(500).json({ error: 'Error interno del servidor al actualizar los datos del usuario' });
+    console.error('Error updating user data:', err);
+    res.status(500).json({ error: 'Internal server error while updating user data' });
   }
 };
 
