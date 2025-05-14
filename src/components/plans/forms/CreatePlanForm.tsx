@@ -5,6 +5,7 @@ import ImageUpload from './ImageUpload';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { Ionicons } from '@expo/vector-icons';
 import LocationPicker from '../maps/LocationPicker';
+import { useTheme } from '../../../hooks/theme/useTheme';
 
 interface CreatePlanFormProps {
   onSubmit?: (form: any) => Promise<void>;
@@ -13,6 +14,7 @@ interface CreatePlanFormProps {
 }
 
 export default function CreatePlanForm({ onSubmit, initialValues, isEditing = false }: CreatePlanFormProps) {
+  const theme = useTheme();
   const {
     form,
     handleChange,
@@ -34,6 +36,7 @@ export default function CreatePlanForm({ onSubmit, initialValues, isEditing = fa
     handleAddTag,
     handleRemoveTag,
     currentTag,
+    handleParticipantsChange,
   } = useCreatePlanForm(isEditing);
 
   useEffect(() => {
@@ -52,41 +55,54 @@ export default function CreatePlanForm({ onSubmit, initialValues, isEditing = fa
   };
 
   return (
-    <ScrollView style={styles.container}>
+    <ScrollView style={[styles.container, { backgroundColor: theme.background }]}>
       <View style={styles.form}>
-        <Text style={styles.label}>Título</Text>
+        <Text style={[styles.label, { color: theme.text }]}>Título</Text>
         <TextInput
-          style={styles.input}
+          style={[styles.input, { 
+            backgroundColor: theme.card,
+            color: theme.text,
+            borderColor: theme.border
+          }]}
           value={form.title}
           onChangeText={(text) => {
             console.log('Title changed:', text);
             handleChange('title', text);
           }}
           placeholder="Título del plan"
+          placeholderTextColor={theme.placeholder}
         />
 
-        <Text style={styles.label}>Descripción</Text>
+        <Text style={[styles.label, { color: theme.text }]}>Descripción</Text>
         <TextInput
-          style={[styles.input, styles.textArea]}
+          style={[styles.input, styles.textArea, { 
+            backgroundColor: theme.card,
+            color: theme.text,
+            borderColor: theme.border
+          }]}
           value={form.description}
           onChangeText={(text) => {
             console.log('Description changed:', text);
             handleChange('description', text);
           }}
           placeholder="Descripción del plan"
+          placeholderTextColor={theme.placeholder}
           multiline
           numberOfLines={4}
         />
 
-        <Text style={styles.label}>Fecha y Hora</Text>
+        <Text style={[styles.label, { color: theme.text }]}>Fecha y Hora</Text>
         <TouchableOpacity 
-          style={styles.dateButton} 
+          style={[styles.dateButton, { 
+            backgroundColor: theme.card,
+            borderColor: theme.border
+          }]} 
           onPress={() => setShowDatePicker(true)}
         >
-          <Text style={styles.dateButtonText}>
+          <Text style={[styles.dateButtonText, { color: theme.text }]}>
             {form.dateTime ? new Date(form.dateTime).toLocaleString() : 'Seleccionar fecha y hora'}
           </Text>
-          <Ionicons name="calendar" size={24} color="#5C4D91" />
+          <Ionicons name="calendar" size={24} color={theme.primary} />
         </TouchableOpacity>
 
         {Platform.OS === 'ios' && showDatePicker && (
@@ -119,7 +135,7 @@ export default function CreatePlanForm({ onSubmit, initialValues, isEditing = fa
           />
         )}
 
-        <Text style={styles.label}>Ubicación</Text>
+        <Text style={[styles.label, { color: theme.text }]}>Ubicación</Text>
         <LocationPicker
           onLocationSelect={(location) => {
             console.log('Location changed:', location);
@@ -128,50 +144,74 @@ export default function CreatePlanForm({ onSubmit, initialValues, isEditing = fa
           initialLocation={form.location}
         />
 
-        <Text style={styles.label}>Etiquetas</Text>
+        <Text style={[styles.label, { color: theme.text }]}>Máximo de Participantes</Text>
+        <View style={styles.participantsContainer}>
+          <TouchableOpacity 
+            style={styles.participantButton}
+            onPress={() => handleParticipantsChange((form.maxParticipants ?? 10) - 1)}
+            disabled={(form.maxParticipants ?? 10) <= 2}
+          >
+            <Ionicons name="remove-circle" size={24} color={(form.maxParticipants ?? 10) <= 2 ? theme.border : theme.primary} />
+          </TouchableOpacity>
+          <Text style={[styles.participantCount, { color: theme.text }]}>{form.maxParticipants ?? 10}</Text>
+          <TouchableOpacity 
+            style={styles.participantButton}
+            onPress={() => handleParticipantsChange((form.maxParticipants ?? 10) + 1)}
+            disabled={(form.maxParticipants ?? 10) >= 100}
+          >
+            <Ionicons name="add-circle" size={24} color={(form.maxParticipants ?? 10) >= 100 ? theme.border : theme.primary} />
+          </TouchableOpacity>
+        </View>
+
+        <Text style={[styles.label, { color: theme.text }]}>Etiquetas</Text>
         <View style={styles.tagsContainer}>
           <View style={styles.tagInputContainer}>
             <TextInput
-              style={styles.tagInput}
+              style={[styles.tagInput, { 
+                backgroundColor: theme.card,
+                color: theme.text,
+                borderColor: theme.border
+              }]}
               value={currentTag}
               onChangeText={handleTagInputChange}
               onSubmitEditing={handleTagInputSubmit}
               placeholder="Añadir etiqueta..."
+              placeholderTextColor={theme.placeholder}
               returnKeyType="done"
             />
             <TouchableOpacity 
               style={styles.addTagButton}
               onPress={handleAddTag}
             >
-              <Ionicons name="add-circle" size={24} color="#5C4D91" />
+              <Ionicons name="add-circle" size={24} color={theme.primary} />
             </TouchableOpacity>
           </View>
           <View style={styles.tagsList}>
             {form.tags.map((tag, index) => (
-              <View key={index} style={styles.tagChip}>
-                <Text style={styles.tagText}>{tag}</Text>
+              <View key={index} style={[styles.tagChip, { backgroundColor: theme.card }]}>
+                <Text style={[styles.tagText, { color: theme.text }]}>{tag}</Text>
                 <TouchableOpacity onPress={() => handleRemoveTag(tag)}>
-                  <Ionicons name="close-circle" size={20} color="#5C4D91" />
+                  <Ionicons name="close-circle" size={20} color={theme.primary} />
                 </TouchableOpacity>
               </View>
             ))}
           </View>
         </View>
 
-        <Text style={styles.label}>Imagen</Text>
+        <Text style={[styles.label, { color: theme.text }]}>Imagen</Text>
         <View style={styles.imageContainer}>
           {form.image ? (
             <View style={styles.imagePreview}>
               <Image source={{ uri: form.image.uri }} style={styles.previewImage} />
-              <TouchableOpacity style={styles.changeImageButton} onPress={handleImagePick}>
-                <Text style={styles.changeImageText}>Cambiar Imagen</Text>
+              <TouchableOpacity style={[styles.changeImageButton, { backgroundColor: theme.primary }]} onPress={handleImagePick}>
+                <Text style={[styles.changeImageText, { color: theme.card }]}>Cambiar Imagen</Text>
               </TouchableOpacity>
             </View>
           ) : form.imageUrl ? (
             <View style={styles.imagePreview}>
               <Image source={{ uri: form.imageUrl }} style={styles.previewImage} />
-              <TouchableOpacity style={styles.changeImageButton} onPress={handleImagePick}>
-                <Text style={styles.changeImageText}>Cambiar Imagen</Text>
+              <TouchableOpacity style={[styles.changeImageButton, { backgroundColor: theme.primary }]} onPress={handleImagePick}>
+                <Text style={[styles.changeImageText, { color: theme.card }]}>Cambiar Imagen</Text>
               </TouchableOpacity>
             </View>
           ) : (
@@ -179,8 +219,8 @@ export default function CreatePlanForm({ onSubmit, initialValues, isEditing = fa
           )}
         </View>
 
-        <TouchableOpacity style={styles.button} onPress={handleSubmit}>
-          <Text style={styles.buttonText}>{onSubmit ? 'Guardar Cambios' : 'Crear Plan'}</Text>
+        <TouchableOpacity style={[styles.button, { backgroundColor: theme.primary }]} onPress={handleSubmit}>
+          <Text style={[styles.buttonText, { color: theme.card }]}>{onSubmit ? 'Guardar Cambios' : 'Crear Plan'}</Text>
         </TouchableOpacity>
       </View>
     </ScrollView>
@@ -190,7 +230,6 @@ export default function CreatePlanForm({ onSubmit, initialValues, isEditing = fa
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
   },
   form: {
     padding: 20,
@@ -198,12 +237,10 @@ const styles = StyleSheet.create({
   label: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#333',
     marginBottom: 8,
   },
   input: {
     borderWidth: 1,
-    borderColor: '#ddd',
     borderRadius: 8,
     padding: 12,
     marginBottom: 16,
@@ -218,14 +255,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     borderWidth: 1,
-    borderColor: '#ddd',
     borderRadius: 8,
     padding: 12,
     marginBottom: 16,
   },
   dateButtonText: {
     fontSize: 16,
-    color: '#333',
   },
   participantsContainer: {
     flexDirection: 'row',
@@ -255,7 +290,6 @@ const styles = StyleSheet.create({
   tagInput: {
     flex: 1,
     borderWidth: 1,
-    borderColor: '#ddd',
     borderRadius: 8,
     padding: 12,
     fontSize: 16,
@@ -272,7 +306,6 @@ const styles = StyleSheet.create({
   tagChip: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#f0f0f0',
     borderRadius: 16,
     paddingHorizontal: 12,
     paddingVertical: 6,
@@ -281,7 +314,6 @@ const styles = StyleSheet.create({
   },
   tagText: {
     fontSize: 14,
-    color: '#333',
     marginRight: 4,
   },
   imageContainer: {
@@ -302,23 +334,19 @@ const styles = StyleSheet.create({
     position: 'absolute',
     bottom: 10,
     right: 10,
-    backgroundColor: 'rgba(0,0,0,0.7)',
     padding: 8,
     borderRadius: 4,
   },
   changeImageText: {
-    color: '#fff',
     fontSize: 14,
   },
   button: {
-    backgroundColor: '#5C4D91',
     padding: 16,
     borderRadius: 8,
     alignItems: 'center',
     marginTop: 20,
   },
   buttonText: {
-    color: '#fff',
     fontSize: 18,
     fontWeight: '600',
   },

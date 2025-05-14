@@ -61,7 +61,6 @@ export const useAuth = ({ navigation }: useAuthProps) => {
                 joinedAt: userData.user.joinedAt || '',
                 isVerified: userData.user.isVerified || false
             }));
-            navigation.navigate('Main');
         } catch (err: any) {
             setError(err.message || 'Ocurrió un error. Intenta nuevamente.');
             console.log('Error en login:', err.message);

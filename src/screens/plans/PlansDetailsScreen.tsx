@@ -3,9 +3,9 @@ import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-nati
 import { Ionicons } from '@expo/vector-icons';
 import { usePlanDetails } from '../../hooks/plans/usePlanDetails';
 import { useJoinPlan } from '../../hooks/plans/useJoinPlan';
-
 import { useUser } from '../../hooks/user/useUser';
 import { JoinRequestModal, PlanHeader, PlanInfoCard, PlanMap } from '../../components/plans';
+import { useTheme } from '../../hooks/theme/useTheme';
 
 interface PlanDetailProps {
   route: {
@@ -24,6 +24,7 @@ export default function PlanDetailScreen({ route, navigation }: PlanDetailProps)
   const [showJoinRequest, setShowJoinRequest] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
   const [mapReady, setMapReady] = useState(false);
+  const theme = useTheme();
 
   const handleJoin = async () => {
     try {
@@ -41,16 +42,16 @@ export default function PlanDetailScreen({ route, navigation }: PlanDetailProps)
 
   if (loading) {
     return (
-      <View style={styles.centered}>
-        <Text>Loading...</Text>
+      <View style={[styles.centered, { backgroundColor: theme.background }]}> 
+        <Text style={{ color: theme.text }}>Loading...</Text>
       </View>
     );
   }
 
   if (error || !plan) {
     return (
-      <View style={styles.centered}>
-        <Text style={styles.error}>{error || 'Plan not found'}</Text>
+      <View style={[styles.centered, { backgroundColor: theme.background }]}> 
+        <Text style={[styles.error, { color: theme.error }]}>{error || 'Plan not found'}</Text>
       </View>
     );
   }
@@ -59,10 +60,10 @@ export default function PlanDetailScreen({ route, navigation }: PlanDetailProps)
   const longitude = plan.location.coordinates[0];
 
   return (
-    <ScrollView style={styles.bg} contentContainerStyle={styles.scrollContent}>
+    <ScrollView style={[styles.bg, { backgroundColor: theme.background }]} contentContainerStyle={styles.scrollContent}>
       {showSuccess && (
-        <View style={styles.successMessage}>
-          <Text style={styles.successText}>¡Te has unido al plan correctamente!</Text>
+        <View style={[styles.successMessage, { backgroundColor: theme.primary }]}> 
+          <Text style={[styles.successText, { color: theme.card }]}>¡Te has unido al plan correctamente!</Text>
         </View>
       )}
       <View style={styles.headerContainer}>
@@ -73,10 +74,10 @@ export default function PlanDetailScreen({ route, navigation }: PlanDetailProps)
         />
         {isAdmin && (
           <TouchableOpacity 
-            style={styles.editButton}
+            style={[styles.editButton, { backgroundColor: theme.card }]}
             onPress={() => navigation.navigate('EditPlan', { planId: plan._id })}
           >
-            <Ionicons name="pencil" size={24} color="#5C4D91" />
+            <Ionicons name="pencil" size={24} color={theme.primary} />
           </TouchableOpacity>
         )}
       </View>
@@ -105,22 +106,20 @@ export default function PlanDetailScreen({ route, navigation }: PlanDetailProps)
         mapReady={mapReady}
         setMapReady={setMapReady}
       />
-      <View style={styles.buttonContainer}>
-        <TouchableOpacity 
-          style={[styles.button, styles.chatButton]} 
-          onPress={() => navigation.navigate('Chat', { planId, planTitle: plan.title })}
-        >
-          <Ionicons name="chatbubble-outline" size={24} color="#fff" />
-          <Text style={styles.buttonText}>Chat</Text>
-        </TouchableOpacity>
-        <TouchableOpacity 
-          style={[styles.button, styles.joinButton]} 
-          onPress={handleJoin}
-          disabled={joinLoading}
-        >
-          <Text style={styles.buttonText}>{joinLoading ? 'Joining...' : 'Join Plan'}</Text>
-        </TouchableOpacity>
-      </View>
+      <TouchableOpacity 
+        style={[styles.button, styles.chatButton, { backgroundColor: theme.success }]}
+        onPress={() => navigation.navigate('Chat', { planId, planTitle: plan.title })}
+      >
+        <Ionicons name="chatbubble-outline" size={24} color={theme.card} />
+        <Text style={[styles.buttonText, { color: theme.card }]}>Chat</Text>
+      </TouchableOpacity>
+      <TouchableOpacity 
+        style={[styles.button, styles.joinButton, { backgroundColor: theme.primary }]}
+        onPress={handleJoin}
+        disabled={joinLoading}
+      >
+        <Text style={[styles.buttonText, { color: theme.card }]}>{joinLoading ? 'Joining...' : 'Join Plan'}</Text>
+      </TouchableOpacity>
       <JoinRequestModal
         visible={showJoinRequest}
         onRequestClose={() => setShowJoinRequest(false)}
@@ -133,7 +132,7 @@ export default function PlanDetailScreen({ route, navigation }: PlanDetailProps)
 
 const styles = StyleSheet.create({
   bg: {
-    backgroundColor: '#fff',
+    // backgroundColor: '#fff',
   },
   scrollContent: {
     padding: 20,
@@ -141,12 +140,10 @@ const styles = StyleSheet.create({
   },
   centered: {
     flex: 1,
-    backgroundColor: '#fff',
     alignItems: 'center',
     justifyContent: 'center',
   },
   error: {
-    color: 'red',
     marginBottom: 10,
     textAlign: 'center',
   },
@@ -158,7 +155,6 @@ const styles = StyleSheet.create({
   editButton: {
     padding: 8,
     borderRadius: 20,
-    backgroundColor: '#F7F5FF',
     marginLeft: 8,
   },
   buttonContainer: {
@@ -175,26 +171,20 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     paddingVertical: 16,
     gap: 8,
+    marginTop: 12,
   },
-  chatButton: {
-    backgroundColor: '#4CAF50',
-  },
-  joinButton: {
-    backgroundColor: '#5C4D91',
-  },
+  chatButton: {},
+  joinButton: {},
   buttonText: {
-    color: '#fff',
     fontSize: 18,
     fontWeight: 'bold',
   },
   successMessage: {
-    backgroundColor: '#4CAF50',
     padding: 12,
     borderRadius: 8,
     marginBottom: 16,
   },
   successText: {
-    color: '#fff',
     fontSize: 16,
     fontWeight: 'bold',
     textAlign: 'center',

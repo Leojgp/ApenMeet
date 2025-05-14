@@ -1,22 +1,29 @@
 import { StyleSheet, Text, View, TouchableOpacity, Image } from 'react-native'
 import React from 'react'
+import { useTheme } from '../../hooks/theme/useTheme'
+import ThemeToggle from '../../components/theme/ThemeToggle'
 
 interface HomeScreenProps{
     navigation:any
 }
 
 export default function HomeScreen({navigation}:HomeScreenProps) {
+  const theme = useTheme()
+
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: theme.background }]}>  
+      <View style={styles.toggleContainer}>
+        <ThemeToggle />
+      </View>
       <View style={styles.logoContainer}>
         <Image source={require('../../../assets/ApenMeetImages/logo.png')} style={styles.logoImage} />
-        <Text style={styles.logoText}>ÅpenMeet</Text>
+        <Text style={[styles.logoText, { color: theme.text }]}>ÅpenMeet</Text>
       </View>
-      <TouchableOpacity style={styles.button} onPress={() => navigation.navigate('SignUp')}>
-        <Text style={styles.buttonText}>Sign Up</Text>
+      <TouchableOpacity style={[styles.button, { backgroundColor: theme.card }]} onPress={() => navigation.navigate('SignUp')}>
+        <Text style={[styles.buttonText, { color: theme.primary }]}>Sign Up</Text>
       </TouchableOpacity>
-      <TouchableOpacity style={styles.button} onPress={() => navigation.navigate('SignIn')}>
-        <Text style={styles.buttonText}>Log In</Text>
+      <TouchableOpacity style={[styles.button, { backgroundColor: theme.card }]} onPress={() => navigation.navigate('SignIn')}>
+        <Text style={[styles.buttonText, { color: theme.primary }]}>Log In</Text>
       </TouchableOpacity>
     </View>
   )
@@ -25,10 +32,15 @@ export default function HomeScreen({navigation}:HomeScreenProps) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#5C4D91',
     alignItems: 'center',
     justifyContent: 'center',
     padding: 20,
+  },
+  toggleContainer: {
+    position: 'absolute',
+    top: 70,
+    right: 24,
+    zIndex: 10,
   },
   logoContainer: {
     alignItems: 'center',
@@ -43,10 +55,8 @@ const styles = StyleSheet.create({
   logoText: {
     fontSize: 36,
     fontWeight: 'bold',
-    color: '#fff',
   },
   button: {
-    backgroundColor: '#fff',
     borderRadius: 12,
     paddingVertical: 14,
     width: '100%',
@@ -54,7 +64,6 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   buttonText: {
-    color: '#5C4D91',
     fontSize: 18,
     fontWeight: 'bold',
   },

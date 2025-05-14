@@ -180,10 +180,9 @@ export const useCreatePlanForm = (isEditing: boolean = false) => {
       formData.append('title', form.title);
       formData.append('description', form.description);
       formData.append('dateTime', form.dateTime.toISOString());
-      formData.append('location', JSON.stringify({
-        address: form.location.address,
-        coordinates: form.location.coordinates
-      }));
+      formData.append('location[address]', form.location.address || '');
+      formData.append('location[coordinates][]', String(form.location.coordinates[0]));
+      formData.append('location[coordinates][]', String(form.location.coordinates[1]));
       
       form.tags.forEach(tag => {
         formData.append('tags[]', tag);

@@ -72,7 +72,9 @@ export default function LocationRequest({ onLocationSet }: LocationRequestProps)
         ...currentUser,
         location: {
           city,
-          coordinates: [location.coords.longitude, location.coords.latitude]
+          coordinates: [location.coords.longitude, location.coords.latitude],
+          country: '',
+          formattedAddress: ''
         }
       }));
 

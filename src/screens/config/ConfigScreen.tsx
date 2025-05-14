@@ -1,6 +1,11 @@
 import { StyleSheet, Text, View, TouchableOpacity, ScrollView } from 'react-native';
 import React from 'react';
 import { Ionicons, MaterialIcons, Feather } from '@expo/vector-icons';
+import ThemeToggle from '../../components/theme/ThemeToggle';
+import { useTheme } from '../../hooks/theme/useTheme';
+import { useDispatch } from 'react-redux';
+import { clearUser } from '../../store/userSlice';
+import * as SecureStore from 'expo-secure-store';
 
 const options = [
   { icon: <Ionicons name="person-circle-outline" size={30} color="#5C4D91" />, label: 'Edit Profile' },
@@ -10,30 +15,48 @@ const options = [
   { icon: <MaterialIcons name="info-outline" size={26} color="#5C4D91" />, label: 'About' },
 ];
 
-interface ConfigScreenProps{
+interface ConfigScreenProps {
   navigation: any;
 }
-export default function ConfigScreen({navigation}:ConfigScreenProps) {
+
+export default function ConfigScreen({ navigation }: ConfigScreenProps) {
+  const theme = useTheme();
+  const dispatch = useDispatch();
+
+  const handleLogout = async () => {
+    await SecureStore.deleteItemAsync('accessToken');
+    await SecureStore.deleteItemAsync('refreshToken');
+    dispatch(clearUser());
+  };
+
   return (
-    <ScrollView style={styles.bg} contentContainerStyle={styles.container}>
-      <Text style={styles.title}>Settings</Text>
+    <ScrollView style={[styles.bg, { backgroundColor: theme.background }]} contentContainerStyle={styles.container}>
+      <Text style={[styles.title, { color: theme.text }]}>Settings</Text>
       <View style={styles.optionsList}>
         {options.map((opt, idx) => (
           <TouchableOpacity 
             key={opt.label} 
-            style={styles.optionRow}
+            style={[styles.optionRow, { backgroundColor: theme.card }]}
             onPress={() => {
               if (opt.label === 'Edit Profile') navigation.navigate('EditProfileScreen');
             }}
           >
             {opt.icon}
-            <Text style={styles.optionText}>{opt.label}</Text>
+            <Text style={[styles.optionText, { color: theme.text }]}>{opt.label}</Text>
           </TouchableOpacity>
         ))}
+        <View style={[styles.optionRow, { backgroundColor: theme.card }]}>
+          <Ionicons name="moon-outline" size={26} color={theme.primary} />
+          <Text style={[styles.optionText, { color: theme.text }]}>Dark Mode</Text>
+          <View style={styles.toggleContainer}>
+            <ThemeToggle />
+          </View>
+        </View>
       </View>
-      <TouchableOpacity onPress={() => {
-        navigation.navigate('Home');
-      }} style={styles.logoutButton}>
+      <TouchableOpacity 
+        onPress={handleLogout}
+        style={[styles.logoutButton, { backgroundColor: theme.card }]}
+      >
         <Text style={styles.logoutText}>Log Out</Text>
       </TouchableOpacity>
     </ScrollView>
@@ -42,7 +65,7 @@ export default function ConfigScreen({navigation}:ConfigScreenProps) {
 
 const styles = StyleSheet.create({
   bg: {
-    backgroundColor: '#E6E0F8',
+    flex: 1,
   },
   container: {
     padding: 24,
@@ -52,7 +75,6 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 30,
     fontWeight: 'bold',
-    color: '#111',
     marginTop: 14,
     marginBottom: 32,
     textAlign: 'left',
@@ -69,7 +91,6 @@ const styles = StyleSheet.create({
     paddingVertical: 26,
     paddingHorizontal: 22,
     borderRadius: 16,
-    backgroundColor: '#fff',
     marginBottom: 16,
     shadowColor: '#5C4D91',
     shadowOffset: { width: 0, height: 2 },
@@ -79,12 +100,14 @@ const styles = StyleSheet.create({
   },
   optionText: {
     fontSize: 22,
-    color: '#222',
     marginLeft: 22,
     fontWeight: '500',
+    flex: 1,
+  },
+  toggleContainer: {
+    marginLeft: 'auto',
   },
   logoutButton: {
-    backgroundColor: '#fff',
     borderRadius: 12,
     paddingVertical: 18,
     alignItems: 'center',

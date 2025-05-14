@@ -1,6 +1,7 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useTheme } from '../../../hooks/theme/useTheme';
 
 interface ImageUploadProps {
   onPress: () => void;
@@ -8,13 +9,16 @@ interface ImageUploadProps {
 }
 
 export default function ImageUpload({ onPress, hasImage }: ImageUploadProps) {
+  const theme = useTheme();
+
   return (
-    <TouchableOpacity style={styles.container} onPress={onPress}>
-      <View style={styles.iconContainer}>
-        <Ionicons name="image-outline" size={40} color="#5C4D91" />
-      </View>
-      <Text style={styles.text}>
-        {hasImage ? 'Change image' : 'Click to upload image'}
+    <TouchableOpacity 
+      style={[styles.container, { backgroundColor: theme.card }]} 
+      onPress={onPress}
+    >
+      <Ionicons name="image" size={40} color={theme.primary} />
+      <Text style={[styles.text, { color: theme.text }]}>
+        {hasImage ? 'Cambiar imagen' : 'Añadir imagen'}
       </Text>
     </TouchableOpacity>
   );
@@ -22,29 +26,16 @@ export default function ImageUpload({ onPress, hasImage }: ImageUploadProps) {
 
 const styles = StyleSheet.create({
   container: {
-    height: 200,
     width: '100%',
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'center',
+    height: 200,
+    borderRadius: 8,
     justifyContent: 'center',
-    gap: 20,
+    alignItems: 'center',
     borderWidth: 2,
     borderStyle: 'dashed',
-    borderColor: '#D1C4E9',
-    backgroundColor: '#fff',
-    padding: 24,
-    borderRadius: 12,
-    marginBottom: 16,
-  },
-  iconContainer: {
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
   },
   text: {
-    fontWeight: '400',
-    color: '#5C4D91',
+    marginTop: 8,
     fontSize: 16,
   },
 }); 

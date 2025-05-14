@@ -7,6 +7,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { Plan } from '../../models/Plan';
+import { useTheme } from '../../hooks/theme/useTheme';
 
 interface Admin {
   _id: string;
@@ -23,6 +24,7 @@ export default function PlansScreen({navigation}: PlansScreenProps) {
   const [search, setSearch] = useState('');
   const [refreshing, setRefreshing] = useState(false);
   const [filterByCity, setFilterByCity] = useState(false);
+  const theme = useTheme();
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
@@ -64,19 +66,19 @@ export default function PlansScreen({navigation}: PlansScreenProps) {
   const renderHeader = () => (
     <View style={styles.searchBarContainer}>
       <TextInput
-        style={styles.searchInput}
+        style={[styles.searchInput, { backgroundColor: theme.card, color: theme.text, borderColor: theme.border }]}
         placeholder="Search by name"
-        placeholderTextColor="#A9A9A9"
+        placeholderTextColor={theme.placeholder}
         value={search}
         onChangeText={setSearch}
         returnKeyType="search"
       />
       {user?.location?.city && (
         <TouchableOpacity 
-          style={[styles.filterButton, filterByCity && styles.filterButtonActive]} 
+          style={[styles.filterButton, filterByCity && [styles.filterButtonActive, { backgroundColor: theme.primary, borderColor: theme.primary }], { backgroundColor: theme.card, borderColor: theme.border }]}
           onPress={() => setFilterByCity(!filterByCity)}
         >
-          <Ionicons name="location" size={24} color={filterByCity ? "#fff" : "#5C4D91"} />
+          <Ionicons name="location" size={24} color={filterByCity ? theme.card : theme.primary} />
         </TouchableOpacity>
       )}
     </View>
@@ -93,31 +95,31 @@ export default function PlansScreen({navigation}: PlansScreenProps) {
 
   return (
     <GestureHandlerRootView style={{flex: 1}}>
-      <View style={{flex: 1}}>
+      <View style={{flex: 1, backgroundColor: theme.background}}>
         <FlatList
           data={uniquePlans}
           renderItem={renderItem}
           keyExtractor={(item) => item.id}
-          contentContainerStyle={styles.container}
+          contentContainerStyle={[styles.container, { backgroundColor: theme.background }]}
           ListHeaderComponent={renderHeader}
           refreshControl={
             <RefreshControl
               refreshing={refreshing}
               onRefresh={onRefresh}
-              colors={['#5C4D91']}
-              tintColor="#5C4D91"
+              colors={[theme.primary]}
+              tintColor={theme.primary}
             />
           }
           ListEmptyComponent={
             <>
-              {loading && <ActivityIndicator size="small" color="#5C4D91" style={{marginBottom: 16}} />}
-              {error && !loading && <Text style={styles.notFound}>{error}</Text>}
-              {!error && !loading && <Text style={styles.notFound}>No plan found</Text>}
+              {loading && <ActivityIndicator size="small" color={theme.primary} style={{marginBottom: 16}} />}
+              {error && !loading && <Text style={[styles.notFound, { color: theme.error }]}>{error}</Text>}
+              {!error && !loading && <Text style={[styles.notFound, { color: theme.text }]}>No plan found</Text>}
             </>
           }
         />
-        <TouchableOpacity style={styles.fab} onPress={() => navigation.navigate('CreatePlan')}>
-          <Ionicons name="add" size={36} color="#fff" />
+        <TouchableOpacity style={[styles.fab, { backgroundColor: theme.primary }]} onPress={() => navigation.navigate('CreatePlan')}>
+          <Ionicons name="add" size={36} color={theme.card} />
         </TouchableOpacity>
       </View>
     </GestureHandlerRootView>
@@ -126,7 +128,6 @@ export default function PlansScreen({navigation}: PlansScreenProps) {
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: '#fff',
     padding: 18,
     paddingTop: 24,
     minHeight: '100%',
@@ -141,30 +142,22 @@ const styles = StyleSheet.create({
   searchInput: {
     flex: 1,
     height: 44,
-    backgroundColor: '#F7F5FF',
     borderRadius: 10,
     paddingHorizontal: 14,
     fontSize: 16,
     borderWidth: 1,
-    borderColor: '#E6E0F8',
     marginRight: 8,
   },
   filterButton: {
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: '#F7F5FF',
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#E6E0F8',
   },
-  filterButtonActive: {
-    backgroundColor: '#5C4D91',
-    borderColor: '#5C4D91',
-  },
+  filterButtonActive: {},
   notFound: {
-    color: '#f44336',
     fontSize: 16,
     marginBottom: 12,
     textAlign: 'center',
@@ -173,7 +166,6 @@ const styles = StyleSheet.create({
     position: 'absolute',
     right: 24,
     bottom: 32,
-    backgroundColor: '#5C4D91',
     width: 60,
     height: 60,
     borderRadius: 30,

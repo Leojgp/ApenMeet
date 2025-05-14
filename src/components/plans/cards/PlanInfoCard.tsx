@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
+import { useTheme } from '../../../hooks/theme/useTheme';
 
 interface PlanInfoCardProps {
   title: string;
@@ -12,15 +13,16 @@ interface PlanInfoCardProps {
 }
 
 export default function PlanInfoCard({ title, content, badges }: PlanInfoCardProps) {
+  const theme = useTheme();
   return (
-    <View style={styles.card}>
-      <Text style={styles.sectionTitle}>{title}</Text>
-      <Text style={styles.sectionText}>{content}</Text>
+    <View style={[styles.card, { backgroundColor: theme.card }]}>
+      <Text style={[styles.sectionTitle, { color: theme.primary }]}>{title}</Text>
+      <Text style={[styles.sectionText, { color: theme.text }]}>{content}</Text>
       {badges && (
         <View style={styles.badgesRow}>
-          <View style={styles.badge}><Text style={styles.badgeText}>{badges.dateTime}</Text></View>
-          <View style={styles.badge}><Text style={styles.badgeText}>{badges.participantsCount} going</Text></View>
-          <View style={styles.badge}><Text style={styles.badgeText}>{badges.status}</Text></View>
+          <View style={[styles.badge, { backgroundColor: theme.background }]}><Text style={[styles.badgeText, { color: theme.primary }]}>{badges.dateTime}</Text></View>
+          <View style={[styles.badge, { backgroundColor: theme.background }]}><Text style={[styles.badgeText, { color: theme.primary }]}>{badges.participantsCount} going</Text></View>
+          <View style={[styles.badge, { backgroundColor: theme.background }]}><Text style={[styles.badgeText, { color: theme.primary }]}>{badges.status}</Text></View>
         </View>
       )}
     </View>
@@ -29,7 +31,6 @@ export default function PlanInfoCard({ title, content, badges }: PlanInfoCardPro
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: '#F7F5FF',
     borderRadius: 16,
     padding: 16,
     marginBottom: 18,
@@ -41,12 +42,10 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     fontWeight: 'bold',
-    color: '#5C4D91',
     fontSize: 16,
     marginBottom: 6,
   },
   sectionText: {
-    color: '#444',
     fontSize: 15,
     marginBottom: 8,
   },
@@ -55,14 +54,12 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
   badge: {
-    backgroundColor: '#E6E0F8',
     borderRadius: 8,
     paddingHorizontal: 8,
     paddingVertical: 2,
     marginRight: 8,
   },
   badgeText: {
-    color: '#5C4D91',
     fontSize: 12,
     fontWeight: 'bold',
   },

@@ -4,8 +4,8 @@ import { SignUpFormState } from '../../hooks/auth/useSignUpForm';
 import * as Location from 'expo-location';
 import debounce from 'lodash/debounce';
 import { Ionicons } from '@expo/vector-icons';
+import { useTheme } from '../../hooks/theme/useTheme';
 
-// Lista de países soportados
 const SUPPORTED_COUNTRIES = [
   'Spain', 'France', 'Italy', 'Germany', 'United Kingdom', 'Portugal',
   'Netherlands', 'Belgium', 'Switzerland', 'Austria', 'Ireland',
@@ -23,6 +23,7 @@ interface SignUpFormProps {
   loading: boolean;
   error: string | null;
   onNavigateToSignIn: () => void;
+  navigation: any;
 }
 
 export default function SignUpForm({
@@ -32,7 +33,8 @@ export default function SignUpForm({
   pickImage,
   loading,
   error,
-  onNavigateToSignIn
+  onNavigateToSignIn,
+  navigation
 }: SignUpFormProps) {
   const [isLoadingLocation, setIsLoadingLocation] = useState(false);
   const [locationError, setLocationError] = useState<string | null>(null);
@@ -41,6 +43,7 @@ export default function SignUpForm({
   const [showCountryModal, setShowCountryModal] = useState(false);
   const [filteredCountries, setFilteredCountries] = useState(SUPPORTED_COUNTRIES);
   const [searchLocationResult, setSearchLocationResult] = useState<any>(null);
+  const theme = useTheme();
 
   const requestLocationPermission = async () => {
     try {
@@ -259,7 +262,6 @@ export default function SignUpForm({
     setFilteredCountries(filtered);
   };
 
-  // Nueva función para validar la ubicación antes de submit
   const isLocationValid = () => {
     const loc = formState.location;
     return (
@@ -273,14 +275,14 @@ export default function SignUpForm({
     );
   };
 
-  // Envolver handleSubmit para validar ubicación
+
   const handleSafeSubmit = () => {
     console.log('searchLocationResult before submit:', searchLocationResult);
     if (!searchLocationResult) {
       setLocationError('Por favor selecciona una ubicación válida antes de registrarte.');
       return;
     }
-    // Construir objeto JSON para el registro
+
     const userData = {
       username: formState.username,
       email: formState.email,
@@ -302,7 +304,7 @@ export default function SignUpForm({
     handleSubmit(userData);
   };
 
-  // Sincroniza el país del formulario con el resultado de la búsqueda
+
   useEffect(() => {
     if (searchLocationResult && searchLocationResult.country) {
       updateFormState('location', {
@@ -310,83 +312,97 @@ export default function SignUpForm({
         country: searchLocationResult.country
       });
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+
   }, [searchLocationResult?.country]);
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: theme.background }]}>
       <TextInput
-        style={styles.input}
+        style={[styles.input, { backgroundColor: theme.card, color: theme.text, borderColor: theme.border }]}
         placeholder="Username"
+        placeholderTextColor={theme.placeholder}
         value={formState.username}
         onChangeText={(text) => updateFormState('username', text)}
       />
       <TextInput
-        style={styles.input}
+        style={[styles.input, { backgroundColor: theme.card, color: theme.text, borderColor: theme.border }]}
         placeholder="Email"
+        placeholderTextColor={theme.placeholder}
         value={formState.email}
         onChangeText={(text) => updateFormState('email', text)}
         keyboardType="email-address"
         autoCapitalize="none"
       />
       <TextInput
-        style={styles.input}
+        style={[styles.input, { backgroundColor: theme.card, color: theme.text, borderColor: theme.border }]}
         placeholder="Password"
+        placeholderTextColor={theme.placeholder}
         value={formState.password}
         onChangeText={(text) => updateFormState('password', text)}
         secureTextEntry
       />
       <TextInput
-        style={styles.input}
+        style={[styles.input, { backgroundColor: theme.card, color: theme.text, borderColor: theme.border }]}
         placeholder="Confirm Password"
+        placeholderTextColor={theme.placeholder}
         value={formState.confirmPassword}
         onChangeText={(text) => updateFormState('confirmPassword', text)}
         secureTextEntry
+      />
+      <TextInput
+        style={[styles.input, styles.textArea, { backgroundColor: theme.card, color: theme.text, borderColor: theme.border }]}
+        placeholder="Bio"
+        placeholderTextColor={theme.placeholder}
+        value={formState.bio}
+        onChangeText={(text) => updateFormState('bio', text)}
+        multiline
+        numberOfLines={4}
       />
       
       <View style={styles.locationContainer}>
         <View style={styles.cityInputContainer}>
           <TextInput
-            style={[styles.input, cityInput && styles.inputWithClear]}
+            style={[styles.input, cityInput && styles.inputWithClear, { backgroundColor: theme.card, color: theme.text, borderColor: theme.border }]}
             placeholder="City"
+            placeholderTextColor={theme.placeholder}
             value={cityInput}
             onChangeText={handleCityChange}
           />
           {cityInput && (
             <TouchableOpacity 
-              style={styles.clearButton}
+              style={[styles.clearButton, { backgroundColor: theme.card }]}
               onPress={clearLocation}
             >
-              <Text style={styles.clearButtonText}>×</Text>
+              <Text style={[styles.clearButtonText, { color: theme.primary }]}>×</Text>
             </TouchableOpacity>
           )}
         </View>
 
         <TouchableOpacity 
-          style={styles.countryButton}
+          style={[styles.countryButton, { backgroundColor: theme.card, borderColor: theme.border }]}
           onPress={() => setShowCountryModal(true)}
         >
-          <Text style={styles.countryButtonText}>
+          <Text style={[styles.countryButtonText, { color: theme.primary }]}>
             {formState.location.country || 'Select Country'}
           </Text>
         </TouchableOpacity>
 
         {isLoadingLocation && (
-          <ActivityIndicator style={styles.locationLoader} color="#5C4D91" />
+          <ActivityIndicator style={styles.locationLoader} color={theme.primary} />
         )}
         {locationError && (
-          <Text style={styles.errorText}>{locationError}</Text>
+          <Text style={[styles.errorText, { color: theme.error }]}>{locationError}</Text>
         )}
         {formState.location.formattedAddress && (
-          <Text style={styles.locationText}>
+          <Text style={[styles.locationText, { color: theme.primary }]}>
             {formState.location.formattedAddress}
           </Text>
         )}
         <TouchableOpacity 
-          style={styles.locationButton}
+          style={[styles.locationButton, { backgroundColor: theme.card }]}
           onPress={requestLocationPermission}
         >
-          <Text style={styles.locationButtonText}>Usar mi ubicación actual</Text>
+          <Text style={[styles.locationButtonText, { color: theme.primary }]}>Usar mi ubicación actual</Text>
         </TouchableOpacity>
       </View>
 
@@ -396,11 +412,12 @@ export default function SignUpForm({
         transparent={true}
         onRequestClose={() => setShowCountryModal(false)}
       >
-        <View style={styles.modalContainer}>
-          <View style={styles.modalContent}>
+        <View style={[styles.modalContainer, { backgroundColor: 'rgba(0, 0, 0, 0.5)' }]}>
+          <View style={[styles.modalContent, { backgroundColor: theme.card }]}>
             <TextInput
-              style={styles.searchInput}
+              style={[styles.searchInput, { backgroundColor: theme.background, color: theme.text, borderColor: theme.border }]}
               placeholder="Search country..."
+              placeholderTextColor={theme.placeholder}
               onChangeText={filterCountries}
             />
             <FlatList
@@ -408,33 +425,33 @@ export default function SignUpForm({
               keyExtractor={(item) => item}
               renderItem={({ item }) => (
                 <TouchableOpacity
-                  style={styles.countryItem}
+                  style={[styles.countryItem, { borderBottomColor: theme.border }]}
                   onPress={() => handleCountrySelect(item)}
                 >
-                  <Text style={styles.countryItemText}>{item}</Text>
+                  <Text style={[styles.countryItemText, { color: theme.primary }]}>{item}</Text>
                 </TouchableOpacity>
               )}
             />
             <TouchableOpacity
-              style={styles.closeButton}
+              style={[styles.closeButton, { backgroundColor: theme.primary }]}
               onPress={() => setShowCountryModal(false)}
             >
-              <Text style={styles.closeButtonText}>Close</Text>
+              <Text style={[styles.closeButtonText, { color: theme.card }]}>Close</Text>
             </TouchableOpacity>
           </View>
         </View>
       </Modal>
 
       <TouchableOpacity 
-        style={styles.button}
+        style={[styles.button, { backgroundColor: theme.primary }]}
         onPress={handleSafeSubmit}
         disabled={loading || isLoadingLocation || !searchLocationResult}
       >
-        <Text style={styles.buttonText}>
+        <Text style={[styles.buttonText, { color: theme.card }]}>
           {loading ? 'Signing up...' : 'Sign Up'}
         </Text>
       </TouchableOpacity>
-      {error ? <Text style={styles.errorText}>{error}</Text> : null}
+      {error ? <Text style={[styles.errorText, { color: theme.error }]}>{error}</Text> : null}
     </View>
   );
 }
@@ -458,24 +475,20 @@ const styles = StyleSheet.create({
     width: 100,
     height: 100,
     borderRadius: 50,
-    backgroundColor: '#E6E0F8',
     alignItems: 'center',
     justifyContent: 'center',
   },
   placeholderText: {
-    color: '#5C4D91',
     fontSize: 16,
   },
   input: {
     height: 48,
     width: '100%',
-    backgroundColor: '#fff',
     borderRadius: 12,
     paddingHorizontal: 16,
     marginBottom: 16,
     fontSize: 16,
     borderWidth: 1,
-    borderColor: '#D1C4E9',
   },
   locationContainer: {
     width: '100%',
@@ -487,24 +500,20 @@ const styles = StyleSheet.create({
     top: 12,
   },
   locationText: {
-    color: '#5C4D91',
     marginTop: 8,
     fontSize: 14,
   },
   locationButton: {
-    backgroundColor: '#E6E0F8',
     padding: 12,
     borderRadius: 8,
     marginTop: 8,
     alignItems: 'center',
   },
   locationButtonText: {
-    color: '#5C4D91',
     fontSize: 14,
     fontWeight: '500',
   },
   button: {
-    backgroundColor: '#5C4D91',
     borderRadius: 12,
     paddingVertical: 14,
     width: '100%',
@@ -512,17 +521,14 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   buttonText: {
-    color: '#fff',
     fontSize: 18,
     fontWeight: 'bold',
   },
   errorText: {
-    color: 'red',
     marginBottom: 10,
     textAlign: 'center',
   },
   linkText: {
-    color: '#5C4D91',
     fontSize: 16,
     marginTop: 8,
     textDecorationLine: 'underline',
@@ -541,26 +547,21 @@ const styles = StyleSheet.create({
     width: 24,
     height: 24,
     borderRadius: 12,
-    backgroundColor: '#E6E0F8',
     alignItems: 'center',
     justifyContent: 'center',
   },
   clearButtonText: {
-    color: '#5C4D91',
     fontSize: 18,
     fontWeight: 'bold',
     lineHeight: 20,
   },
   countryButton: {
-    backgroundColor: '#fff',
     padding: 12,
     borderRadius: 8,
     marginTop: 8,
     borderWidth: 1,
-    borderColor: '#D1C4E9',
   },
   countryButtonText: {
-    color: '#5C4D91',
     fontSize: 16,
     textAlign: 'center',
   },
@@ -568,10 +569,8 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
   },
   modalContent: {
-    backgroundColor: '#fff',
     borderRadius: 12,
     padding: 20,
     width: '90%',
@@ -580,7 +579,6 @@ const styles = StyleSheet.create({
   searchInput: {
     height: 40,
     borderWidth: 1,
-    borderColor: '#D1C4E9',
     borderRadius: 8,
     paddingHorizontal: 12,
     marginBottom: 12,
@@ -588,22 +586,23 @@ const styles = StyleSheet.create({
   countryItem: {
     padding: 12,
     borderBottomWidth: 1,
-    borderBottomColor: '#E6E0F8',
   },
   countryItemText: {
     fontSize: 16,
-    color: '#5C4D91',
   },
   closeButton: {
-    backgroundColor: '#5C4D91',
     padding: 12,
     borderRadius: 8,
     marginTop: 12,
     alignItems: 'center',
   },
   closeButtonText: {
-    color: '#fff',
     fontSize: 16,
     fontWeight: 'bold',
+  },
+  textArea: {
+    height: 100,
+    textAlignVertical: 'top',
+    paddingTop: 12,
   },
 }); 

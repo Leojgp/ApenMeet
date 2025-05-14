@@ -10,8 +10,8 @@ export const usePlans = () => {
   const fetchPlansData = useCallback(async () => {
     try {
       setLoading(true);
-      const data = await fetchPlans();  
-      setPlans(data); 
+      const data = await fetchPlans();
+      setPlans(data.filter((plan): plan is Plan => plan !== null));
       setLoading(false);
     } catch (err: any) {
       setError(err.message);

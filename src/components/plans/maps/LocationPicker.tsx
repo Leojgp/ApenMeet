@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, TextInput, TouchableOpacity, Platform, Alert, L
 import MapView, { Marker, PROVIDER_GOOGLE } from 'react-native-maps';
 import * as Location from 'expo-location';
 import { Ionicons } from '@expo/vector-icons';
+import { useTheme } from '../../../hooks/theme/useTheme';
 
 interface LocationPickerProps {
   onLocationSelect: (location: { address: string; coordinates: [number, number] }) => void;
@@ -21,6 +22,7 @@ export default function LocationPicker({ onLocationSelect, initialLocation }: Lo
   const [selectedLocation, setSelectedLocation] = useState<[number, number] | null>(null);
   const [locationPermissionDenied, setLocationPermissionDenied] = useState(false);
   const [isInitialLoad, setIsInitialLoad] = useState(true);
+  const theme = useTheme();
 
   useEffect(() => {
     checkLocationPermission();
@@ -167,20 +169,25 @@ export default function LocationPicker({ onLocationSelect, initialLocation }: Lo
     <View style={styles.container}>
       <View style={styles.searchContainer}>
         <TextInput
-          style={styles.searchInput}
+          style={[styles.searchInput, { 
+            backgroundColor: theme.card,
+            color: theme.text,
+            borderColor: theme.border
+          }]}
           value={searchQuery}
           onChangeText={setSearchQuery}
           placeholder="Buscar ubicación..."
           onSubmitEditing={handleSearch}
+          placeholderTextColor={theme.placeholder}
         />
         <TouchableOpacity style={styles.searchButton} onPress={handleSearch}>
-          <Ionicons name="search" size={24} color="#5C4D91" />
+          <Ionicons name="search" size={24} color={theme.card} />
         </TouchableOpacity>
         <TouchableOpacity 
-          style={[styles.locationButton, locationPermissionDenied && styles.locationButtonDisabled]} 
+          style={[styles.locationButton, locationPermissionDenied && styles.locationButtonDisabled, { backgroundColor: theme.primary }]} 
           onPress={locationPermissionDenied ? checkLocationPermission : getCurrentLocation}
         >
-          <Ionicons name="locate" size={24} color={locationPermissionDenied ? "#999" : "#5C4D91"} />
+          <Ionicons name="locate" size={24} color={theme.card} />
         </TouchableOpacity>
       </View>
       <MapView

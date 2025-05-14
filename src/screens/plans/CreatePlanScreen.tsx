@@ -1,8 +1,10 @@
 import { StyleSheet, Text, ScrollView } from 'react-native';
 import { useCreatePlanForm } from '../../hooks/plans/useCreatePlanForm';
 import CreatePlanForm from '../../components/plans/forms/CreatePlanForm';
+import { useTheme } from '../../hooks/theme/useTheme';
 
 export default function CreatePlanScreen() {
+  const theme = useTheme();
   const {
     form,
     handleChange,
@@ -16,8 +18,8 @@ export default function CreatePlanScreen() {
   } = useCreatePlanForm();
 
   return (
-    <ScrollView style={styles.bg}>
-      <Text style={styles.title}>Create Plan</Text>
+    <ScrollView style={[styles.bg, { backgroundColor: theme.background }]}>
+      <Text style={[styles.title, { color: theme.primary }]}>Create Plan</Text>
       <CreatePlanForm />
     </ScrollView>
   );
@@ -25,12 +27,11 @@ export default function CreatePlanScreen() {
 
 const styles = StyleSheet.create({
   bg: {
-    backgroundColor: '#fff',
+    flex: 1,
   },
   title: {
     fontSize: 28,
     fontWeight: 'bold',
-    color: '#5C4D91',
     marginBottom: 24,
     textAlign: 'left',
     paddingHorizontal: 24,

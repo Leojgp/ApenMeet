@@ -8,6 +8,7 @@ import { useUser } from '../../../hooks/user/useUser';
 import { deletePlan } from '../../../api/plans/plansApi';
 import Swipeable from 'react-native-gesture-handler/Swipeable';
 import { RectButton } from 'react-native-gesture-handler';
+import { useTheme } from '../../../hooks/theme/useTheme';
 
 interface PlanCardProps {
   plan: Plan;
@@ -21,6 +22,7 @@ export default function PlanCard({ plan, navigation, onPlanDeleted }: PlanCardPr
   const { user } = useUser();
   const swipeableRef = useRef<Swipeable>(null);
   const isAdmin = plan.admins?.some(admin => admin._id === user?._id || (admin as any).id === user?._id);
+  const theme = useTheme();
 
   const handlePress = () => {
     navigation.navigate('PlanDetail', { planId: String(plan.id) });
@@ -104,20 +106,20 @@ export default function PlanCard({ plan, navigation, onPlanDeleted }: PlanCardPr
         }, 2000);
       }}
     >
-      <TouchableOpacity onPress={handlePress} style={styles.cardContainer}>
+      <TouchableOpacity onPress={handlePress} style={[styles.cardContainer, { backgroundColor: theme.card }]}>
         <Image 
           source={{ uri: plan.imageUrl || DEFAULT_IMAGE_URL }} 
-          style={styles.image} 
+          style={[styles.image, { backgroundColor: theme.background }]} 
         />
         <View style={styles.textContainer}>
-          <Text style={styles.title}>{plan.title}</Text>
+          <Text style={[styles.title, { color: theme.primary }]}>{plan.title}</Text>
           {plan.admins && plan.admins.length > 0 && (
-            <Text style={styles.admins}>Admins: {plan.admins.map(a => a.username).join(', ')}</Text>
+            <Text style={[styles.admins, { color: theme.text }]}>{'Admins: ' + plan.admins.map(a => a.username).join(', ')}</Text>
           )}
-          <Text style={styles.subtitle}>{plan.description}</Text>
+          <Text style={[styles.subtitle, { color: theme.text }]}>{plan.description}</Text>
           <View style={styles.badgesRow}>
-            <View style={styles.badge}><Text style={styles.badgeText}>{new Date(plan.dateTime).toLocaleDateString()}</Text></View>
-            <View style={styles.badge}><Text style={styles.badgeText}>{plan.participants.length} going</Text></View>
+            <View style={[styles.badge, { backgroundColor: theme.background }]}><Text style={[styles.badgeText, { color: theme.primary }]}>{new Date(plan.dateTime).toLocaleDateString()}</Text></View>
+            <View style={[styles.badge, { backgroundColor: theme.background }]}><Text style={[styles.badgeText, { color: theme.primary }]}>{plan.participants.length} going</Text></View>
           </View>
         </View>
       </TouchableOpacity>
@@ -129,7 +131,6 @@ const styles = StyleSheet.create({
   cardContainer: {
     flexDirection: 'row',
     marginBottom: 20,
-    backgroundColor: '#fff',
     borderRadius: 18,
     shadowColor: '#5C4D91',
     shadowOffset: { width: 0, height: 2 },
@@ -144,7 +145,6 @@ const styles = StyleSheet.create({
     height: 70,
     marginRight: 14,
     borderRadius: 12,
-    backgroundColor: '#E6E0F8',
   },
   textContainer: {
     flex: 1,
@@ -152,16 +152,13 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#5C4D91',
     marginBottom: 4,
   },
   subtitle: {
-    color: '#888',
     fontSize: 14,
     marginBottom: 8,
   },
   admins: {
-    color: '#888',
     fontSize: 12,
     marginBottom: 2,
   },
@@ -169,14 +166,12 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
   },
   badge: {
-    backgroundColor: '#E6E0F8',
     borderRadius: 8,
     paddingHorizontal: 8,
     paddingVertical: 2,
     marginRight: 8,
   },
   badgeText: {
-    color: '#5C4D91',
     fontSize: 12,
     fontWeight: 'bold',
   },
