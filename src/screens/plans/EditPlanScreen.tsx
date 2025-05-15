@@ -1,4 +1,4 @@
-import { StyleSheet, Text, ScrollView, Alert, View, Platform } from 'react-native';
+import { StyleSheet, Text, ScrollView, Alert, View, Platform, ActivityIndicator } from 'react-native';
 import CreatePlanForm from '../../components/plans/forms/CreatePlanForm';
 import { usePlanDetails } from '../../hooks/plans/usePlanDetails';
 import { useEffect, useState } from 'react';
@@ -6,16 +6,7 @@ import { editPlan } from '../../api/plans/plansApi';
 import { useTheme } from '../../hooks/theme/useTheme';
 import { useTranslation } from 'react-i18next';
 
-interface EditPlanScreenProps {
-  route: {
-    params: {
-      planId: string;
-    };
-  };
-  navigation: any;
-}
-
-export default function EditPlanScreen({ route, navigation }: EditPlanScreenProps) {
+export default function EditPlanScreen({ route, navigation }: any) {
   const { planId } = route.params;
   const { plan, loading, error } = usePlanDetails(planId);
   const [formData, setFormData] = useState<any>(null);
@@ -72,8 +63,8 @@ export default function EditPlanScreen({ route, navigation }: EditPlanScreenProp
 
   if (loading) {
     return (
-      <View style={[styles.container, { backgroundColor: theme.background }]}>
-        <Text style={{ color: theme.text }}>{t('plans.detail.loading')}</Text>
+      <View style={[styles.container, { backgroundColor: theme.background, justifyContent: 'center', alignItems: 'center' }]}>
+        <ActivityIndicator size="large" color={theme.primary} style={{marginBottom: 16}} />
       </View>
     );
   }

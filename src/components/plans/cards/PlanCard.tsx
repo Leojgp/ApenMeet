@@ -86,7 +86,7 @@ export default function PlanCard({ plan, navigation, onPlanDeleted }: PlanCardPr
       <RectButton style={styles.leftAction} onPress={handleDelete}>
         <Animated.View style={[styles.actionContent, { transform: [{ translateX: trans }] }]}>
           <Ionicons name="trash" size={24} color="#fff" />
-          <Text style={styles.actionText}>Eliminar</Text>
+          <Text style={styles.actionText}>{t('alerts.deletePlan.title')}</Text>
         </Animated.View>
       </RectButton>
     );
@@ -114,7 +114,17 @@ export default function PlanCard({ plan, navigation, onPlanDeleted }: PlanCardPr
           style={[styles.image, { backgroundColor: theme.background }]} 
         />
         <View style={styles.textContainer}>
-          <Text style={[styles.title, { color: theme.primary }]}>{plan.title}</Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 4 }}>
+            <Text style={[styles.title, { color: theme.primary, flex: 1 }]}>{plan.title}</Text>
+            {isAdmin && (
+              <TouchableOpacity
+                onPress={() => navigation.navigate('ManageAdmins', { planId: plan.id })}
+                style={{ marginLeft: 8, padding: 4 }}
+              >
+                <Ionicons name="people" size={22} color={theme.primary} />
+              </TouchableOpacity>
+            )}
+          </View>
           {plan.admins && plan.admins.length > 0 && (
             <Text style={[styles.admins, { color: theme.text }]}>{'Admins: ' + plan.admins.map(a => a.username).join(', ')}</Text>
           )}

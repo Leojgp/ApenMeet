@@ -100,7 +100,8 @@ export default {
       title: "No hay eventos",
       message: "Prueba a actualizar o cambia tu ubicación.",
       refresh: "Actualizar"
-    }
+    },
+    showingIn: "Mostrando eventos en {{city}}, {{country}}"
   },
   alerts: {
     location: {
@@ -110,7 +111,7 @@ export default {
       deny: "No, gracias"
     },
     deletePlan: {
-      title: "Eliminar Plan",
+      title: "Eliminar",
       message: "¿Estás seguro de que quieres eliminar este plan?",
       confirm: "Eliminar",
       cancel: "Cancelar"

@@ -4,7 +4,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../hooks/theme/useTheme';
 import { useTranslation } from 'react-i18next';
 import MainScreen from '../screens/home/MainScreen';
-import { PlansScreen } from '../screens/plans';
+import PlansStack from '../screens/plans/PlansStack';
 import { ChatsScreen } from '../screens/chat';
 import { ConfigScreen } from '../screens';
 
@@ -44,7 +44,7 @@ export default function BottomTabs() {
       })}
     >
       <Tab.Screen name="Home" component={MainScreen} options={{ title: t('navigation.home') }} />
-      <Tab.Screen name="Plans" component={PlansScreen} options={{ title: t('navigation.plans') }} />
+      <Tab.Screen name="Plans" component={PlansStack} options={{ title: t('navigation.plans'), headerShown: false }} />
       <Tab.Screen name="Chats" component={ChatsScreen} options={{ title: t('navigation.chats') }} />
       <Tab.Screen name="Config" component={ConfigScreen} options={{ title: t('navigation.config') }} />
     </Tab.Navigator>

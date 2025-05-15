@@ -9,16 +9,7 @@ import { useTheme } from '../../hooks/theme/useTheme';
 import { useTranslation } from 'react-i18next';
 import MapView, { Marker } from 'react-native-maps';
 
-interface PlanDetailProps {
-  route: {
-    params: {
-      planId: string;
-    };
-  };
-  navigation: any;
-}
-
-export default function PlanDetailScreen({ route, navigation }: PlanDetailProps) {
+export default function PlanDetailScreen({ route, navigation }: any) {
   const { planId } = route.params;
   const { plan, loading, error } = usePlanDetails(planId);
   const { user } = useUser();
@@ -78,12 +69,20 @@ export default function PlanDetailScreen({ route, navigation }: PlanDetailProps)
           imageUrl={plan.imageUrl || 'https://res.cloudinary.com/dbfh8wmqt/image/upload/v1746874867/noImagePlan_rfm46c.webp'}
         />
         {isAdmin && (
-          <TouchableOpacity 
-            style={[styles.editButton, { backgroundColor: theme.card }]}
-            onPress={() => navigation.navigate('EditPlan', { planId: plan._id })}
-          >
-            <Ionicons name="pencil" size={24} color={theme.primary} />
-          </TouchableOpacity>
+          <>
+            <TouchableOpacity 
+              style={[styles.editButton, { backgroundColor: theme.card }]}
+              onPress={() => navigation.navigate('EditPlan', { planId: plan._id })}
+            >
+              <Ionicons name="pencil" size={24} color={theme.primary} />
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.editButton, { backgroundColor: theme.card }]}
+              onPress={() => navigation.navigate('ManageAdmins', { planId: plan._id })}
+            >
+              <Ionicons name="people" size={24} color={theme.primary} />
+            </TouchableOpacity>
+          </>
         )}
       </View>
       <PlanInfoCard

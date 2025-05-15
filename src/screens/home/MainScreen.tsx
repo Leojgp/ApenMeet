@@ -8,6 +8,7 @@ import { useFocusEffect } from '@react-navigation/native';
 import { ScrapedEvent } from '../../models/ScrapedEvent';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../../hooks/theme/useTheme';
+import { useTranslation } from 'react-i18next';
 
 export default function MainScreen({ navigation }: any) {
   const user = useSelector((state: RootState) => state.user);
@@ -16,6 +17,7 @@ export default function MainScreen({ navigation }: any) {
   const [error, setError] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
   const theme = useTheme();
+  const { t } = useTranslation();
 
   const loadEvents = async () => {
     try {
@@ -117,8 +119,32 @@ export default function MainScreen({ navigation }: any) {
     );
   }
 
+  if (events.length === 0) {
+    return (
+      <View style={[styles.container, { backgroundColor: theme.background, justifyContent: 'center', alignItems: 'center' }]}> 
+        <Text style={{ fontSize: 22, fontWeight: 'bold', color: theme.primary, marginBottom: 8 }}>{t('events.empty.title')}</Text>
+        <Text style={{ color: theme.text, marginBottom: 24 }}>{t('events.empty.message')}</Text>
+        <TouchableOpacity style={{ backgroundColor: theme.primary, paddingHorizontal: 24, paddingVertical: 12, borderRadius: 8 }} onPress={onRefresh}>
+          <Text style={{ color: theme.card, fontWeight: 'bold', fontSize: 16 }}>{t('events.empty.refresh')}</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  }
+
   return (
     <View style={[styles.container, { backgroundColor: theme.background }]}> 
+      {user.location?.city && user.location?.country && (
+        <Text style={{
+          color: theme.primary,
+          fontWeight: 'bold',
+          fontSize: 22,
+          marginTop: 20,
+          marginBottom: 16,
+          textAlign: 'center',
+        }}>
+          {t('events.showingIn', { city: user.location.city, country: user.location.country })}
+        </Text>
+      )}
       <FlatList
         data={events}
         keyExtractor={(item) => item._id}
@@ -127,15 +153,7 @@ export default function MainScreen({ navigation }: any) {
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={theme.primary} />
         }
-        ListEmptyComponent={
-          <View style={styles.emptyContainer}>
-            <Text style={[styles.emptyTitle, { color: theme.primary }]}>No hay eventos</Text>
-            <Text style={[styles.emptyText, { color: theme.text }]}>Prueba a actualizar o cambia tu ubicación.</Text>
-            <TouchableOpacity style={[styles.emptyButton, { backgroundColor: theme.primary }]} onPress={onRefresh}>
-              <Text style={[styles.emptyButtonText, { color: theme.card }]}>Actualizar</Text>
-            </TouchableOpacity>
-          </View>
-        }
+        ListEmptyComponent={null}
       />
     </View>
   );
