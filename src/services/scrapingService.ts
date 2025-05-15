@@ -26,7 +26,10 @@ class ScrapingService {
     try {
       console.log('Navegando a la página...');
       await page.goto(url, { waitUntil: 'networkidle', timeout: 30000 });
-      return await this.scrapeFeverEvents(page, url);
+      const scrapedData = await this.scrapeFeverEvents(page, url);
+      
+      const uniqueData = await this.filterDuplicates(scrapedData);
+      return uniqueData;
     } catch (error) {
       console.error('Error en scrapeEventPage:', error);
       throw error;
@@ -119,6 +122,26 @@ class ScrapingService {
       console.error('Error scraping Fever:', error);
       throw new Error(`Error al extraer actividades de Fever: ${(error as Error).message}`);
     }
+  }
+
+  private async filterDuplicates(scrapedData: Partial<IScrapedSource>[]): Promise<Partial<IScrapedSource>[]> {
+    const uniqueData: Partial<IScrapedSource>[] = [];
+    
+    for (const data of scrapedData) {
+      // Buscar eventos existentes con la misma URL
+      const existingEvent = await ScrapedSource.findOne({ url: data.url });
+      
+      if (!existingEvent) {
+        // Si no existe, añadir a la lista de eventos únicos
+        uniqueData.push(data);
+      } else {
+        // Si existe, actualizar lastScraped
+        existingEvent.lastScraped = new Date();
+        await existingEvent.save();
+      }
+    }
+    
+    return uniqueData;
   }
 
   async saveScrapedData(data: Partial<IScrapedSource>): Promise<IScrapedSource> {

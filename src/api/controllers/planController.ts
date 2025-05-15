@@ -334,36 +334,49 @@ export const cancelPlan = async (req: Request, res: Response): Promise<void> => 
 export const addAdmin = async (req: Request, res: Response): Promise<void> => {
   try {
     const { planId, userId } = req.params;
+    console.log('IDs recibidos:', { planId, userId });
     const authenticatedUser = (req as any).user;
+    
     if (!mongoose.Types.ObjectId.isValid(planId) || !mongoose.Types.ObjectId.isValid(userId)) {
+      console.log('IDs inválidos:', { planId, userId });
       res.status(400).json({ error: 'Invalid IDs' });
       return;
     }
+
     const plan = await Plan.findById(planId);
     if (!plan) {
+      console.log('Plan no encontrado:', planId);
       res.status(404).json({ error: 'Plan not found' });
       return;
     }
+
+    const user = await User.findById(userId);
+    if (!user) {
+      console.log('Usuario no encontrado:', userId);
+      res.status(404).json({ error: 'User not found' });
+      return;
+    }
+
     if (!plan.admins.some(admin => admin.id.toString() === authenticatedUser._id)) {
       res.status(403).json({ error: 'You do not have permission to add administrators' });
       return;
     }
+
     if (plan.admins.some(admin => admin.id.toString() === userId)) {
       res.status(400).json({ error: 'User is already an administrator' });
       return;
     }
-    const user = await User.findById(userId);
-    if (!user) {
-      res.status(404).json({ error: 'User not found' });
-      return;
-    }
+
+    console.log('Antes de añadir admin:', plan.admins);
     plan.admins.push({
       id: new mongoose.Types.ObjectId(userId),
       username: user.username
     });
+    console.log('Después de añadir admin:', plan.admins);
     await plan.save();
     res.status(200).json({ message: 'Administrator added successfully' });
   } catch (error) {
+    console.error('Error en addAdmin:', error);
     res.status(500).json({ error: 'Error adding administrator' });
   }
 };
@@ -377,7 +390,7 @@ export const removeAdmin = async (req: Request, res: Response): Promise<void> =>
       res.status(404).json({ error: 'Plan not found' });
       return;
     }
-    if (!plan.admins.some(adminId => adminId.toString() === authenticatedUser._id.toString())) {
+    if (!plan.admins.some(admin => admin.id.toString() === authenticatedUser._id.toString())) {
       res.status(403).json({ error: 'You do not have permission to perform this action' });
       return;
     }
@@ -385,7 +398,7 @@ export const removeAdmin = async (req: Request, res: Response): Promise<void> =>
       res.status(400).json({ error: 'Cannot remove the creator as administrator' });
       return;
     }
-    plan.admins = plan.admins.filter(adminId => adminId.toString() !== userId);
+    plan.admins = plan.admins.filter(admin => admin.id.toString() !== userId);
     await plan.save();
     const populatedPlan = await Plan.findById(plan._id)
       .populate('creatorId', 'username profileImage')

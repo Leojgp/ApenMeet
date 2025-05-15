@@ -14,6 +14,24 @@ export const scrapeUrl = async (req: Request, res: Response): Promise<void> => {
     const scrapedData = await scrapingService.scrapeEventPage(city, country);
     const savedData = await Promise.all(scrapedData.map(data => scrapingService.saveScrapedData(data)));
 
+    if (savedData.length === 0) {
+
+      const cityLower = city.toLowerCase();
+      const countryLower = country.toLowerCase();
+
+      const existingEvents = await ScrapedSource.find({
+        $or: [
+          { 'location': { $regex: cityLower, $options: 'i' } },
+          { 'sourceUrl': { $regex: cityLower, $options: 'i' } },
+          { 'sourceUrl': { $regex: countryLower, $options: 'i' } }
+        ],
+        type: 'event',
+        isActive: true
+      }).sort({ lastScraped: -1 });
+      res.status(200).json(existingEvents);
+      return;
+    }
+
     res.status(200).json(savedData);
   } catch (error) {
     console.error('Error in scraping controller:', error);
