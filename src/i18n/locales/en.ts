@@ -53,7 +53,10 @@ export default {
       save: "Save Changes"
     },
     searchByName: "Search by name",
-    notFound: "No plans found"
+    notFound: "No plans found",
+    allPlans: "All Plans",
+    createdPlans: "Created Plans",
+    joinedPlans: "Joined Plans"
   },
   chat: {
     title: "Chat",

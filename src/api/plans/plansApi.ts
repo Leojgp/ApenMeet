@@ -27,9 +27,34 @@ export const getPlanById = async (planId: string) => {
     }
 };
 
+export const getPlansByUsername = async (username: string) => {
+    try {
+        const response = await api.get(`plans/user/${username}`);
+        return response.data;
+    } catch (error: any) {
+        if (error.response) {
+            throw new Error(error.response.data.error || i18next.t('api.errors.serverError'));
+        } else {
+            throw new Error(i18next.t('api.errors.serverError'));
+        }
+    }
+};
+
+export const getUserParticipatingPlans = async () => {
+    try {
+        const response = await api.get('plans/participating');
+        return response.data;
+    } catch (error: any) {
+        if (error.response) {
+            throw new Error(error.response.data.error || i18next.t('api.errors.serverError'));
+        } else {
+            throw new Error(i18next.t('api.errors.serverError'));
+        }
+    }
+};
+
 export const joinPlan = async (planId: string) => {
     try {
-        console.log(planId)
         const response = await api.post(`plans/${planId}/join`);
         return response.data;
     } catch (error: any) {
@@ -39,7 +64,7 @@ export const joinPlan = async (planId: string) => {
             throw new Error(i18next.t('api.errors.serverError'));
         }
     }
-}
+};
 
 export const createPlan = async (plan: any) => {
     try {
@@ -89,6 +114,71 @@ export const editPlan = async (planId: string, planData: FormData): Promise<any>
 export const deletePlan = async (planId: string) => {
     try {
         const response = await api.delete(`plans/${planId}`);
+        return response.data;
+    } catch (error: any) {
+        if (error.response) {
+            throw new Error(error.response.data.error || i18next.t('api.errors.serverError'));
+        } else {
+            throw new Error(i18next.t('api.errors.serverError'));
+        }
+    }
+};
+
+export const getMyCreatedPlans = async () => {
+    try {
+        const response = await api.get('plans/created');
+        return response.data;
+    } catch (error: any) {
+        if (error.response) {
+            throw new Error(error.response.data.error || i18next.t('api.errors.serverError'));
+        } else {
+            throw new Error(i18next.t('api.errors.serverError'));
+        }
+    }
+};
+
+export const getMyJoinedPlans = async () => {
+    try {
+        const response = await api.get('plans/joined');
+        return response.data;
+    } catch (error: any) {
+        if (error.response) {
+            throw new Error(error.response.data.error || i18next.t('api.errors.serverError'));
+        } else {
+            throw new Error(i18next.t('api.errors.serverError'));
+        }
+    }
+};
+
+export const getMySavedPlans = async () => {
+    try {
+        const response = await api.get('plans/saved');
+        return response.data;
+    } catch (error: any) {
+        if (error.response) {
+            throw new Error(error.response.data.error || i18next.t('api.errors.serverError'));
+        } else {
+            throw new Error(i18next.t('api.errors.serverError'));
+        }
+    }
+};
+
+export const savePlan = async (planId: string) => {
+    try {
+        const response = await api.post(`plans/${planId}/save`);
+        return response.data;
+    } catch (error: any) {
+        if (error.response) {
+            throw new Error(error.response.data.error || i18next.t('api.errors.serverError'));
+        } else {
+            throw new Error(i18next.t('api.errors.serverError'));
+        }
+    }
+};
+
+export const unsavePlan = async (planId: string) => {
+    try {
+        const response = await api.delete(`plans/${planId}/save`);
         return response.data;
     } catch (error: any) {
         if (error.response) {

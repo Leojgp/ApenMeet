@@ -1,4 +1,9 @@
-import { getPlanById, getPlans } from '../../api/plans/plansApi';
+import { 
+  getPlanById, 
+  getPlans, 
+  getPlansByUsername, 
+  getUserParticipatingPlans
+} from '../../api/plans/plansApi';
 import { Plan, fromApiResponse } from '../../models/Plan';
 import i18next from 'i18next';
 
@@ -33,11 +38,29 @@ export const fetchPlans = async () => {
   }
 };
 
-export const fetchPlanById = async (PlanId:string) => {
-    try {
-      const data = await getPlanById(PlanId);  
-      return fromApiResponse(data);  
-    } catch (error: any) {
-      throw new Error(error.response?.data?.error || i18next.t('api.errors.serverError'));
-    }
-  };
+export const fetchPlanById = async (planId: string) => {
+  try {
+    const data = await getPlanById(planId);
+    return fromApiResponse(data);
+  } catch (error: any) {
+    throw new Error(error.response?.data?.error || i18next.t('api.errors.serverError'));
+  }
+};
+
+export const fetchMyCreatedPlans = async (username: string) => {
+  try {
+    const data = await getPlansByUsername(username);
+    return data.map((plan: any) => fromApiResponse(plan));
+  } catch (error: any) {
+    throw new Error(error.response?.data?.error || i18next.t('api.errors.serverError'));
+  }
+};
+
+export const fetchMyJoinedPlans = async () => {
+  try {
+    const data = await getUserParticipatingPlans();
+    return data.map((plan: any) => fromApiResponse(plan));
+  } catch (error: any) {
+    throw new Error(error.response?.data?.error || i18next.t('api.errors.serverError'));
+  }
+};

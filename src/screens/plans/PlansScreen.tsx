@@ -1,5 +1,5 @@
 import { ActivityIndicator, StyleSheet, Text, View, TextInput, TouchableOpacity, RefreshControl, FlatList } from 'react-native'
-import React, { useState, useCallback } from 'react'
+import React, { useState, useCallback, useMemo } from 'react'
 import PlanCard from '../../components/plans/cards/PlanCard';
 import { usePlans } from '../../hooks/plans/usePlans';
 import { useUser } from '../../hooks/user/useUser';
@@ -9,6 +9,8 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { Plan } from '../../models/Plan';
 import { useTheme } from '../../hooks/theme/useTheme';
 import { useTranslation } from 'react-i18next';
+import { TabView, TabBar } from 'react-native-tab-view';
+import debounce from 'lodash/debounce';
 
 interface Admin {
   _id: string;
@@ -20,13 +22,28 @@ interface PlansScreenProps {
 }
 
 export default function PlansScreen({navigation}: PlansScreenProps) {
-  const { plans, loading, error, refresh } = usePlans();
+  const { plans, loading, error, refresh, myCreatedPlans, myJoinedPlans } = usePlans();
   const { user } = useUser();
   const [search, setSearch] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
   const [refreshing, setRefreshing] = useState(false);
   const [filterByCity, setFilterByCity] = useState(false);
+  const [index, setIndex] = useState(0);
   const theme = useTheme();
   const { t } = useTranslation();
+  const [isInitialLoad, setIsInitialLoad] = useState(true);
+
+  const debouncedSetSearch = useCallback(
+    debounce((text: string) => {
+      setDebouncedSearch(text);
+    }, 300),
+    []
+  );
+
+  const handleSearchChange = (text: string) => {
+    setSearch(text);
+    debouncedSetSearch(text);
+  };
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
@@ -36,44 +53,67 @@ export default function PlansScreen({navigation}: PlansScreenProps) {
 
   useFocusEffect(
     useCallback(() => {
-      refresh();
-    }, [refresh])
+      if (isInitialLoad) {
+        refresh();
+        setIsInitialLoad(false);
+      }
+    }, [refresh, isInitialLoad])
   );
 
-  let filteredPlans = plans;
+  const handleTabChange = useCallback((newIndex: number) => {
+    setIndex(newIndex);
+  }, []);
 
-  if (filterByCity && user?.location?.city) {
-    const userCity = user.location.city;
-    filteredPlans = filteredPlans.filter(plan => {
-      const matches = plan.location && plan.location.address && plan.location.address.toLowerCase().includes(userCity.toLowerCase());
-      return matches;
-    });
-  }
+  const [routes] = useState([
+    { key: 'all', title: t('plans.allPlans') },
+    { key: 'created', title: t('plans.createdPlans') },
+    { key: 'joined', title: t('plans.joinedPlans') },
+  ]);
 
-  if (search) {
-    filteredPlans = filteredPlans.filter(plan => {
-      const matches = plan.title.toLowerCase().includes(search.toLowerCase());
-      return matches;
-    });
-  }
+  const memoizedPlans = useMemo(() => {
+    const basePlans = index === 0 ? plans : 
+                     index === 1 ? myCreatedPlans : 
+                     myJoinedPlans;
 
-  const uniquePlans = Object.values(filteredPlans.reduce((acc, plan) => {
-    const key = plan.title + '_' + plan.admins.map((admin: Admin) => admin._id).join(',');
-    if (!acc[key]) {
-      acc[key] = plan;
+    if (filterByCity && user?.location?.city) {
+      const userCity = user.location.city.toLowerCase();
+      return basePlans.filter(plan => 
+        plan.location?.address?.toLowerCase().includes(userCity)
+      );
     }
-    return acc;
-  }, {} as Record<string, Plan>));
+    return basePlans;
+  }, [index, plans, myCreatedPlans, myJoinedPlans, filterByCity, user?.location?.city]);
 
-  const renderHeader = () => (
+  const filteredPlans = useMemo(() => {
+    if (!debouncedSearch) return memoizedPlans;
+
+    const searchTerm = debouncedSearch.toLowerCase();
+    return memoizedPlans.filter(plan => 
+      plan.title.toLowerCase().includes(searchTerm) ||
+      plan.description?.toLowerCase().includes(searchTerm)
+    );
+  }, [memoizedPlans, debouncedSearch]);
+
+  const uniquePlans = useMemo(() => 
+    Object.values(filteredPlans.reduce((acc, plan) => {
+      const key = plan.title + '_' + plan.admins.map((admin: Admin) => admin._id).join(',');
+      if (!acc[key]) {
+        acc[key] = plan;
+      }
+      return acc;
+    }, {} as Record<string, Plan>))
+  , [filteredPlans]);
+
+  const renderHeader = useCallback(() => (
     <View style={styles.searchBarContainer}>
       <TextInput
         style={[styles.searchInput, { backgroundColor: theme.card, color: theme.text, borderColor: theme.border }]}
         placeholder={t('plans.searchByName')}
         placeholderTextColor={theme.placeholder}
         value={search}
-        onChangeText={setSearch}
+        onChangeText={handleSearchChange}
         returnKeyType="search"
+        clearButtonMode="while-editing"
       />
       {user?.location?.city && (
         <TouchableOpacity 
@@ -84,41 +124,67 @@ export default function PlansScreen({navigation}: PlansScreenProps) {
         </TouchableOpacity>
       )}
     </View>
-  );
+  ), [search, filterByCity, theme, user?.location?.city, t]);
 
-  const renderItem = ({ item: plan }: { item: Plan }) => (
+  const renderItem = useCallback(({ item: plan }: { item: Plan }) => (
     <PlanCard 
       key={plan.id} 
       plan={plan} 
       navigation={navigation} 
       onPlanDeleted={refresh}
     />
-  );
+  ), [navigation, refresh]);
+
+  const renderScene = useCallback(({ route }: { route: { key: string } }) => (
+    <FlatList
+      data={uniquePlans}
+      renderItem={renderItem}
+      keyExtractor={(item) => item.id}
+      contentContainerStyle={[styles.container, { backgroundColor: theme.background }]}
+      ListHeaderComponent={renderHeader}
+      refreshControl={
+        <RefreshControl
+          refreshing={refreshing}
+          onRefresh={onRefresh}
+          colors={[theme.primary]}
+          tintColor={theme.primary}
+        />
+      }
+      ListEmptyComponent={
+        <>
+          {loading && <ActivityIndicator size="small" color={theme.primary} style={{marginBottom: 16}} />}
+          {error && !loading && <Text style={[styles.notFound, { color: theme.error }]}>{error}</Text>}
+          {!error && !loading && <Text style={[styles.notFound, { color: theme.text }]}>{t('plans.notFound')}</Text>}
+        </>
+      }
+      removeClippedSubviews={true}
+      maxToRenderPerBatch={10}
+      windowSize={5}
+      initialNumToRender={10}
+    />
+  ), [uniquePlans, renderItem, renderHeader, refreshing, onRefresh, loading, error, theme, t]);
+
+  const renderTabBar = useCallback((props: any) => (
+    <TabBar
+      {...props}
+      style={{ backgroundColor: theme.card }}
+      indicatorStyle={{ backgroundColor: theme.primary }}
+      activeColor={theme.primary}
+      inactiveColor={theme.text}
+    />
+  ), [theme]);
 
   return (
     <GestureHandlerRootView style={{flex: 1}}>
       <View style={{flex: 1, backgroundColor: theme.background}}>
-        <FlatList
-          data={uniquePlans}
-          renderItem={renderItem}
-          keyExtractor={(item) => item.id}
-          contentContainerStyle={[styles.container, { backgroundColor: theme.background }]}
-          ListHeaderComponent={renderHeader}
-          refreshControl={
-            <RefreshControl
-              refreshing={refreshing}
-              onRefresh={onRefresh}
-              colors={[theme.primary]}
-              tintColor={theme.primary}
-            />
-          }
-          ListEmptyComponent={
-            <>
-              {loading && <ActivityIndicator size="small" color={theme.primary} style={{marginBottom: 16}} />}
-              {error && !loading && <Text style={[styles.notFound, { color: theme.error }]}>{error}</Text>}
-              {!error && !loading && <Text style={[styles.notFound, { color: theme.text }]}>{t('plans.notFound')}</Text>}
-            </>
-          }
+        <TabView
+          navigationState={{ index, routes }}
+          renderScene={renderScene}
+          onIndexChange={handleTabChange}
+          initialLayout={{ width: 100 }}
+          renderTabBar={renderTabBar}
+          lazy={true}
+          lazyPreloadDistance={0}
         />
         <TouchableOpacity style={[styles.fab, { backgroundColor: theme.primary }]} onPress={() => navigation.navigate('CreatePlan')}>
           <Ionicons name="add" size={36} color={theme.card} />

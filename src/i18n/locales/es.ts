@@ -53,7 +53,10 @@ export default {
       save: "Guardar Cambios"
     },
     searchByName: "Buscar por nombre",
-    notFound: "No se encontró ningún plan"
+    notFound: "No se encontró ningún plan",
+    allPlans: "Todos los Planes",
+    createdPlans: "Planes Creados",
+    joinedPlans: "Planes Unidos"
   },
   chat: {
     title: "Chat",
