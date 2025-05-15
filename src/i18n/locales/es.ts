@@ -21,7 +21,8 @@ export default {
       submit: "Registrarse",
       loading: "Registrando...",
       searchCountry: "Buscar país...",
-      close: "Cerrar"
+      close: "Cerrar",
+      selectCountry: "Seleccionar un País"
     }
   },
   plans: {
@@ -57,7 +58,8 @@ export default {
   chat: {
     title: "Chat",
     messagePlaceholder: "Escribe un mensaje...",
-    joinToChat: "Únete al plan para chatear"
+    joinToChat: "Únete al plan para chatear",
+    participants: "participantes"
   },
   profile: {
     edit: {

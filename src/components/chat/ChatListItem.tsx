@@ -2,6 +2,7 @@ import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Plan } from '../../models/Plan';
+import { useTranslation } from 'react-i18next';
 
 interface ChatListItemProps {
   plan: Plan;
@@ -9,6 +10,7 @@ interface ChatListItemProps {
 }
 
 export default function ChatListItem({ plan, onPress }: ChatListItemProps) {
+  const { t } = useTranslation();
   return (
     <TouchableOpacity style={styles.container} onPress={onPress}>
       <View style={styles.iconContainer}>
@@ -16,7 +18,7 @@ export default function ChatListItem({ plan, onPress }: ChatListItemProps) {
       </View>
       <View style={styles.contentContainer}>
         <Text style={styles.title}>{plan.title}</Text>
-        <Text style={styles.subtitle}>{plan.participants.length} participantes</Text>
+        <Text style={styles.subtitle}>{plan.participants.length} {t('chat.participants')}</Text>
       </View>
       <Ionicons name="chevron-forward" size={24} color="#5C4D91" />
     </TouchableOpacity>

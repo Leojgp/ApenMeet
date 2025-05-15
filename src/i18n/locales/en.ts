@@ -21,7 +21,8 @@ export default {
       submit: "Sign Up",
       loading: "Signing up...",
       searchCountry: "Search country...",
-      close: "Close"
+      close: "Close",
+      selectCountry: "Select a Country"
     }
   },
   plans: {
@@ -39,7 +40,7 @@ export default {
       image: "Image",
       addImage: "Add image",
       changeImage: "Change image",
-      submit: "Create Plan"
+      submit: "Create Plan",
     },
     detail: {
       loading: "Loading...",
@@ -57,7 +58,8 @@ export default {
   chat: {
     title: "Chat",
     messagePlaceholder: "Type a message...",
-    joinToChat: "Join the plan to chat"
+    joinToChat: "Join the plan to chat",
+    participants: "participants"
   },
   profile: {
     edit: {
@@ -164,5 +166,29 @@ export default {
     darkMode: "Dark Mode",
     logout: "Log Out",
     language: "Language"
-  }
+  },
+  adminManagement: {
+    title: 'Admin Management',
+    addAdmin: 'Add Admin',
+    removeAdmin: 'Remove Admin',
+    confirmAddAdmin: 'Are you sure you want to make {{name}} an admin?',
+    confirmRemoveAdmin: 'Are you sure you want to remove {{name}} as admin?',
+    adminAdded: '{{name}} is now an admin',
+    adminRemoved: '{{name}} is no longer an admin',
+    noAdmins: 'No admins yet',
+    searchPlaceholder: 'Search users...',
+    adminList: 'Admin List',
+    userList: 'User List',
+    permissions: {
+      title: 'Permissions',
+      manageUsers: 'Manage Users',
+      manageContent: 'Manage Content',
+      manageSettings: 'Manage Settings',
+    },
+    role: {
+      creator: 'Creator',
+      admin: 'Admin',
+      user: 'User',
+    },
+  },
 }; 

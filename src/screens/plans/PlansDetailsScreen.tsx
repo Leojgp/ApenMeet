@@ -67,7 +67,7 @@ export default function PlanDetailScreen({ route, navigation }: PlanDetailProps)
       {showSuccess && (
         <View style={[styles.successMessage, { backgroundColor: theme.primary }]}> 
           <Text style={[styles.successText, { color: theme.card }]}>
-          {t('api.success.plans.joined')}
+          {t('api.success.joined')}
           </Text>
         </View>
       )}

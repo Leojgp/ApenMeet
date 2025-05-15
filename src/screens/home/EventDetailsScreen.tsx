@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, Image, ScrollView, TouchableOpacity, Linking } 
 import { RouteProp } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { ScrapedEvent } from '../../models/ScrapedEvent';
+import { useTheme } from '../../hooks/theme/useTheme';
 
 
 type RootStackParamList = {
@@ -16,6 +17,7 @@ type EventDetailsScreenProps = {
 
 export default function EventDetailsScreen({ route }: EventDetailsScreenProps) {
   const { event } = route.params;
+  const theme = useTheme();
 
   const handleOpenUrl = async () => {
     try {
@@ -26,39 +28,39 @@ export default function EventDetailsScreen({ route }: EventDetailsScreenProps) {
   };
 
   return (
-    <ScrollView style={styles.container}>
+    <ScrollView style={[styles.container, { backgroundColor: theme.background }]}>
       <Image 
         source={{ uri: event.imageUrl || 'https://via.placeholder.com/150' }} 
         style={styles.image}
       />
-      <View style={styles.content}>
-        <Text style={styles.title}>{event.title}</Text>
+      <View style={[styles.content, { backgroundColor: theme.card }]}>
+        <Text style={[styles.title, { color: theme.text }]}>{event.title}</Text>
         
         {event.location && (
           <View style={styles.infoRow}>
-            <Text style={styles.label}>Ubicación:</Text>
-            <Text style={styles.value}>{event.location}</Text>
+            <Text style={[styles.label, { color: theme.primary }]}>Ubicación:</Text>
+            <Text style={[styles.value, { color: theme.text }]}>{event.location}</Text>
           </View>
         )}
 
         {event.date && (
           <View style={styles.infoRow}>
-            <Text style={styles.label}>Fecha:</Text>
-            <Text style={styles.value}>{event.date}</Text>
+            <Text style={[styles.label, { color: theme.primary }]}>Fecha:</Text>
+            <Text style={[styles.value, { color: theme.text }]}>{event.date}</Text>
           </View>
         )}
 
         {event.price && (
           <View style={styles.infoRow}>
-            <Text style={styles.label}>Precio:</Text>
-            <Text style={styles.value}>{event.price}</Text>
+            <Text style={[styles.label, { color: theme.primary }]}>Precio:</Text>
+            <Text style={[styles.value, { color: theme.text }]}>{event.price}</Text>
           </View>
         )}
 
-        <Text style={styles.description}>{event.description}</Text>
+        <Text style={[styles.description, { color: theme.text }]}>{event.description}</Text>
 
-        <TouchableOpacity style={styles.button} onPress={handleOpenUrl}>
-          <Text style={styles.buttonText}>Ver más información</Text>
+        <TouchableOpacity style={[styles.button, { backgroundColor: theme.primary }]} onPress={handleOpenUrl}>
+          <Text style={[styles.buttonText, { color: theme.card }]}>Ver más información</Text>
         </TouchableOpacity>
       </View>
     </ScrollView>
