@@ -4,7 +4,7 @@ import { usePlansById } from './usePlansById';
 import { getCurrentUser } from '../../api/user/userApi';
 
 export const usePlanDetails = (planId: string) => {
-  const { plan, loading, error } = usePlansById(planId);
+  const { plan, loading, error, refetch } = usePlansById(planId);
   const { join } = useJoinPlan();
   const [mapReady, setMapReady] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
@@ -64,6 +64,7 @@ export const usePlanDetails = (planId: string) => {
     currentUser,
     handleJoin,
     handleAcceptJoin,
-    handleRejectJoin
+    handleRejectJoin,
+    refetch
   };
 }; 

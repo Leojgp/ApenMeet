@@ -26,12 +26,14 @@ export default function PlanCard({ plan, navigation, onPlanDeleted }: PlanCardPr
   const theme = useTheme();
   const { t } = useTranslation();
 
+  const planIdToUse = plan._id || plan.id;
+
   const handlePress = () => {
-    navigation.navigate('PlanDetail', { planId: String(plan.id) });
+    navigation.navigate('PlanDetail', { planId: String(planIdToUse) });
   };
 
   const handleEdit = () => {
-    navigation.navigate('EditPlan', { planId: String(plan.id) });
+    navigation.navigate('EditPlan', { planId: String(planIdToUse) });
   };
 
   const handleDelete = async () => {
@@ -118,7 +120,7 @@ export default function PlanCard({ plan, navigation, onPlanDeleted }: PlanCardPr
             <Text style={[styles.title, { color: theme.primary, flex: 1 }]}>{plan.title}</Text>
             {isAdmin && (
               <TouchableOpacity
-                onPress={() => navigation.navigate('ManageAdmins', { planId: plan.id })}
+                onPress={() => navigation.navigate('ManageAdmins', { planId: planIdToUse })}
                 style={{ marginLeft: 8, padding: 4 }}
               >
                 <Ionicons name="people" size={22} color={theme.primary} />

@@ -13,7 +13,8 @@ import { TabView, TabBar } from 'react-native-tab-view';
 import debounce from 'lodash/debounce';
 
 interface Admin {
-  _id: string;
+  id: string;
+  _id?: string;
   username: string;
 }
 

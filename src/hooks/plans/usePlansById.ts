@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { Plan } from '../../models/Plan';
 import { fetchPlanById } from '../../core/services/planService'; 
 
@@ -8,28 +8,22 @@ export const usePlansById = (planId: string) => {
   const [error, setError] = useState<string | null>(null);
   const previousParticipants = useRef<string[]>([]);
 
-  useEffect(() => {
-    const fetchPlanData = async () => {
-      try {
-        const data = await fetchPlanById(planId);
-        
-        const currentParticipants = data.participants.map((p: any) => p._id).sort().join(',');
-        const prevParticipants = previousParticipants.current.sort().join(',');
-        
-        if (currentParticipants !== prevParticipants) {
-          setPlan(data);
-          previousParticipants.current = data.participants.map((p: any) => p._id);
-        }
-        
-        setLoading(false);
-      } catch (err: any) {
-        setError(err.message);
-        setLoading(false);
-      }
-    };
-
-    fetchPlanData();
+  const refetch = useCallback(async () => {
+    setLoading(true);
+    try {
+      const data = await fetchPlanById(planId);
+      setPlan(data);
+      previousParticipants.current = data.participants.map((p: any) => p._id);
+      setLoading(false);
+    } catch (err: any) {
+      setError(err.message);
+      setLoading(false);
+    }
   }, [planId]);
 
-  return { plan, loading, error };
+  useEffect(() => {
+    refetch();
+  }, [refetch]);
+
+  return { plan, loading, error, refetch };
 };
