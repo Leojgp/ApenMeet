@@ -9,6 +9,9 @@ import planRoutes from './src/api/routing/planRoutes';
 import messageRoutes from './src/api/routing/messageRoutes';
 import { SocketServer } from './src/websocket/chat';
 import scrapingRoutes from './src/api/routing/scrapingRoutes';
+import swaggerUi from 'swagger-ui-express';
+import swaggerJSDoc from 'swagger-jsdoc';
+import fs from 'fs';
 
 
 dotenv.config();
@@ -31,6 +34,10 @@ app.use('/api/reviews', reviewRoutes);
 app.use('/api/plans', planRoutes);
 app.use('/api/messages', messageRoutes);
 app.use('/api/scraping', scrapingRoutes);
+
+const swaggerPath = path.join(__dirname, 'swagger.yaml');
+const swaggerDocument = require('yamljs').load(swaggerPath);
+app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 
 mongoose.connect(process.env.DB_KEY!)
   .then(() => {
