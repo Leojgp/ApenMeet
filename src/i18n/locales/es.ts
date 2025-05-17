@@ -56,7 +56,10 @@ export default {
     notFound: "No se encontró ningún plan",
     allPlans: "Todos los Planes",
     createdPlans: "Planes Creados",
-    joinedPlans: "Planes Unidos"
+    joinedPlans: "Planes Unidos",
+    leave: "Abandonar plan",
+    leaveTitle: "Abandonar plan",
+    leaveConfirm: "¿Seguro que quieres abandonar este plan?"
   },
   chat: {
     title: "Chat",

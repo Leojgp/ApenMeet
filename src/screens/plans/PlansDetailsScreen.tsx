@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { usePlanDetails } from '../../hooks/plans/usePlanDetails';
 import { useJoinPlan } from '../../hooks/plans/useJoinPlan';
@@ -8,10 +8,11 @@ import { JoinRequestModal, PlanHeader, PlanInfoCard, PlanMap } from '../../compo
 import { useTheme } from '../../hooks/theme/useTheme';
 import { useTranslation } from 'react-i18next';
 import MapView, { Marker } from 'react-native-maps';
+import { leavePlan } from '../../api/plans/plansApi';
 
 export default function PlanDetailScreen({ route, navigation }: any) {
   const { planId } = route.params;
-  const { plan, loading, error } = usePlanDetails(planId);
+  const { plan, loading, error, refetch } = usePlanDetails(planId);
   const { user } = useUser();
   const { join, loadingPlan: joinLoading } = useJoinPlan();
   const [showJoinRequest, setShowJoinRequest] = useState(false);
@@ -20,19 +21,56 @@ export default function PlanDetailScreen({ route, navigation }: any) {
   const theme = useTheme();
   const { t } = useTranslation();
 
+  useEffect(() => {
+    refetch();
+  }, [refetch]);
+
+  const isAdmin = plan?.admins?.some((admin: any) => admin._id === user?._id);
+  const isCreator = plan?.creatorId === user?._id;
+  const isParticipant = plan?.participants?.some(
+    (p: any) => {
+      const participantId = p.id?._id || p._id;
+      return participantId === user?._id;
+    }
+  );
+
   const handleJoin = async () => {
     try {
-      await join(planId);
-      setShowSuccess(true);
-      setTimeout(() => {
-        setShowSuccess(false);
-      }, 3000);
+      const result = await join(planId);
+      if (result) {
+        setShowSuccess(true);
+        await refetch(); 
+        setTimeout(() => {
+          setShowSuccess(false);
+        }, 3000);
+      }
     } catch (error) {
       console.error('Error joining plan:', error);
     }
   };
 
-  const isAdmin = plan?.admins?.some((admin: any) => admin._id === user?._id);
+  const handleLeavePlan = async () => {
+    Alert.alert(
+      t('plans.leaveTitle') || 'Abandonar plan',
+      t('plans.leaveConfirm') || '¿Seguro que quieres abandonar este plan?',
+      [
+        { text: t('alerts.deletePlan.cancel'), style: 'cancel' },
+        {
+          text: t('plans.leave') || 'Abandonar',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await leavePlan(planId, user?._id);
+              await refetch(); 
+              navigation.goBack();
+            } catch (e: any) {
+              Alert.alert('Error', e?.response?.data?.error || 'Error');
+            }
+          }
+        }
+      ]
+    );
+  };
 
   if (loading) {
     return (
@@ -115,15 +153,27 @@ export default function PlanDetailScreen({ route, navigation }: any) {
         onPress={() => navigation.navigate('Chat', { planId, planTitle: plan.title })}
       >
         <Ionicons name="chatbubble-outline" size={24} color={theme.card} />
-        <Text style={[styles.buttonText, { color: theme.card }]}>Chat</Text>
+        <Text style={[styles.buttonText, { color: theme.card }]}>{t('plans.detail.chat')}</Text>
       </TouchableOpacity>
-      <TouchableOpacity 
-        style={[styles.button, styles.joinButton, { backgroundColor: theme.primary }]}
-        onPress={handleJoin}
-        disabled={joinLoading}
-      >
-        <Text style={[styles.buttonText, { color: theme.card }]}>{joinLoading ? 'Joining...' : 'Join Plan'}</Text>
-      </TouchableOpacity>
+      {!isParticipant && (
+        <TouchableOpacity 
+          style={[styles.button, styles.joinButton, { backgroundColor: theme.primary }]}
+          onPress={handleJoin}
+          disabled={joinLoading}
+        >
+          <Text style={[styles.buttonText, { color: theme.card }]}>
+            {joinLoading ? t('plans.detail.joining', 'Joining...') : t('plans.detail.join')}
+          </Text>
+        </TouchableOpacity>
+      )}
+      {isParticipant && !isCreator && (
+        <TouchableOpacity
+          style={[styles.button, { backgroundColor: theme.error }]}
+          onPress={handleLeavePlan}
+        >
+          <Text style={[styles.buttonText, { color: theme.card }]}>{t('plans.leave')}</Text>
+        </TouchableOpacity>
+      )}
       <JoinRequestModal
         visible={showJoinRequest}
         onRequestClose={() => setShowJoinRequest(false)}

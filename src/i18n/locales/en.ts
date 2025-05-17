@@ -56,7 +56,10 @@ export default {
     notFound: "No plans found",
     allPlans: "All Plans",
     createdPlans: "Created Plans",
-    joinedPlans: "Joined Plans"
+    joinedPlans: "Joined Plans",
+    leave: "Leave plan",
+    leaveTitle: "Leave plan",
+    leaveConfirm: "Are you sure you want to leave this plan?"
   },
   chat: {
     title: "Chat",
