@@ -170,5 +170,17 @@ export default {
     darkMode: "Modo Oscuro",
     logout: "Cerrar sesión",
     language: "Idioma"
+  },
+  adminManagement: {
+    title: "Gestionar administradores",
+    addAdmin: "Añadir admin",
+    removeAdmin: "Eliminar admin",
+    alreadyAdmin: "Ya es admin",
+    removeUser: "Eliminar usuario",
+    confirmRemoveTitle: "Eliminar usuario",
+    confirmRemoveMsg: "¿Seguro que quieres eliminar a este usuario del plan?",
+    cancel: "Cancelar",
+    remove: "Eliminar",
+    you: "Tú"
   }
 }; 

@@ -23,6 +23,7 @@ export default function PlanCard({ plan, navigation, onPlanDeleted }: PlanCardPr
   const { user } = useUser();
   const swipeableRef = useRef<Swipeable>(null);
   const isAdmin = plan.admins?.some(admin => admin._id === user?._id || (admin as any).id === user?._id);
+  const isCreator = plan.creatorId === user?._id;
   const theme = useTheme();
   const { t } = useTranslation();
 
@@ -77,7 +78,7 @@ export default function PlanCard({ plan, navigation, onPlanDeleted }: PlanCardPr
   };
 
   const renderLeftActions = (progress: Animated.AnimatedInterpolation<number>, dragX: Animated.AnimatedInterpolation<number>) => {
-    if (!isAdmin) return null;
+    if (!isCreator) return null;
 
     const trans = dragX.interpolate({
       inputRange: [0, 100],

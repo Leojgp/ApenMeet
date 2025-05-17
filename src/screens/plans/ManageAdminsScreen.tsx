@@ -6,6 +6,8 @@ import { useTheme } from '../../hooks/theme/useTheme';
 import { useTranslation } from 'react-i18next';
 import { Ionicons } from '@expo/vector-icons';
 import { planService } from '../../services/planService';
+import Swipeable from 'react-native-gesture-handler/Swipeable';
+import { RectButton } from 'react-native-gesture-handler';
 
 export default function ManageAdminsScreen({ route }: any) {
   const { planId } = route.params;
@@ -80,6 +82,29 @@ export default function ManageAdminsScreen({ route }: any) {
     }
   };
 
+  const handleRemoveUser = async (userId: string) => {
+    Alert.alert(
+      t('adminManagement.confirmRemoveTitle') || 'Eliminar usuario',
+      t('adminManagement.confirmRemoveMsg') || '¿Seguro que quieres eliminar a este usuario del plan?',
+      [
+        { text: t('adminManagement.cancel') || 'Cancelar', style: 'cancel' },
+        {
+          text: t('adminManagement.remove') || 'Eliminar',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              const planIdToUse = plan.id || plan._id;
+              await planService.leavePlan(planIdToUse!, userId); 
+              await refetch();
+            } catch (e: any) {
+              Alert.alert('Error', e?.response?.data?.error || 'Error');
+            }
+          }
+        }
+      ]
+    );
+  };
+
   return (
     <View style={[styles.container, { backgroundColor: theme.background }]}> 
       <Text style={[styles.title, { color: theme.primary }]}>{t('adminManagement.title')}</Text>
@@ -89,35 +114,74 @@ export default function ManageAdminsScreen({ route }: any) {
         renderItem={({ item }) => {
           const participantUserId = getUserId(item.id);
           const participantIsAdmin = isAdmin(participantUserId);
+          const currentUserIsAdmin = plan.admins.some((admin: any) => getUserId(admin.id) === getUserId(user._id));
+          const isCreator = getUserId(user._id) === getUserId(plan.creatorId);
+          const isSelf = getUserId(user._id) === participantUserId;
+
+          const renderRightActions = () => (
+            <RectButton
+              style={{
+                backgroundColor: theme.error,
+                justifyContent: 'center',
+                alignItems: 'center',
+                width: 100,
+                height: '88%',
+                borderRadius: 14,
+                marginVertical: 6,
+                marginRight: 8
+              }}
+              onPress={() => handleRemoveUser(participantUserId)}
+            >
+              <Ionicons name="trash" size={22} color={theme.card} />
+              <Text style={{ color: theme.card, fontWeight: 'bold', marginTop: 4, fontSize: 13 }}>
+                {t('adminManagement.removeUser') || 'Eliminar'}
+              </Text>
+            </RectButton>
+          );
+
           return (
-            <View style={styles.row}>
-              <Text style={[styles.username, { color: theme.text }]}>{item.username}</Text>
-              {participantIsAdmin ? (
-                <TouchableOpacity
-                  style={[styles.button, { backgroundColor: theme.error, opacity: loadingId === participantUserId ? 0.5 : 1 }]}
-                  onPress={() => handleToggleAdmin(participantUserId)}
-                  disabled={loadingId === participantUserId}
-                >
-                  <Ionicons name={'remove-circle'} size={22} color={theme.card} />
-                  <Text style={[styles.buttonText, { color: theme.card }]}> 
-                    {t('adminManagement.removeAdmin')}
-                  </Text>
-                </TouchableOpacity>
-              ) : (
-                <TouchableOpacity
-                  style={[styles.button, { backgroundColor: theme.success, opacity: loadingId === participantUserId ? 0.5 : 1 }]}
-                  onPress={() => handleToggleAdmin(participantUserId)}
-                  disabled={loadingId === participantUserId}
-                >
-                  <Ionicons name={'person-add'} size={22} color={theme.card} />
-                  <Text style={[styles.buttonText, { color: theme.card }]}> 
-                    {t('adminManagement.addAdmin')}
-                  </Text>
-                </TouchableOpacity>
-              )}
-            </View>
+            <Swipeable
+              renderRightActions={currentUserIsAdmin && !participantIsAdmin ? renderRightActions : undefined}
+              overshootRight={false}
+            >
+              <View style={[styles.row, { backgroundColor: theme.card, borderBottomColor: theme.border }]}> 
+                <Text style={[styles.username, { color: theme.text }]}>{item.username}{isSelf ? ' (' + (t('adminManagement.you') || 'Tú') + ')' : ''}</Text>
+                {participantIsAdmin ? (
+                  isCreator && !isSelf ? (
+                    <TouchableOpacity
+                      style={[styles.button, { backgroundColor: theme.error, opacity: loadingId === participantUserId ? 0.5 : 1 }]}
+                      onPress={() => handleToggleAdmin(participantUserId)}
+                      disabled={loadingId === participantUserId}
+                      activeOpacity={0.7}
+                    >
+                      <Ionicons name={'remove-circle'} size={22} color={theme.card} />
+                      <Text style={[styles.buttonText, { color: theme.card }]}> 
+                        {t('adminManagement.removeAdmin')}
+                      </Text>
+                    </TouchableOpacity>
+                  ) : isSelf ? (
+                    <Text style={{ color: theme.success, fontWeight: 'bold' }}>{t('adminManagement.you') || 'Tú'}</Text>
+                  ) : (
+                    <Text style={{ color: theme.success, fontWeight: 'bold' }}>{t('adminManagement.alreadyAdmin') || 'Admin'}</Text>
+                  )
+                ) : (
+                  <TouchableOpacity
+                    style={[styles.button, { backgroundColor: theme.success, opacity: loadingId === participantUserId ? 0.5 : 1 }]}
+                    onPress={() => handleToggleAdmin(participantUserId)}
+                    disabled={loadingId === participantUserId}
+                    activeOpacity={0.7}
+                  >
+                    <Ionicons name={'person-add'} size={22} color={theme.card} />
+                    <Text style={[styles.buttonText, { color: theme.card }]}> 
+                      {t('adminManagement.addAdmin')}
+                    </Text>
+                  </TouchableOpacity>
+                )}
+              </View>
+            </Swipeable>
           );
         }}
+        ItemSeparatorComponent={() => <View style={{ height: 4 }} />}
       />
     </View>
   );
@@ -138,10 +202,11 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: 16,
-    paddingVertical: 8,
+    marginBottom: 0,
+    paddingVertical: 12,
     borderBottomWidth: 1,
-    borderColor: '#eee',
+    borderRadius: 14,
+    paddingHorizontal: 12,
   },
   username: {
     fontSize: 16,
