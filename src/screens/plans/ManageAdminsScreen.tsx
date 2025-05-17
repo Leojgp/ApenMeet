@@ -41,21 +41,24 @@ export default function ManageAdminsScreen({ route }: any) {
     );
   }
 
-  const isAdmin = (userId: string) => {
-    return plan.admins.some((admin: any) => {
-      const adminId = admin.id || admin._id;
-      return String(adminId) === String(userId);
-    });
+  const getUserId = (id: any) => {
+    if (typeof id === 'string') return id;
+    if (typeof id === 'object' && id !== null && id._id) return id._id;
+    return '';
   };
 
-  const handleToggleAdmin = async (participantId: string) => {
-    setLoadingId(participantId);
+  const isAdmin = (participantUserId: string) => {
+    return plan.admins.some((admin: any) => getUserId(admin.id) === participantUserId);
+  };
+
+  const handleToggleAdmin = async (participantUserId: string) => {
+    setLoadingId(participantUserId);
     try {
       const planIdToUse = plan.id || plan._id;
       if (!planIdToUse) {
         throw new Error('Invalid plan ID');
       }
-      const participant = plan.participants.find(p => String(p._id) === participantId);
+      const participant = plan.participants.find(p => getUserId(p.id) === participantUserId);
       if (!participant) {
         throw new Error('Participant not found');
       }
@@ -83,21 +86,38 @@ export default function ManageAdminsScreen({ route }: any) {
       <FlatList
         data={plan.participants}
         keyExtractor={item => String(item._id)}
-        renderItem={({ item }) => (
-          <View style={styles.row}>
-            <Text style={[styles.username, { color: theme.text }]}>{item.username}</Text>
-            <TouchableOpacity
-              style={[styles.button, { backgroundColor: isAdmin(String(item._id)) ? theme.error : theme.success, opacity: loadingId === String(item._id) ? 0.5 : 1 }]}
-              onPress={() => handleToggleAdmin(String(item._id))}
-              disabled={loadingId === String(item._id)}
-            >
-              <Ionicons name={isAdmin(String(item._id)) ? 'remove-circle' : 'person-add'} size={22} color={theme.card} />
-              <Text style={[styles.buttonText, { color: theme.card }]}> 
-                {isAdmin(String(item._id)) ? t('adminManagement.removeAdmin') : t('adminManagement.addAdmin')}
-              </Text>
-            </TouchableOpacity>
-          </View>
-        )}
+        renderItem={({ item }) => {
+          const participantUserId = getUserId(item.id);
+          const participantIsAdmin = isAdmin(participantUserId);
+          return (
+            <View style={styles.row}>
+              <Text style={[styles.username, { color: theme.text }]}>{item.username}</Text>
+              {participantIsAdmin ? (
+                <TouchableOpacity
+                  style={[styles.button, { backgroundColor: theme.error, opacity: loadingId === participantUserId ? 0.5 : 1 }]}
+                  onPress={() => handleToggleAdmin(participantUserId)}
+                  disabled={loadingId === participantUserId}
+                >
+                  <Ionicons name={'remove-circle'} size={22} color={theme.card} />
+                  <Text style={[styles.buttonText, { color: theme.card }]}> 
+                    {t('adminManagement.removeAdmin')}
+                  </Text>
+                </TouchableOpacity>
+              ) : (
+                <TouchableOpacity
+                  style={[styles.button, { backgroundColor: theme.success, opacity: loadingId === participantUserId ? 0.5 : 1 }]}
+                  onPress={() => handleToggleAdmin(participantUserId)}
+                  disabled={loadingId === participantUserId}
+                >
+                  <Ionicons name={'person-add'} size={22} color={theme.card} />
+                  <Text style={[styles.buttonText, { color: theme.card }]}> 
+                    {t('adminManagement.addAdmin')}
+                  </Text>
+                </TouchableOpacity>
+              )}
+            </View>
+          );
+        }}
       />
     </View>
   );

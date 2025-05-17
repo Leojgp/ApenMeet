@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Plan } from '../../models/Plan';
 import { useTranslation } from 'react-i18next';
+import { useTheme } from '../../hooks/theme/useTheme';
 
 interface ChatListItemProps {
   plan: Plan;
@@ -11,16 +12,17 @@ interface ChatListItemProps {
 
 export default function ChatListItem({ plan, onPress }: ChatListItemProps) {
   const { t } = useTranslation();
+  const theme = useTheme();
   return (
-    <TouchableOpacity style={styles.container} onPress={onPress}>
-      <View style={styles.iconContainer}>
-        <Ionicons name="chatbubble-ellipses" size={24} color="#5C4D91" />
+    <TouchableOpacity style={[styles.container, { backgroundColor: theme.card, shadowColor: theme.primary }]} onPress={onPress}>
+      <View style={[styles.iconContainer, { backgroundColor: theme.background }]}>
+        <Ionicons name="chatbubble-ellipses" size={24} color={theme.primary} />
       </View>
       <View style={styles.contentContainer}>
-        <Text style={styles.title}>{plan.title}</Text>
-        <Text style={styles.subtitle}>{plan.participants.length} {t('chat.participants')}</Text>
+        <Text style={[styles.title, { color: theme.primary }]}>{plan.title}</Text>
+        <Text style={[styles.subtitle, { color: theme.text }]}>{plan.participants.length} {t('chat.participants')}</Text>
       </View>
-      <Ionicons name="chevron-forward" size={24} color="#5C4D91" />
+      <Ionicons name="chevron-forward" size={24} color={theme.primary} />
     </TouchableOpacity>
   );
 }

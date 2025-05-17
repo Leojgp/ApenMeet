@@ -166,27 +166,27 @@ export default function ChatScreen({ route, navigation }: ChatScreenProps) {
     return (
       <View style={[
         styles.messageContainer,
-        isOwnMessage ? styles.ownMessage : styles.otherMessage,
+        isOwnMessage ? styles.ownMessage : { backgroundColor: theme.card, alignSelf: 'flex-start' },
         isSystemMessage && styles.systemMessage
       ]}>
         {!isSystemMessage && (
           <Text style={[
             styles.senderName,
-            isOwnMessage ? styles.ownSenderName : styles.otherSenderName
+            isOwnMessage ? styles.ownSenderName : { color: theme.primary }
           ]}>
             {message.sender.username}
           </Text>
         )}
         <Text style={[
           styles.messageText,
-          isOwnMessage ? styles.ownMessageText : styles.otherMessageText,
+          isOwnMessage ? styles.ownMessageText : { color: theme.text },
           isSystemMessage && styles.systemMessageText
         ]}>
           {message.content}
         </Text>
         <Text style={[
           styles.timestamp,
-          isOwnMessage ? styles.ownTimestamp : styles.otherTimestamp
+          isOwnMessage ? styles.ownTimestamp : { color: theme.primary }
         ]}>
           {new Date(message.timestamp).toString() === 'Invalid Date' ? '' : new Date(message.timestamp).toLocaleTimeString()}
         </Text>
@@ -208,9 +208,9 @@ export default function ChatScreen({ route, navigation }: ChatScreenProps) {
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
     >
-      <View style={styles.header}>
-        <Text style={styles.title}>{planTitle || 'Chat'}</Text>
-        {!isConnected && <ActivityIndicator size="small" color="#5C4D91" />}
+      <View style={[styles.header, { backgroundColor: theme.card }]}>
+        <Text style={[styles.title, { color: theme.text }]}>{planTitle || 'Chat'}</Text>
+        {!isConnected && <ActivityIndicator size="small" color={theme.primary} />}
       </View>
 
       <FlatList
@@ -258,12 +258,10 @@ const styles = StyleSheet.create({
     padding: 16,
     borderBottomWidth: 1,
     borderBottomColor: '#E6E0F8',
-    backgroundColor: '#fff',
   },
   title: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#5C4D91',
     marginRight: 8,
   },
   messagesList: {
