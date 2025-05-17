@@ -5,7 +5,7 @@ import {
   fetchPlanById, 
   fetchMyCreatedPlans, 
   fetchMyJoinedPlans
-} from '../../core/services/planService';
+} from '../../services/planService';
 import { useUser } from '../user/useUser';
 
 export const usePlans = () => {

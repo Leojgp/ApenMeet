@@ -154,26 +154,7 @@ export default function PlansScreen({navigation}: PlansScreenProps) {
       ListEmptyComponent={
         <>
           {loading && <ActivityIndicator size="small" color={theme.primary} style={{marginBottom: 16}} />}
-          {error && !loading ? (
-            <View style={{ alignItems: 'center', marginTop: 32 }}>
-              <Text style={{ color: theme.text, fontSize: 16, marginBottom: 12 }}>
-                {t('events.empty.message') || 'No se encontraron eventos para esa ciudad.'}
-              </Text>
-              <TouchableOpacity
-                style={{
-                  backgroundColor: theme.primary,
-                  paddingHorizontal: 24,
-                  paddingVertical: 10,
-                  borderRadius: 8,
-                }}
-                onPress={onRefresh}
-              >
-                <Text style={{ color: theme.card, fontWeight: 'bold' }}>
-                  {t('events.empty.refresh') || 'Recargar'}
-                </Text>
-              </TouchableOpacity>
-            </View>
-          ) : null}
+          {error && !loading && <Text style={[styles.notFound, { color: theme.error }]}>{error}</Text>}
           {!error && !loading && <Text style={[styles.notFound, { color: theme.text }]}>{t('plans.notFound')}</Text>}
         </>
       }

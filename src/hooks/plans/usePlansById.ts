@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { Plan } from '../../models/Plan';
-import { fetchPlanById } from '../../core/services/planService'; 
+import { fetchPlanById } from '../../services/planService'; 
 
 export const usePlansById = (planId: string) => {
   const [plan, setPlan] = useState<Plan | null>(null);

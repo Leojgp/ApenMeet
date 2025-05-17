@@ -5,9 +5,9 @@ import { useUser } from '../../hooks/user/useUser';
 import { useTheme } from '../../hooks/theme/useTheme';
 import { useTranslation } from 'react-i18next';
 import { Ionicons } from '@expo/vector-icons';
-import { planService } from '../../services/planService';
 import Swipeable from 'react-native-gesture-handler/Swipeable';
 import { RectButton } from 'react-native-gesture-handler';
+import { addAdmin, leavePlan, removeAdmin } from '../../api/plans';
 
 export default function ManageAdminsScreen({ route }: any) {
   const { planId } = route.params;
@@ -69,9 +69,9 @@ export default function ManageAdminsScreen({ route }: any) {
         : String(participant.id);
       console.log('Intentando añadir admin con userId:', userId);
       if (isAdmin(userId)) {
-        await planService.removeAdmin(planIdToUse, userId);
+        await removeAdmin(planIdToUse, userId);
       } else {
-        await planService.addAdmin(planIdToUse, userId);
+        await addAdmin(planIdToUse, userId);
       }
       await refetch();
     } catch (e: any) {
@@ -94,7 +94,7 @@ export default function ManageAdminsScreen({ route }: any) {
           onPress: async () => {
             try {
               const planIdToUse = plan.id || plan._id;
-              await planService.leavePlan(planIdToUse!, userId); 
+              await leavePlan(planIdToUse!, userId); 
               await refetch();
             } catch (e: any) {
               Alert.alert('Error', e?.response?.data?.error || 'Error');

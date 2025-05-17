@@ -188,3 +188,25 @@ export const unsavePlan = async (planId: string) => {
         }
     }
 };
+
+export const addAdmin = async (planId: string, userId: string) => {
+    if (!planId || !userId) {
+      throw new Error('Invalid plan ID or user ID');
+    }
+    const res = await api.post(`/plans/${planId}/admins/${userId}`);
+    return res.data;
+  };
+  export const removeAdmin = async (planId: string, userId: string) => {
+    if (!planId || !userId) {
+      throw new Error('Invalid plan ID or user ID');
+    }
+    const res = await api.delete(`/plans/${planId}/admins/${userId}`);
+    return res.data;
+  };
+  export const leavePlan = async (planId: string, userId: string) => {
+    if (!planId || !userId) {
+      throw new Error('Invalid plan ID or user ID');
+    }
+    const res = await api.post(`/plans/${planId}/leave`, { userId });
+    return res.data;
+  };
