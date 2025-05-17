@@ -80,9 +80,9 @@ export default function MainScreen({ navigation }: any) {
       />
       <View style={styles.cardContent}>
         <Text style={[styles.cardTitle, { color: theme.text }]}>{item.title}</Text>
-        {item.location && <Text style={[styles.cardLocation, { color: theme.placeholder }]}>{item.location}</Text>}
-        {item.date && <Text style={[styles.cardDate, { color: theme.primary }]}>{item.date}</Text>}
-        {item.price && <Text style={[styles.cardPrice, { color: theme.primary }]}>{item.price}</Text>}
+        {item.location && <Text style={[styles.cardLocation, { color: theme.placeholder }]}>{t('events.location') + ': ' + item.location}</Text>}
+        {item.date && <Text style={[styles.cardDate, { color: theme.primary }]}>{t('events.date') + ': ' + item.date}</Text>}
+        {item.price && <Text style={[styles.cardPrice, { color: theme.primary }]}>{t('events.price') + ': ' + item.price}</Text>}
       </View>
     </TouchableOpacity>
   );

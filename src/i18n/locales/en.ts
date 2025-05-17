@@ -46,7 +46,12 @@ export default {
       loading: "Loading...",
       notFound: "Plan not found",
       join: "Join Plan",
-      chat: "Chat"
+      chat: "Chat",
+      location: "Location",
+      date: "Date",
+      description: "Description",
+      tags: "Tags",
+      admins: "Admins"
     },
     edit: {
       title: "Edit Plan",
@@ -74,7 +79,8 @@ export default {
       email: "Email",
       bio: "Bio",
       city: "City",
-      interests: "Interests (comma separated)",
+      country: "Country",
+      interests: "Interests",
       addPhoto: "Add Photo",
       save: "Save",
       saving: "Saving...",
@@ -105,6 +111,10 @@ export default {
       refresh: "Refresh"
     },
     showingIn: "Showing events in {{city}}, {{country}}",
+    location: "Location",
+    date: "Date",
+    price: "Price",
+    seeMoreInfo: "See more information"
   },
   alerts: {
     location: {

@@ -4,6 +4,7 @@ import { RouteProp } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { ScrapedEvent } from '../../models/ScrapedEvent';
 import { useTheme } from '../../hooks/theme/useTheme';
+import { useTranslation } from 'react-i18next';
 
 
 type RootStackParamList = {
@@ -18,6 +19,7 @@ type EventDetailsScreenProps = {
 export default function EventDetailsScreen({ route }: EventDetailsScreenProps) {
   const { event } = route.params;
   const theme = useTheme();
+  const { t } = useTranslation();
 
   const handleOpenUrl = async () => {
     try {
@@ -38,21 +40,21 @@ export default function EventDetailsScreen({ route }: EventDetailsScreenProps) {
         
         {event.location && (
           <View style={styles.infoRow}>
-            <Text style={[styles.label, { color: theme.primary }]}>Ubicación:</Text>
+            <Text style={[styles.label, { color: theme.primary }]}>{t('events.location') || 'Ubicación'}:</Text>
             <Text style={[styles.value, { color: theme.text }]}>{event.location}</Text>
           </View>
         )}
 
         {event.date && (
           <View style={styles.infoRow}>
-            <Text style={[styles.label, { color: theme.primary }]}>Fecha:</Text>
+            <Text style={[styles.label, { color: theme.primary }]}>{t('events.date') || 'Fecha'}:</Text>
             <Text style={[styles.value, { color: theme.text }]}>{event.date}</Text>
           </View>
         )}
 
         {event.price && (
           <View style={styles.infoRow}>
-            <Text style={[styles.label, { color: theme.primary }]}>Precio:</Text>
+            <Text style={[styles.label, { color: theme.primary }]}>{t('events.price') || 'Precio'}:</Text>
             <Text style={[styles.value, { color: theme.text }]}>{event.price}</Text>
           </View>
         )}
@@ -60,7 +62,7 @@ export default function EventDetailsScreen({ route }: EventDetailsScreenProps) {
         <Text style={[styles.description, { color: theme.text }]}>{event.description}</Text>
 
         <TouchableOpacity style={[styles.button, { backgroundColor: theme.primary }]} onPress={handleOpenUrl}>
-          <Text style={[styles.buttonText, { color: theme.card }]}>Ver más información</Text>
+          <Text style={[styles.buttonText, { color: theme.card }]}>{t('events.seeMoreInfo') || 'Ver más información'}</Text>
         </TouchableOpacity>
       </View>
     </ScrollView>

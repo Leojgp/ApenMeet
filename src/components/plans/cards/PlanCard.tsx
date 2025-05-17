@@ -60,7 +60,7 @@ export default function PlanCard({ plan, navigation, onPlanDeleted }: PlanCardPr
   };
 
   const renderRightActions = (progress: Animated.AnimatedInterpolation<number>, dragX: Animated.AnimatedInterpolation<number>) => {
-    if (!isAdmin) return null;
+    if (!isAdmin && !isCreator) return null;
     
     const trans = dragX.interpolate({
       inputRange: [-100, 0],
@@ -119,7 +119,7 @@ export default function PlanCard({ plan, navigation, onPlanDeleted }: PlanCardPr
         <View style={styles.textContainer}>
           <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 4 }}>
             <Text style={[styles.title, { color: theme.primary, flex: 1 }]}>{plan.title}</Text>
-            {isAdmin && (
+            {(isAdmin || isCreator) && (
               <TouchableOpacity
                 onPress={() => navigation.navigate('ManageAdmins', { planId: planIdToUse })}
                 style={{ marginLeft: 8, padding: 4 }}

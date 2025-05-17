@@ -23,7 +23,7 @@ export const eventService = {
       });
 
       if (!response.data || !Array.isArray(response.data)) {
-        throw new Error('No se encontraron eventos para esa ciudad.');
+        throw new Error('No events found for this city.');
       }
 
       console.log('Eventos obtenidos:', response.data.length);
@@ -34,7 +34,7 @@ export const eventService = {
         error.response.status === 500 &&
         error.response.data?.error === 'Error scraping the provided location'
       ) {
-        throw new Error('No se encontraron eventos para esa ciudad. Prueba con otra ciudad o revisa la ortografía.');
+        throw new Error('No events found for this city. Try with another city or check the spelling.');
       }
       throw error;
     }

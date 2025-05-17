@@ -46,7 +46,12 @@ export default {
       loading: "Cargando...",
       notFound: "Plan no encontrado",
       join: "Unirse al Plan",
-      chat: "Chat"
+      chat: "Chat",
+      location: "Ubicación",
+      date: "Fecha",
+      description: "Descripción",
+      tags: "Etiquetas",
+      admins: "Administradores"
     },
     edit: {
       title: "Editar Plan",
@@ -74,7 +79,8 @@ export default {
       email: "Correo Electrónico",
       bio: "Biografía",
       city: "Ciudad",
-      interests: "Intereses (separados por comas)",
+      country: "País",
+      interests: "Intereses",
       addPhoto: "Añadir Foto",
       save: "Guardar",
       saving: "Guardando...",
@@ -104,7 +110,11 @@ export default {
       message: "Prueba a actualizar o cambia tu ubicación.",
       refresh: "Actualizar"
     },
-    showingIn: "Mostrando eventos en {{city}}, {{country}}"
+    showingIn: "Mostrando eventos en {{city}}, {{country}}",
+    location: "Ubicación",
+    date: "Fecha",
+    price: "Precio",
+    seeMoreInfo: "Ver más información"
   },
   alerts: {
     location: {

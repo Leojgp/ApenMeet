@@ -124,20 +124,23 @@ export default function PlanDetailScreen({ route, navigation }: any) {
         )}
       </View>
       <PlanInfoCard
-        title="Description"
-        content={plan.description}
-        badges={{
-          dateTime: new Date(plan.dateTime).toLocaleString(),
-          participantsCount: plan.participants.length,
-          status: plan.status
-        }}
+        title={t('plans.detail.location')}
+        content={plan.location.address}
       />
       <PlanInfoCard
-        title="Tags"
+        title={t('plans.detail.date')}
+        content={new Date(plan.dateTime).toLocaleString()}
+      />
+      <PlanInfoCard
+        title={t('plans.detail.description')}
+        content={plan.description}
+      />
+      <PlanInfoCard
+        title={t('plans.detail.tags')}
         content={plan.tags.join(', ')}
       />
       <PlanInfoCard
-        title="Admins"
+        title={t('plans.detail.admins')}
         content={plan.admins.map((admin: any) => admin.username).join(', ')}
       />
       <PlanMap
