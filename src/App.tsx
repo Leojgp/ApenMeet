@@ -14,25 +14,10 @@ import { Provider } from 'react-redux';
 import { store } from './store';
 import { useTheme } from './hooks/theme/useTheme';
 import ThemeToggle from './components/theme/ThemeToggle';
-import BottomTabs from './navigation/BottomTabs';
+import BottomTabs from './components/navigation/BottomTabs';
 import { I18nextProvider } from 'react-i18next';
 import i18n from './i18n';
-
-type RootStackParamList = {
-  Home: undefined;
-  SignUp: undefined;
-  SignIn: undefined;
-  Tabs: undefined;
-  Config: undefined;
-  Plans: undefined;
-  PlanDetail: { planId: string };
-  CreatePlan: undefined;
-  EditPlan: { planId: string };
-  EditProfileScreen: undefined;
-  Chat: { planId: string; planTitle: string };
-  Chats: undefined;
-  EventDetails: { event: any };
-};
+import { RootStackParamList } from './models/navigation';
 
 const Stack = createStackNavigator<RootStackParamList>();
 

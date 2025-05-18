@@ -1,0 +1,30 @@
+import { StackNavigationProp } from '@react-navigation/stack';
+import { RouteProp } from '@react-navigation/native';
+import { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
+
+export type RootStackParamList = {
+  Home: undefined;
+  SignUp: undefined;
+  SignIn: undefined;
+  Tabs: undefined;
+  Config: undefined;
+  Plans: undefined;
+  PlanDetail: { planId: string };
+  CreatePlan: undefined;
+  EditPlan: { planId: string };
+  EditProfileScreen: undefined;
+  Chat: { planId: string; planTitle: string };
+  Chats: undefined;
+  EventDetails: { event: any };
+};
+
+export type TabParamList = {
+  Home: undefined;
+  Plans: undefined;
+  Chats: undefined;
+  Config: undefined;
+};
+
+export type RootStackNavigationProp = StackNavigationProp<RootStackParamList>;
+export type RootStackRouteProp<T extends keyof RootStackParamList> = RouteProp<RootStackParamList, T>;
+export type TabNavigationProp = BottomTabNavigationProp<TabParamList>; 

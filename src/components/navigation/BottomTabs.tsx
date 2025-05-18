@@ -1,12 +1,12 @@
 import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Ionicons } from '@expo/vector-icons';
-import { useTheme } from '../hooks/theme/useTheme';
+import { useTheme } from '../../hooks/theme/useTheme';
 import { useTranslation } from 'react-i18next';
-import MainScreen from '../screens/home/MainScreen';
-import PlansStack from '../screens/plans/PlansStack';
-import { ChatsScreen } from '../screens/chat';
-import { ConfigScreen } from '../screens';
+import MainScreen from '../../screens/home/MainScreen';
+import PlansStack from '../../screens/plans/PlansStack';
+import { ChatsScreen } from '../../screens/chat';
+import { ConfigScreen } from '../../screens';
 
 const Tab = createBottomTabNavigator();
 
