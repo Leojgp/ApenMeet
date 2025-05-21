@@ -457,3 +457,19 @@ export const deletePlan = async (req: Request, res: Response): Promise<void> => 
     res.status(500).json({ error: 'Error deleting plan' });
   }
 };
+
+export const getPlansByLocation = async (req: Request, res: Response) => {
+  try {
+    const { city, country } = req.query;
+    console.log('BACKEND LOG - city:', city, 'country:', country);
+    let query: any = {};
+    if (city) query['location.city'] = { $regex: city, $options: 'i' };
+    if (country) query['location.country'] = { $regex: country, $options: 'i' };
+    const plans = await Plan.find(query)
+      .populate('creatorId', 'username')
+      .populate('participants.id', 'username');
+    res.json(plans);
+  } catch (err) {
+    res.status(500).json({ error: 'Error getting plans by location' });
+  }
+};

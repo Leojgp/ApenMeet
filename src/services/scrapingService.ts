@@ -128,14 +128,11 @@ class ScrapingService {
     const uniqueData: Partial<IScrapedSource>[] = [];
     
     for (const data of scrapedData) {
-      // Buscar eventos existentes con la misma URL
       const existingEvent = await ScrapedSource.findOne({ url: data.url });
       
       if (!existingEvent) {
-        // Si no existe, añadir a la lista de eventos únicos
         uniqueData.push(data);
       } else {
-        // Si existe, actualizar lastScraped
         existingEvent.lastScraped = new Date();
         await existingEvent.save();
       }

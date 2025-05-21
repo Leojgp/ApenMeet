@@ -9,6 +9,8 @@ export interface IPlan extends Document {
   location: {
     address: string;
     coordinates: [number, number];
+    city?: string;
+    country?: string;
   };
   tags: string[];
   dateTime: Date;
@@ -39,6 +41,8 @@ const PlanSchema: Schema = new Schema({
   location: {
     address: { type: String, required: true },
     coordinates: { type: [Number], index: '2dsphere', required: true },
+    city: { type: String },
+    country: { type: String }
   },
   tags: [{ type: String }],
   dateTime: { type: Date, required: true },
