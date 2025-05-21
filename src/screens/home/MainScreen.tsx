@@ -97,8 +97,8 @@ export default function MainScreen({ navigation }: any) {
 
   if (error) {
     return (
-      <View style={[styles.container, { backgroundColor: theme.background }]}> 
-        <Text style={[styles.errorText, { color: theme.error }]}>{error}</Text>
+      <View style={[styles.container, { backgroundColor: theme.background, justifyContent: 'center', alignItems: 'center' }]}> 
+        <Text style={[styles.errorText, { color: theme.error, marginBottom: 24 }]}>{error}</Text>
         {error.includes('iniciar sesión') && (
           <TouchableOpacity 
             style={[styles.loginButton, { backgroundColor: theme.primary }]}
@@ -113,6 +113,14 @@ export default function MainScreen({ navigation }: any) {
             onPress={() => navigation.navigate('EditProfile')}
           >
             <Text style={[styles.loginButtonText, { color: theme.card }]}>Actualizar Ubicación</Text>
+          </TouchableOpacity>
+        )}
+        {!error.includes('iniciar sesión') && !error.includes('ubicación') && (
+          <TouchableOpacity 
+            style={{ backgroundColor: theme.primary, paddingHorizontal: 32, paddingVertical: 14, borderRadius: 8 }}
+            onPress={onRefresh}
+          >
+            <Text style={{ color: theme.card, fontWeight: 'bold', fontSize: 16 }}>Recargar eventos</Text>
           </TouchableOpacity>
         )}
       </View>

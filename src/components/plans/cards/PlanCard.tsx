@@ -59,38 +59,24 @@ export default function PlanCard({ plan, navigation, onPlanDeleted }: PlanCardPr
     );
   };
 
-  const renderRightActions = (progress: Animated.AnimatedInterpolation<number>, dragX: Animated.AnimatedInterpolation<number>) => {
-    if (!isAdmin && !isCreator) return null;
-    
-    const trans = dragX.interpolate({
-      inputRange: [-100, 0],
-      outputRange: [0, 100],
-    });
-
+  const renderRightActions = () => {
     return (
       <RectButton style={styles.rightAction} onPress={handleEdit}>
-        <Animated.View style={[styles.actionContent, { transform: [{ translateX: trans }] }]}>
+        <View style={styles.actionContent}>
           <Ionicons name="pencil" size={24} color="#fff" />
           <Text style={styles.actionText}>{t('plans.edit.title')}</Text>
-        </Animated.View>
+        </View>
       </RectButton>
     );
   };
 
-  const renderLeftActions = (progress: Animated.AnimatedInterpolation<number>, dragX: Animated.AnimatedInterpolation<number>) => {
-    if (!isCreator) return null;
-
-    const trans = dragX.interpolate({
-      inputRange: [0, 100],
-      outputRange: [-100, 0],
-    });
-
+  const renderLeftActions = () => {
     return (
       <RectButton style={styles.leftAction} onPress={handleDelete}>
-        <Animated.View style={[styles.actionContent, { transform: [{ translateX: trans }] }]}>
+        <View style={styles.actionContent}>
           <Ionicons name="trash" size={24} color="#fff" />
           <Text style={styles.actionText}>{t('alerts.deletePlan.title')}</Text>
-        </Animated.View>
+        </View>
       </RectButton>
     );
   };
@@ -114,27 +100,34 @@ export default function PlanCard({ plan, navigation, onPlanDeleted }: PlanCardPr
       <TouchableOpacity onPress={handlePress} style={[styles.cardContainer, { backgroundColor: theme.card }]}>
         <Image 
           source={{ uri: plan.imageUrl || DEFAULT_IMAGE_URL }} 
-          style={[styles.image, { backgroundColor: theme.background }]} 
+          style={styles.image}
         />
-        <View style={styles.textContainer}>
-          <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 4 }}>
-            <Text style={[styles.title, { color: theme.primary, flex: 1 }]}>{plan.title}</Text>
+        <View style={styles.contentContainer}>
+          <View style={styles.headerContainer}>
+            <Text style={[styles.title, { color: theme.primary }]}>{plan.title}</Text>
             {(isAdmin || isCreator) && (
               <TouchableOpacity
                 onPress={() => navigation.navigate('ManageAdmins', { planId: planIdToUse })}
-                style={{ marginLeft: 8, padding: 4 }}
+                style={styles.adminButton}
               >
                 <Ionicons name="people" size={22} color={theme.primary} />
               </TouchableOpacity>
             )}
           </View>
+          
           {plan.admins && plan.admins.length > 0 && (
             <Text style={[styles.admins, { color: theme.text }]}>{'Admins: ' + plan.admins.map(a => a.username).join(', ')}</Text>
           )}
-          <Text style={[styles.subtitle, { color: theme.text }]}>{plan.description}</Text>
-          <View style={styles.badgesRow}>
-            <View style={[styles.badge, { backgroundColor: theme.background }]}><Text style={[styles.badgeText, { color: theme.primary }]}>{new Date(plan.dateTime).toLocaleDateString()}</Text></View>
-            <View style={[styles.badge, { backgroundColor: theme.background }]}><Text style={[styles.badgeText, { color: theme.primary }]}>{plan.participants.length} going</Text></View>
+          
+          <Text style={[styles.description, { color: theme.text }]} numberOfLines={2}>{plan.description}</Text>
+          
+          <View style={styles.badgesContainer}>
+            <View style={[styles.badge, { backgroundColor: theme.background }]}>
+              <Text style={[styles.badgeText, { color: theme.primary }]}>{new Date(plan.dateTime).toLocaleDateString()}</Text>
+            </View>
+            <View style={[styles.badge, { backgroundColor: theme.background }]}>
+              <Text style={[styles.badgeText, { color: theme.primary }]}>{plan.participants.length} going</Text>
+            </View>
           </View>
         </View>
       </TouchableOpacity>
@@ -144,47 +137,55 @@ export default function PlanCard({ plan, navigation, onPlanDeleted }: PlanCardPr
 
 const styles = StyleSheet.create({
   cardContainer: {
-    flexDirection: 'row',
-    marginBottom: 20,
-    borderRadius: 18,
-    shadowColor: '#5C4D91',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.12,
-    shadowRadius: 8,
+    borderRadius: 12,
+    marginBottom: 16,
+    overflow: 'hidden',
     elevation: 3,
-    padding: 12,
-    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
   },
   image: {
-    width: 70,
-    height: 70,
-    marginRight: 14,
-    borderRadius: 12,
+    width: '100%',
+    height: 200,
+    resizeMode: 'cover',
   },
-  textContainer: {
-    flex: 1,
+  contentContainer: {
+    padding: 16,
+  },
+  headerContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 4,
   },
   title: {
     fontSize: 18,
     fontWeight: 'bold',
-    marginBottom: 4,
+    flex: 1,
   },
-  subtitle: {
-    fontSize: 14,
-    marginBottom: 8,
+  adminButton: {
+    padding: 4,
   },
   admins: {
     fontSize: 12,
-    marginBottom: 2,
+    marginBottom: 8,
   },
-  badgesRow: {
+  description: {
+    fontSize: 14,
+    marginBottom: 12,
+    lineHeight: 20,
+  },
+  badgesContainer: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
   },
   badge: {
     borderRadius: 8,
     paddingHorizontal: 8,
-    paddingVertical: 2,
-    marginRight: 8,
+    paddingVertical: 4,
   },
   badgeText: {
     fontSize: 12,
@@ -194,29 +195,29 @@ const styles = StyleSheet.create({
     backgroundColor: '#4CAF50',
     justifyContent: 'center',
     alignItems: 'flex-end',
-    width: 100,
-    marginBottom: 20,
-    borderRadius: 18,
+    width: 140,
+    marginBottom: 16,
+    borderRadius: 12,
   },
   leftAction: {
     backgroundColor: '#f44336',
     justifyContent: 'center',
     alignItems: 'flex-start',
-    width: 100,
-    marginBottom: 20,
-    borderRadius: 18,
+    width: 140,
+    marginBottom: 16,
+    borderRadius: 12,
   },
   actionContent: {
     width: '100%',
     height: '100%',
     justifyContent: 'center',
     alignItems: 'center',
-    padding: 12,
+    padding: 16,
   },
   actionText: {
     color: '#fff',
-    fontSize: 14,
-    marginTop: 4,
+    fontSize: 16,
+    marginTop: 6,
     fontWeight: 'bold',
   },
 });

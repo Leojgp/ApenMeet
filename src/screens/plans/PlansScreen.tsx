@@ -47,7 +47,10 @@ export default function PlansScreen({navigation}: PlansScreenProps) {
   const [filterByCity, setFilterByCity] = useState(false);
   const [cityInput, setCityInput] = useState('');
   const [citySuggestions, setCitySuggestions] = useState<CitySuggestion[]>([]);
-  const [selectedCity, setSelectedCity] = useState<City | null>(null);
+  const [selectedCity, setSelectedCity] = useState<string | null>(null);
+  const [selectedCountry, setSelectedCountry] = useState<string | null>(null);
+  const [userCity, setUserCity] = useState<string | null>(null);
+  const [userCountry, setUserCountry] = useState<string | null>(null);
   const [showCityModal, setShowCityModal] = useState(false);
   const [searchResults, setSearchResults] = useState<any[]>([]);
   const [showResults, setShowResults] = useState(false);
@@ -55,9 +58,8 @@ export default function PlansScreen({navigation}: PlansScreenProps) {
   const [locationError, setLocationError] = useState<string | null>(null);
   const [index, setIndex] = useState(0);
   const theme = useTheme();
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const [isInitialLoad, setIsInitialLoad] = useState(true);
-  const [selectedCountry, setSelectedCountry] = useState('Spain');
   const [isLoadingCities, setIsLoadingCities] = useState(false);
 
   const debouncedSetSearch = useCallback(
@@ -78,30 +80,56 @@ export default function PlansScreen({navigation}: PlansScreenProps) {
     }, 10);
   };
 
+  useEffect(() => {
+    if (!selectedCity && !userCity) {
+      (async () => {
+        let { status } = await Location.requestForegroundPermissionsAsync();
+        if (status !== 'granted') return;
+        const location = await Location.getCurrentPositionAsync({});
+        const [place] = await Location.reverseGeocodeAsync(location.coords);
+        setUserCity(place.city);
+        setUserCountry(place.country);
+        refresh(place.city ?? undefined, place.country ?? undefined);
+      })();
+    }
+  }, [selectedCity, userCity]);
+
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
-    await refresh();
+    if (selectedCity && selectedCountry) {
+      await refresh(selectedCity || undefined, selectedCountry || undefined);
+    } else if (userCity && userCountry) {
+      await refresh(userCity || undefined, userCountry || undefined);
+    } else {
+      await refresh();
+    }
     setRefreshing(false);
-  }, [refresh]);
+  }, [refresh, selectedCity, selectedCountry, userCity, userCountry]);
 
   useFocusEffect(
     useCallback(() => {
       if (isInitialLoad) {
-        refresh();
+        if (selectedCity && selectedCountry) {
+          refresh(selectedCity || undefined, selectedCountry || undefined);
+        } else if (userCity && userCountry) {
+          refresh(userCity || undefined, userCountry || undefined);
+        } else {
+          refresh();
+        }
         setIsInitialLoad(false);
       }
-    }, [refresh, isInitialLoad])
+    }, [refresh, isInitialLoad, selectedCity, selectedCountry, userCity, userCountry])
   );
 
   const handleTabChange = useCallback((newIndex: number) => {
     setIndex(newIndex);
   }, []);
 
-  const [routes] = useState([
+  const routes = useMemo(() => [
     { key: 'all', title: t('plans.allPlans') },
     { key: 'created', title: t('plans.createdPlans') },
     { key: 'joined', title: t('plans.joinedPlans') },
-  ]);
+  ], [t, i18n.language]);
 
   const debouncedGeocode = useCallback(
     debounce(async (text: string) => {
@@ -142,24 +170,19 @@ export default function PlansScreen({navigation}: PlansScreenProps) {
   };
 
   const handleResultSelect = (result: any) => {
-    const city: City = {
-      name: result.city,
-      country: result.country
-    };
-    setCityInput(result.city);
-    setShowResults(false);
-    setSearchResults([]);
-    setSelectedCity(city);
-    setFilterByCity(true);
-    refresh(result.city, result.country);
+    setSelectedCity(result.city);
+    setSelectedCountry(result.country);
+    refresh(result.city || undefined, result.country || undefined);
   };
 
   const clearCityInput = () => {
-    setCityInput('');
-    setShowResults(false);
-    setSearchResults([]);
-    setFilterByCity(false);
-    refresh();
+    setSelectedCity(null);
+    setSelectedCountry(null);
+    if (userCity && userCountry) {
+      refresh(userCity || undefined, userCountry || undefined);
+    } else {
+      refresh();
+    }
   };
 
   const handleCitySearch = async (text: string) => {
@@ -167,7 +190,6 @@ export default function PlansScreen({navigation}: PlansScreenProps) {
       setSearchResults([]);
       return;
     }
-
     try {
       setIsLoadingLocation(true);
       setLocationError(null);
@@ -198,10 +220,11 @@ export default function PlansScreen({navigation}: PlansScreenProps) {
           })
         );
         setSearchResults(locations.filter(Boolean));
+      } else {
+        setSearchResults([]);
       }
     } catch (error) {
-      console.error('Error searching location:', error);
-      setLocationError(t('alerts.errors.location'));
+      setLocationError('Error al buscar la ciudad');
     } finally {
       setIsLoadingLocation(false);
     }
@@ -254,28 +277,22 @@ export default function PlansScreen({navigation}: PlansScreenProps) {
   );
 
   useEffect(() => {
-    debouncedCitySearch(cityInput, selectedCountry);
+    debouncedCitySearch(cityInput, selectedCountry || '');
   }, [cityInput, selectedCountry, debouncedCitySearch]);
 
   const handleCitySelect = (location: any) => {
-    const city: City = {
-      name: location.city,
-      country: location.country
-    };
-    setCityInput(location.formattedAddress);
-    setSelectedCity(city);
+    setSelectedCity(location.city);
     setSelectedCountry(location.country);
-    setFilterByCity(true);
+    setCityInput(location.formattedAddress);
     setShowCityModal(false);
-    setSearchResults([]);
-    refresh(city.name, city.country);
+    refresh(location.city || undefined, location.country || undefined);
   };
 
   const handleApplyCityFilter = () => {
     setShowCityModal(false);
     if (cityInput && selectedCity) {
       setFilterByCity(true);
-      refresh(selectedCity.name, selectedCity.country);
+      refresh(selectedCity || undefined, selectedCountry || undefined);
     } else {
       setFilterByCity(false);
       refresh();
@@ -292,7 +309,7 @@ export default function PlansScreen({navigation}: PlansScreenProps) {
         const planCity = plan.location?.city?.toLowerCase() || '';
         const planCountry = plan.location?.country?.toLowerCase() || '';
         return (
-          planCity.includes(selectedCity.name.toLowerCase()) &&
+          planCity.includes(selectedCity.toLowerCase()) &&
           (!selectedCountry || planCountry.includes(selectedCountry.toLowerCase()))
         );
       });
@@ -342,20 +359,22 @@ export default function PlansScreen({navigation}: PlansScreenProps) {
         returnKeyType="search"
         clearButtonMode="while-editing"
       />
-      <TouchableOpacity 
-        style={[styles.cityFilter, { backgroundColor: theme.primary }]} 
-        onPress={() => setShowCityModal(true)}
-      >
-        <Text style={styles.cityFilterText}>
-          {selectedCity
-            ? selectedCity.country
-              ? `${selectedCity.name}, ${selectedCity.country}`
-              : selectedCity.name
-            : t('plans.filterByCity')}
-        </Text>
-      </TouchableOpacity>
+      {index === 0 && (
+        <TouchableOpacity 
+          style={[styles.cityFilter, { backgroundColor: theme.primary }]} 
+          onPress={() => setShowCityModal(true)}
+        >
+          <Text style={styles.cityFilterText}>
+            {selectedCity
+              ? selectedCountry
+                ? `${selectedCity}, ${selectedCountry}`
+                : selectedCity
+              : t('plans.filterByCity')}
+          </Text>
+        </TouchableOpacity>
+      )}
     </View>
-  ), [search, theme, t, selectedCity]);
+  ), [search, theme, t, selectedCity, selectedCountry, index]);
 
   const renderCityModal = () => (
     <Modal
@@ -378,7 +397,7 @@ export default function PlansScreen({navigation}: PlansScreenProps) {
               placeholder={t('plans.searchCityPlaceholder')}
               placeholderTextColor={theme.placeholder}
               value={cityInput}
-              onChangeText={setCityInput}
+              onChangeText={handleCityInputChange}
               autoFocus
             />
             {isLoadingCities && <ActivityIndicator size="small" color={theme.primary} />}
@@ -391,8 +410,9 @@ export default function PlansScreen({navigation}: PlansScreenProps) {
                   key={`${city.city}-${city.country}-${index}`}
                   style={[styles.suggestionItem, { borderBottomColor: theme.border }]}
                   onPress={() => {
-                    setSelectedCity({ name: city.city, country: city.country });
-                    setCityInput(`${city.city}, ${city.country}`);
+                    setSelectedCity(city.city);
+                    setSelectedCountry(city.country);
+                    setCityInput(city.formattedAddress);
                     setShowCityModal(false);
                     refresh(city.city, city.country);
                   }}
@@ -459,6 +479,27 @@ export default function PlansScreen({navigation}: PlansScreenProps) {
     />
   ), [theme]);
 
+  const handleCityInputChange = (text: string) => {
+    setCityInput(text);
+    if (text.trim() === '') {
+      setSelectedCity(userCity);
+      setSelectedCountry(userCountry);
+      if (userCity && userCountry) {
+        debouncedCitySearch(userCity, userCountry);
+        refresh(userCity, userCountry);
+      }
+      return;
+    }
+    const [city, country] = text.split(',').map(s => s.trim());
+    if (city && country) {
+      setSelectedCity(city);
+      setSelectedCountry(country);
+      debouncedCitySearch(city, country);
+    } else {
+      debouncedCitySearch(city, selectedCountry || userCountry || '');
+    }
+  };
+
   return (
     <GestureHandlerRootView style={{flex: 1}}>
       <View style={{flex: 1, backgroundColor: theme.background}}>
@@ -477,18 +518,20 @@ export default function PlansScreen({navigation}: PlansScreenProps) {
                   returnKeyType="search"
                   clearButtonMode="while-editing"
                 />
-                <TouchableOpacity 
-                  style={[styles.cityFilter, { backgroundColor: theme.primary }]} 
-                  onPress={() => setShowCityModal(true)}
-                >
-                  <Text style={styles.cityFilterText}>
-                    {selectedCity
-                      ? selectedCity.country
-                        ? `${selectedCity.name}, ${selectedCity.country}`
-                        : selectedCity.name
-                      : t('plans.filterByCity')}
-                  </Text>
-                </TouchableOpacity>
+                {index === 0 && (
+                  <TouchableOpacity 
+                    style={[styles.cityFilter, { backgroundColor: theme.primary }]} 
+                    onPress={() => setShowCityModal(true)}
+                  >
+                    <Text style={styles.cityFilterText}>
+                      {selectedCity
+                        ? selectedCountry
+                          ? `${selectedCity}, ${selectedCountry}`
+                          : selectedCity
+                        : t('plans.filterByCity')}
+                    </Text>
+                  </TouchableOpacity>
+                )}
               </View>
               {renderScene({ route })}
             </>
@@ -518,7 +561,7 @@ const styles = StyleSheet.create({
   searchBarContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
+    justifyContent: 'flex-start',
     marginBottom: 18,
     marginTop: 12,
     paddingHorizontal: 16,
@@ -534,7 +577,6 @@ const styles = StyleSheet.create({
     marginRight: 0,
     backgroundColor: '#fff',
     minWidth: 0,
-    maxWidth: '75%',
   },
   filterButton: {
     width: 44,
