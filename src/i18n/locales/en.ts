@@ -64,7 +64,10 @@ export default {
     joinedPlans: "Joined Plans",
     leave: "Leave plan",
     leaveTitle: "Leave plan",
-    leaveConfirm: "Are you sure you want to leave this plan?"
+    leaveConfirm: "Are you sure you want to leave this plan?",
+    filterByCity: "Filter by city",
+    searchCity: "Search city",
+    searchCityPlaceholder: "Type a city name...",
   },
   chat: {
     title: "Chat",
@@ -87,6 +90,10 @@ export default {
       errorLoading: "Error loading user data"
     }
   },
+  common: {
+    close: "Close",
+    apply: "Apply"
+  }, 
   location: {
     permission: {
       title: "Location Permission Required",

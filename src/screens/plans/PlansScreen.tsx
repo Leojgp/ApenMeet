@@ -1,5 +1,5 @@
-import { ActivityIndicator, StyleSheet, Text, View, TextInput, TouchableOpacity, RefreshControl, FlatList } from 'react-native'
-import React, { useState, useCallback, useMemo } from 'react'
+import { ActivityIndicator, StyleSheet, Text, View, TextInput, TouchableOpacity, RefreshControl, FlatList, Modal, ScrollView } from 'react-native'
+import React, { useState, useCallback, useMemo, useEffect, useRef } from 'react'
 import PlanCard from '../../components/plans/cards/PlanCard';
 import { usePlans } from '../../hooks/plans/usePlans';
 import { useUser } from '../../hooks/user/useUser';
@@ -11,6 +11,7 @@ import { useTheme } from '../../hooks/theme/useTheme';
 import { useTranslation } from 'react-i18next';
 import { TabView, TabBar } from 'react-native-tab-view';
 import debounce from 'lodash/debounce';
+import * as Location from 'expo-location';
 
 interface Admin {
   id: string;
@@ -22,17 +23,42 @@ interface PlansScreenProps {
   navigation: any;
 }
 
+interface City {
+  name: string;
+  country: string;
+}
+
+interface CitySuggestion {
+  city: string;
+  country: string;
+  coordinates: [number, number];
+  formattedAddress: string;
+  postalCode?: string;
+  region?: string;
+}
+
 export default function PlansScreen({navigation}: PlansScreenProps) {
   const { plans, loading, error, refresh, myCreatedPlans, myJoinedPlans } = usePlans();
   const { user } = useUser();
   const [search, setSearch] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
+  const searchInputRef = useRef<TextInput>(null);
   const [refreshing, setRefreshing] = useState(false);
   const [filterByCity, setFilterByCity] = useState(false);
+  const [cityInput, setCityInput] = useState('');
+  const [citySuggestions, setCitySuggestions] = useState<CitySuggestion[]>([]);
+  const [selectedCity, setSelectedCity] = useState<City | null>(null);
+  const [showCityModal, setShowCityModal] = useState(false);
+  const [searchResults, setSearchResults] = useState<any[]>([]);
+  const [showResults, setShowResults] = useState(false);
+  const [isLoadingLocation, setIsLoadingLocation] = useState(false);
+  const [locationError, setLocationError] = useState<string | null>(null);
   const [index, setIndex] = useState(0);
   const theme = useTheme();
   const { t } = useTranslation();
   const [isInitialLoad, setIsInitialLoad] = useState(true);
+  const [selectedCountry, setSelectedCountry] = useState('Spain');
+  const [isLoadingCities, setIsLoadingCities] = useState(false);
 
   const debouncedSetSearch = useCallback(
     debounce((text: string) => {
@@ -44,6 +70,12 @@ export default function PlansScreen({navigation}: PlansScreenProps) {
   const handleSearchChange = (text: string) => {
     setSearch(text);
     debouncedSetSearch(text);
+  };
+
+  const handleSearchBlur = () => {
+    setTimeout(() => {
+      searchInputRef.current?.focus();
+    }, 10);
   };
 
   const onRefresh = useCallback(async () => {
@@ -71,29 +103,222 @@ export default function PlansScreen({navigation}: PlansScreenProps) {
     { key: 'joined', title: t('plans.joinedPlans') },
   ]);
 
+  const debouncedGeocode = useCallback(
+    debounce(async (text: string) => {
+      if (text.length < 3) {
+        setShowResults(false);
+        setSearchResults([]);
+        setFilterByCity(false);
+        return;
+      }
+      const results = await Location.geocodeAsync(text);
+      if (results.length > 0 && text.length > 2) {
+        setShowResults(false);
+        setSearchResults(results.map(r => {
+          const city = (r as any).city || (r as any).locality || text;
+          const street = (r as any).street || '';
+          const country = (r as any).country || '';
+          return {
+            city,
+            formattedAddress: street ? `${street}, ${city}, ${country}` : `${city}, ${country}`,
+            ...r
+          };
+        }));
+      } else {
+        setShowResults(false);
+        setSearchResults([]);
+      }
+    }, 1000),
+    []
+  );
+
+  useEffect(() => {
+    debouncedGeocode(cityInput);
+  }, [cityInput]);
+
+  const handleCityChange = (text: string) => {
+    setCityInput(text);
+    debouncedGeocode(text);
+  };
+
+  const handleResultSelect = (result: any) => {
+    const city: City = {
+      name: result.city,
+      country: result.country
+    };
+    setCityInput(result.city);
+    setShowResults(false);
+    setSearchResults([]);
+    setSelectedCity(city);
+    setFilterByCity(true);
+    refresh(result.city, result.country);
+  };
+
+  const clearCityInput = () => {
+    setCityInput('');
+    setShowResults(false);
+    setSearchResults([]);
+    setFilterByCity(false);
+    refresh();
+  };
+
+  const handleCitySearch = async (text: string) => {
+    if (text.length < 3) {
+      setSearchResults([]);
+      return;
+    }
+
+    try {
+      setIsLoadingLocation(true);
+      setLocationError(null);
+      const results = await Location.geocodeAsync(text);
+      if (results.length > 0) {
+        const locations = await Promise.all(
+          results.map(async (result) => {
+            const reverseGeocode = await Location.reverseGeocodeAsync({
+              latitude: result.latitude,
+              longitude: result.longitude
+            });
+            if (reverseGeocode.length > 0) {
+              const location = reverseGeocode[0];
+              return {
+                city: location.city || '',
+                country: location.country || '',
+                coordinates: [result.longitude, result.latitude],
+                formattedAddress: [
+                  location.street,
+                  location.city,
+                  location.region,
+                  location.postalCode,
+                  location.country
+                ].filter(Boolean).join(', ')
+              };
+            }
+            return null;
+          })
+        );
+        setSearchResults(locations.filter(Boolean));
+      }
+    } catch (error) {
+      console.error('Error searching location:', error);
+      setLocationError(t('alerts.errors.location'));
+    } finally {
+      setIsLoadingLocation(false);
+    }
+  };
+
+  const debouncedCitySearch = useCallback(
+    debounce(async (city: string, country: string) => {
+      if (city.length < 3 || !country) {
+        setCitySuggestions([]);
+        return;
+      }
+      setIsLoadingCities(true);
+      setLocationError('');
+      try {
+        const query = `${city}, ${country}`;
+        const results = await Location.geocodeAsync(query);
+        if (results.length > 0) {
+          const suggestions = await Promise.all(
+            results.map(async (result) => {
+              const reverseGeocode = await Location.reverseGeocodeAsync({
+                latitude: result.latitude,
+                longitude: result.longitude
+              });
+              if (reverseGeocode.length > 0) {
+                const location = reverseGeocode[0];
+                return {
+                  city: location.city || city,
+                  country: location.country || country,
+                  coordinates: [result.longitude, result.latitude],
+                  formattedAddress: location.formattedAddress || `${city}, ${country}`,
+                  postalCode: location.postalCode || '',
+                  region: location.region || '',
+                };
+              }
+              return null;
+            })
+          );
+          setCitySuggestions(suggestions.filter(Boolean) as CitySuggestion[]);
+        } else {
+          setCitySuggestions([]);
+        }
+      } catch (e) {
+        setLocationError('Error buscando la ciudad.');
+        setCitySuggestions([]);
+      } finally {
+        setIsLoadingCities(false);
+      }
+    }, 1000),
+    [selectedCountry]
+  );
+
+  useEffect(() => {
+    debouncedCitySearch(cityInput, selectedCountry);
+  }, [cityInput, selectedCountry, debouncedCitySearch]);
+
+  const handleCitySelect = (location: any) => {
+    const city: City = {
+      name: location.city,
+      country: location.country
+    };
+    setCityInput(location.formattedAddress);
+    setSelectedCity(city);
+    setSelectedCountry(location.country);
+    setFilterByCity(true);
+    setShowCityModal(false);
+    setSearchResults([]);
+    refresh(city.name, city.country);
+  };
+
+  const handleApplyCityFilter = () => {
+    setShowCityModal(false);
+    if (cityInput && selectedCity) {
+      setFilterByCity(true);
+      refresh(selectedCity.name, selectedCity.country);
+    } else {
+      setFilterByCity(false);
+      refresh();
+    }
+  };
+
   const memoizedPlans = useMemo(() => {
     const basePlans = index === 0 ? plans : 
                      index === 1 ? myCreatedPlans : 
                      myJoinedPlans;
 
-    if (filterByCity && user?.location?.city) {
-      const userCity = user.location.city.toLowerCase();
-      return basePlans.filter(plan => 
-        plan.location?.address?.toLowerCase().includes(userCity)
-      );
+    if (filterByCity && selectedCity) {
+      return basePlans.filter(plan => {
+        const planCity = plan.location?.city?.toLowerCase() || '';
+        const planCountry = plan.location?.country?.toLowerCase() || '';
+        return (
+          planCity.includes(selectedCity.name.toLowerCase()) &&
+          (!selectedCountry || planCountry.includes(selectedCountry.toLowerCase()))
+        );
+      });
     }
     return basePlans;
-  }, [index, plans, myCreatedPlans, myJoinedPlans, filterByCity, user?.location?.city]);
+  }, [index, plans, myCreatedPlans, myJoinedPlans, filterByCity, selectedCity, selectedCountry]);
 
   const filteredPlans = useMemo(() => {
     if (!debouncedSearch) return memoizedPlans;
-
     const searchTerm = debouncedSearch.toLowerCase();
     return memoizedPlans.filter(plan => 
       plan.title.toLowerCase().includes(searchTerm) ||
       plan.description?.toLowerCase().includes(searchTerm)
     );
   }, [memoizedPlans, debouncedSearch]);
+
+  const groupedPlans = useMemo(() => {
+    return Object.values(filteredPlans.reduce((acc, plan) => {
+      const date = new Date(plan.dateTime).toLocaleDateString();
+      if (!acc[date]) {
+        acc[date] = [];
+      }
+      acc[date].push(plan);
+      return acc;
+    }, {} as Record<string, Plan[]>));
+  }, [filteredPlans]);
 
   const uniquePlans = useMemo(() => 
     Object.values(filteredPlans.reduce((acc, plan) => {
@@ -108,6 +333,7 @@ export default function PlansScreen({navigation}: PlansScreenProps) {
   const renderHeader = useCallback(() => (
     <View style={styles.searchBarContainer}>
       <TextInput
+        ref={searchInputRef}
         style={[styles.searchInput, { backgroundColor: theme.card, color: theme.text, borderColor: theme.border }]}
         placeholder={t('plans.searchByName')}
         placeholderTextColor={theme.placeholder}
@@ -116,16 +342,74 @@ export default function PlansScreen({navigation}: PlansScreenProps) {
         returnKeyType="search"
         clearButtonMode="while-editing"
       />
-      {user?.location?.city && (
-        <TouchableOpacity 
-          style={[styles.filterButton, filterByCity && [styles.filterButtonActive, { backgroundColor: theme.primary, borderColor: theme.primary }], { backgroundColor: theme.card, borderColor: theme.border }]}
-          onPress={() => setFilterByCity(!filterByCity)}
-        >
-          <Ionicons name="location" size={24} color={filterByCity ? theme.card : theme.primary} />
-        </TouchableOpacity>
-      )}
+      <TouchableOpacity 
+        style={[styles.cityFilter, { backgroundColor: theme.primary }]} 
+        onPress={() => setShowCityModal(true)}
+      >
+        <Text style={styles.cityFilterText}>
+          {selectedCity
+            ? selectedCity.country
+              ? `${selectedCity.name}, ${selectedCity.country}`
+              : selectedCity.name
+            : t('plans.filterByCity')}
+        </Text>
+      </TouchableOpacity>
     </View>
-  ), [search, filterByCity, theme, user?.location?.city, t]);
+  ), [search, theme, t, selectedCity]);
+
+  const renderCityModal = () => (
+    <Modal
+      visible={showCityModal}
+      animationType="slide"
+      transparent={true}
+      onRequestClose={() => setShowCityModal(false)}
+    >
+      <View style={[styles.modalOverlay, { backgroundColor: 'rgba(0, 0, 0, 0.5)' }]}> 
+        <View style={[styles.modalContent, { backgroundColor: theme.card }]}> 
+          <View style={styles.modalHeader}>
+            <Text style={[styles.modalTitle, { color: theme.text }]}>{t('plans.searchCity')}</Text>
+            <TouchableOpacity onPress={() => setShowCityModal(false)}>
+              <Text style={[styles.closeButton, { color: theme.text }]}>✕</Text>
+            </TouchableOpacity>
+          </View>
+          <View style={styles.searchContainer}>
+            <TextInput
+              style={[styles.searchInput, { backgroundColor: theme.card, color: theme.text, borderColor: theme.border }]}
+              placeholder={t('plans.searchCityPlaceholder')}
+              placeholderTextColor={theme.placeholder}
+              value={cityInput}
+              onChangeText={setCityInput}
+              autoFocus
+            />
+            {isLoadingCities && <ActivityIndicator size="small" color={theme.primary} />}
+          </View>
+
+          {citySuggestions.length > 0 && (
+            <ScrollView style={[styles.suggestionsList, { maxHeight: 220 }]}>
+              {citySuggestions.map((city, index) => (
+                <TouchableOpacity
+                  key={`${city.city}-${city.country}-${index}`}
+                  style={[styles.suggestionItem, { borderBottomColor: theme.border }]}
+                  onPress={() => {
+                    setSelectedCity({ name: city.city, country: city.country });
+                    setCityInput(`${city.city}, ${city.country}`);
+                    setShowCityModal(false);
+                    refresh(city.city, city.country);
+                  }}
+                >
+                  <Text style={[styles.suggestionText, { color: theme.text, fontWeight: 'bold', fontSize: 16 }]}>{city.formattedAddress || `${city.city}, ${city.country}`}</Text>
+                  <Text style={[styles.suggestionText, { color: theme.text, fontSize: 13 }]}>{city.city}, {city.region ? city.region + ', ' : ''}{city.country}</Text>
+                  {city.postalCode ? (
+                    <Text style={[styles.suggestionText, { color: theme.placeholder, fontSize: 12 }]}>{city.postalCode}</Text>
+                  ) : null}
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+          )}
+        </View>
+      </View>
+    </Modal>
+  );
 
   const renderItem = useCallback(({ item: plan }: { item: Plan }) => (
     <PlanCard 
@@ -142,7 +426,6 @@ export default function PlansScreen({navigation}: PlansScreenProps) {
       renderItem={renderItem}
       keyExtractor={(item) => item.id}
       contentContainerStyle={[styles.container, { backgroundColor: theme.background }]}
-      ListHeaderComponent={renderHeader}
       refreshControl={
         <RefreshControl
           refreshing={refreshing}
@@ -162,8 +445,9 @@ export default function PlansScreen({navigation}: PlansScreenProps) {
       maxToRenderPerBatch={10}
       windowSize={5}
       initialNumToRender={10}
+      keyboardShouldPersistTaps="handled"
     />
-  ), [uniquePlans, renderItem, renderHeader, refreshing, onRefresh, loading, error, theme, t]);
+  ), [uniquePlans, renderItem, refreshing, onRefresh, loading, error, theme, t]);
 
   const renderTabBar = useCallback((props: any) => (
     <TabBar
@@ -180,13 +464,42 @@ export default function PlansScreen({navigation}: PlansScreenProps) {
       <View style={{flex: 1, backgroundColor: theme.background}}>
         <TabView
           navigationState={{ index, routes }}
-          renderScene={renderScene}
+          renderScene={({ route }) => (
+            <>
+              <View style={styles.searchBarContainer}>
+                <TextInput
+                  ref={searchInputRef}
+                  style={[styles.searchInput, { backgroundColor: theme.card, color: theme.text, borderColor: theme.border }]}
+                  placeholder={t('plans.searchByName')}
+                  placeholderTextColor={theme.placeholder}
+                  value={search}
+                  onChangeText={handleSearchChange}
+                  returnKeyType="search"
+                  clearButtonMode="while-editing"
+                />
+                <TouchableOpacity 
+                  style={[styles.cityFilter, { backgroundColor: theme.primary }]} 
+                  onPress={() => setShowCityModal(true)}
+                >
+                  <Text style={styles.cityFilterText}>
+                    {selectedCity
+                      ? selectedCity.country
+                        ? `${selectedCity.name}, ${selectedCity.country}`
+                        : selectedCity.name
+                      : t('plans.filterByCity')}
+                  </Text>
+                </TouchableOpacity>
+              </View>
+              {renderScene({ route })}
+            </>
+          )}
           onIndexChange={handleTabChange}
           initialLayout={{ width: 100 }}
           renderTabBar={renderTabBar}
           lazy={true}
           lazyPreloadDistance={0}
         />
+        {renderCityModal()}
         <TouchableOpacity style={[styles.fab, { backgroundColor: theme.primary }]} onPress={() => navigation.navigate('CreatePlan')}>
           <Ionicons name="add" size={36} color={theme.card} />
         </TouchableOpacity>
@@ -205,8 +518,11 @@ const styles = StyleSheet.create({
   searchBarContainer: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
     marginBottom: 18,
-    gap: 8,
+    marginTop: 12,
+    paddingHorizontal: 16,
+    gap: 10,
   },
   searchInput: {
     flex: 1,
@@ -215,7 +531,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     fontSize: 16,
     borderWidth: 1,
-    marginRight: 8,
+    marginRight: 0,
+    backgroundColor: '#fff',
+    minWidth: 0,
+    maxWidth: '75%',
   },
   filterButton: {
     width: 44,
@@ -245,5 +564,90 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.18,
     shadowRadius: 8,
     elevation: 6,
+  },
+  modalContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  modalContent: {
+    width: '100%',
+    maxHeight: '80%',
+    borderRadius: 20,
+    padding: 20,
+  },
+  locationItem: {
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+  },
+  locationItemText: {
+    fontSize: 16,
+  },
+  locationLoader: {
+    marginVertical: 10,
+  },
+  errorText: {
+    marginVertical: 10,
+    textAlign: 'center',
+  },
+  closeButton: {
+    marginTop: 20,
+    padding: 12,
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  closeButtonText: {
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  applyButton: {
+    marginTop: 10,
+    padding: 12,
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  cityFilter: {
+    paddingVertical: 8,
+    paddingHorizontal: 18,
+    borderRadius: 20,
+    minWidth: 0,
+    alignSelf: 'center',
+    marginLeft: 8,
+  },
+  cityFilterText: {
+    color: '#fff',
+    textAlign: 'center',
+    fontSize: 16,
+  },
+  modalOverlay: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 15,
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+  },
+  searchContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 15,
+  },
+  suggestionsList: {
+    maxHeight: 300,
+  },
+  suggestionItem: {
+    padding: 15,
+    borderBottomWidth: 1,
+  },
+  suggestionText: {
+    fontSize: 16,
   },
 });

@@ -181,7 +181,7 @@ export default function LocationPicker({ onLocationSelect, initialLocation }: Lo
           placeholderTextColor={theme.placeholder}
         />
         <TouchableOpacity style={styles.searchButton} onPress={handleSearch}>
-          <Ionicons name="search" size={24} color={theme.card} />
+          <Ionicons name="search" size={24} color={theme.text} />
         </TouchableOpacity>
         <TouchableOpacity 
           style={[styles.locationButton, locationPermissionDenied && styles.locationButtonDisabled, { backgroundColor: theme.primary }]} 

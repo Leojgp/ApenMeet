@@ -4,7 +4,8 @@ import {
   fetchPlans, 
   fetchPlanById, 
   fetchMyCreatedPlans, 
-  fetchMyJoinedPlans
+  fetchMyJoinedPlans,
+  fetchPlansByLocation
 } from '../../services/planService';
 import { useUser } from '../user/useUser';
 
@@ -16,12 +17,18 @@ export const usePlans = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const refresh = useCallback(async () => {
+  const refresh = useCallback(async (city?: string, country?: string) => {
     try {
       setLoading(true);
       setError(null);
-      const [allPlans, created, joined] = await Promise.all([
-        fetchPlans(),
+      let allPlans = [];
+      if (city && country) {
+        allPlans = await fetchPlansByLocation(city, country);
+        console.log('Planes filtrados por ciudad y país:', allPlans);
+      } else {
+        allPlans = await fetchPlans();
+      }
+      const [created, joined] = await Promise.all([
         user ? fetchMyCreatedPlans(user.username) : [],
         fetchMyJoinedPlans()
       ]);

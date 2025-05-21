@@ -3,7 +3,8 @@ import {
   getPlanById, 
   getPlans, 
   getPlansByUsername, 
-  getUserParticipatingPlans
+  getUserParticipatingPlans,
+  getPlansByLocation
 } from '../api/plans/plansApi';
 import { Plan, fromApiResponse } from '../models/Plan';
 import i18next from 'i18next';
@@ -64,4 +65,11 @@ export const fetchMyJoinedPlans = async () => {
   } catch (error: any) {
     throw new Error(error.response?.data?.error || i18next.t('api.errors.serverError'));
   }
+};
+
+export const fetchPlansByLocation = async (city: string, country: string) => {
+  const data = await getPlansByLocation(city, country);
+  console.log('Planes recibidos del backend:', data);
+  if (!data || !Array.isArray(data)) return [];
+  return data.map((plan: any) => fromApiResponse(plan)).filter(Boolean);
 };

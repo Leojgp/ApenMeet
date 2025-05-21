@@ -11,6 +11,8 @@ export interface Plan {
   location: {
     address: string;
     coordinates: [number, number];
+    city?: string;
+    country?: string;
   };
   tags: string[];
   dateTime: string;

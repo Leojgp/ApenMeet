@@ -1,5 +1,6 @@
 import api from '../config/axiosInstance';
 import i18next from 'i18next';
+import { handleApiError } from '../utils/errorHandler';
 
 export const getPlans = async () => {
     try {
@@ -210,3 +211,13 @@ export const addAdmin = async (planId: string, userId: string) => {
     const res = await api.post(`/plans/${planId}/leave`, { userId });
     return res.data;
   };
+
+export const getPlansByLocation = async (city: string, country: string) => {
+  console.log('FRONTEND LOG - city:', city, 'country:', country);
+  try {
+    const response = await api.get(`/plans/location`, { params: { city, country } });
+    return response.data;
+  } catch (error) {
+    handleApiError(error);
+  }
+};

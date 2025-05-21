@@ -64,7 +64,10 @@ export default {
     joinedPlans: "Planes Unidos",
     leave: "Abandonar plan",
     leaveTitle: "Abandonar plan",
-    leaveConfirm: "¿Seguro que quieres abandonar este plan?"
+    leaveConfirm: "¿Seguro que quieres abandonar este plan?",
+    filterByCity: "Filtrar por ciudad",
+    searchCity: "Buscar ciudad",
+    searchCityPlaceholder: "Escribe el nombre de una ciudad..."
   },
   chat: {
     title: "Chat",
@@ -97,6 +100,10 @@ export default {
       loading: "Obteniendo ubicación...",
       update: "Actualizar Ubicación"
     }
+  },
+  common: {
+    close: "Cerrar",
+    apply: "Aplicar"
   },
   navigation: {
     home: "Eventos",
@@ -194,6 +201,25 @@ export default {
     confirmRemoveMsg: "¿Seguro que quieres eliminar a este usuario del plan?",
     cancel: "Cancelar",
     remove: "Eliminar",
-    you: "Tú"
-  }
+    you: "Tú",
+    confirmAddAdmin: '¿Seguro que quieres hacer admin a {{name}}?',
+    confirmRemoveAdmin: '¿Seguro que quieres quitar a {{name}} como admin?',
+    adminAdded: '{{name}} ahora es admin',
+    adminRemoved: '{{name}} ya no es admin',
+    noAdmins: 'Aún no hay admins',
+    searchPlaceholder: 'Buscar usuarios...',
+    adminList: 'Lista de admins',
+    userList: 'Lista de usuarios',
+    permissions: {
+      title: 'Permisos',
+      manageUsers: 'Gestionar usuarios',
+      manageContent: 'Gestionar contenido',
+      manageSettings: 'Gestionar ajustes',
+    },
+    role: {
+      creator: 'Creador',
+      admin: 'Admin',
+      user: 'Usuario',
+    },
+  },
 }; 
