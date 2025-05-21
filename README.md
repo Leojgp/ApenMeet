@@ -1,4 +1,4 @@
-# 🌍 ÅpenMeet
+#v🌍ÅpenMeet
 
 **ÅpenMeet** es una aplicación móvil multiplataforma diseñada para conectar personas a través de planes y eventos sociales en su ciudad. Ideal para estudiantes, expatriados o cualquier persona que quiera ampliar su círculo social de forma moderna, fluida y segura.
 
@@ -50,7 +50,7 @@ Durante experiencias de movilidad internacional como Erasmus, es común sentirse
 
 ---
 
-## 🛠️ Arquitectura
+## 🛠️Arquitectura
 
 ApenMeet utiliza una arquitectura cliente-servidor moderna y modular:
 
@@ -73,7 +73,7 @@ ApenMeet utiliza una arquitectura cliente-servidor moderna y modular:
 
 ---
 
-## ⚙️ Tecnologías
+## ⚙️Tecnologías
 
 | Área     | Tecnologías principales                                                             |
 |----------|--------------------------------------------------------------------------------------|
@@ -97,17 +97,6 @@ ApenMeet utiliza una arquitectura cliente-servidor moderna y modular:
 
 ---
 
-## Roadmap
-
-- [ ] Notificaciones push en tiempo real
-- [ ] Login con Google y Facebook
-- [ ] Modo offline y sincronización de datos
-- [ ] Recomendaciones personalizadas
-- [ ] Mejora de rendimiento y optimización del bundle
-- [ ] Tests unitarios y de integración
-
----
-
 ## Instalación rápida
 
 ### Frontend
@@ -126,11 +115,11 @@ npm install
 npm run dev
 ```
 
-### 📝 Licencia
+### 📝Licencia
 
 Este proyecto está bajo la Licencia MIT. Consulta el archivo LICENSE para más detalles.
 
-### 👤 Autor
+### 👤Autor
 
 Desarrollado por Leonardo como parte del proyecto final del Grado Superior de Desarrollo de Aplicaciones Multiplataforma (DAM).
 
