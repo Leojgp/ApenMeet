@@ -37,6 +37,14 @@ export const createPlan = async (req: Request, res: Response): Promise<void> => 
     if (location.coordinates && Array.isArray(location.coordinates)) {
       coordinates = location.coordinates;
     }
+
+    console.log('Location data received:', {
+      address: location.address,
+      city: location.city,
+      country: location.country,
+      coordinates: coordinates
+    });
+
     let tags: string[] = [];
     if (req.body['tags[]']) {
       tags = Array.isArray(req.body['tags[]']) 
@@ -47,8 +55,10 @@ export const createPlan = async (req: Request, res: Response): Promise<void> => 
       title,
       description,
       location: {
-        address: location.address,
-        coordinates: coordinates
+        address: location.address || '',
+        coordinates: coordinates,
+        city: location.city || '',
+        country: location.country || ''
       },
       dateTime,
       maxParticipants,
@@ -471,5 +481,57 @@ export const getPlansByLocation = async (req: Request, res: Response) => {
     res.json(plans);
   } catch (err) {
     res.status(500).json({ error: 'Error getting plans by location' });
+  }
+};
+
+export const removeParticipant = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const authenticatedUser = (req as any).user;
+    const { planId, participantUserId } = req.params;
+
+    if (!mongoose.Types.ObjectId.isValid(planId) || !mongoose.Types.ObjectId.isValid(participantUserId)) {
+      res.status(400).json({ error: 'Invalid IDs' });
+      return;
+    }
+
+    const plan = await Plan.findById(planId);
+    if (!plan) {
+      res.status(404).json({ error: 'Plan not found' });
+      return;
+    }
+
+    if (!plan.admins.some(admin => admin.id.toString() === authenticatedUser._id.toString())) {
+      res.status(403).json({ error: 'You do not have permission to remove participants' });
+      return;
+    }
+
+    if (plan.creatorId.toString() === participantUserId) {
+        res.status(400).json({ error: 'Cannot remove the creator from the plan' });
+        return;
+    }
+
+    const participantIndex = plan.participants.findIndex(p => p.id.toString() === participantUserId);
+
+    if (participantIndex === -1) {
+      res.status(400).json({ error: 'User is not a participant in this plan' });
+      return;
+    }
+
+    plan.participants.splice(participantIndex, 1);
+    await plan.save();
+
+    const updatedPlan = await Plan.findById(planId)
+      .populate('creatorId', 'username profileImage')
+      .populate('participants.id', 'username profileImage')
+      .populate('admins.id', 'username profileImage');
+
+    res.status(200).json({
+      message: 'Participant removed successfully',
+      plan: updatedPlan
+    });
+
+  } catch (error) {
+    console.error('Error removing participant:', error);
+    res.status(500).json({ error: 'Error removing participant' });
   }
 };

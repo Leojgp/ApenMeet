@@ -24,7 +24,7 @@ export const getMessagesByPlan = async (req: Request, res: Response): Promise<vo
 
     const isCreator = plan.creatorId.toString() === userId;
     
-    let joinedAt = null;
+    let joinedAt: Date | null = null;
     if (!isCreator) {
       const participant = plan.participants.find(p => p.id.toString() === userId);
       if (!participant) {

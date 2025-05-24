@@ -1,5 +1,5 @@
 import express from 'express';
-import { getAllPlans, createPlan, getPlanById, getPlansByUsername, joinPlan, leavePlan, updatePlan, cancelPlan, addAdmin, removeAdmin, isAdmin, getUserParticipatingPlans, deletePlan, getPlansByLocation } from '../controllers/planController';
+import { getAllPlans, createPlan, getPlanById, getPlansByUsername, joinPlan, leavePlan, updatePlan, cancelPlan, addAdmin, removeAdmin, isAdmin, getUserParticipatingPlans, deletePlan, getPlansByLocation, removeParticipant } from '../controllers/planController';
 import { authenticateToken } from '../middlewares/authenticateToken';
 import { upload, handleMulterError } from '../middlewares/uploadMiddleware';
 
@@ -22,5 +22,6 @@ router.delete('/:planId/admins/:userId', authenticateToken, removeAdmin);
 router.get('/:planId/is-admin', authenticateToken, isAdmin);
 
 router.delete('/:id', authenticateToken, deletePlan);
+router.delete('/:planId/participants/:participantUserId/remove', authenticateToken, removeParticipant);
 
 export default router;

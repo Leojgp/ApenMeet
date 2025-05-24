@@ -58,7 +58,7 @@ const PlanSchema: Schema = new Schema({
   }],
   origin: { type: String, default: 'user' },
   createdAt: { type: Date, default: Date.now },
-  status: { type: String, default: 'open' },
+  status: { type: String, default: 'open' }
 });
 
 PlanSchema.index({ creatorId: 1 });

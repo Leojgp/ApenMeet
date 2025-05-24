@@ -10,9 +10,7 @@ import messageRoutes from './src/api/routing/messageRoutes';
 import { SocketServer } from './src/websocket/chat';
 import scrapingRoutes from './src/api/routing/scrapingRoutes';
 import swaggerUi from 'swagger-ui-express';
-import swaggerJSDoc from 'swagger-jsdoc';
 import fs from 'fs';
-
 
 dotenv.config();
 
@@ -22,9 +20,7 @@ const PORT = process.env.PORT || 3000;
 const cors = require('cors');
 app.use(cors());
 
-
 app.use(express.json());
-
 
 const server = http.createServer(app);
 const chatServer = new SocketServer(server);
