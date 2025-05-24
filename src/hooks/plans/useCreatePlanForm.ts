@@ -186,6 +186,18 @@ export const useCreatePlanForm = (isEditing: boolean = false) => {
       formData.append('location[coordinates][]', String(form.location.coordinates[0]));
       formData.append('location[coordinates][]', String(form.location.coordinates[1]));
       
+      const addressParts = form.location.address.split(',').map(part => part.trim());
+      if (addressParts.length > 0) {
+        if (addressParts.length === 1) {
+          formData.append('location[city]', addressParts[0]);
+        } else {
+          const country = addressParts[addressParts.length - 1];
+          const city = addressParts[addressParts.length - 2];
+          if (city) formData.append('location[city]', city);
+          if (country) formData.append('location[country]', country);
+        }
+      }
+      
       form.tags.forEach(tag => {
         formData.append('tags[]', tag);
       });

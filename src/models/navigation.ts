@@ -4,16 +4,17 @@ import { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
 
 export type RootStackParamList = {
   Home: undefined;
-  SignUp: undefined;
-  SignIn: undefined;
+  SignUp: { redirectTo?: string; planId?: string };
+  SignIn: { redirectTo?: string; planId?: string };
   Tabs: undefined;
   Config: undefined;
   Plans: undefined;
   PlanDetail: { planId: string };
   CreatePlan: undefined;
   EditPlan: { planId: string };
+  ManageAdmins: { planId: string };
   EditProfileScreen: undefined;
-  Chat: { planId: string; planTitle: string };
+  Chat: { planId: string; planTitle?: string };
   Chats: undefined;
   EventDetails: { event: any };
 };

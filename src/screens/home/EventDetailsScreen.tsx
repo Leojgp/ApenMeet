@@ -5,18 +5,17 @@ import { StackNavigationProp } from '@react-navigation/stack';
 import { ScrapedEvent } from '../../models/ScrapedEvent';
 import { useTheme } from '../../hooks/theme/useTheme';
 import { useTranslation } from 'react-i18next';
+import { RootStackParamList } from '../../models/navigation';
 
+type EventDetailsScreenNavigationProp = StackNavigationProp<RootStackParamList, 'EventDetails'>;
+type EventDetailsScreenRouteProp = RouteProp<RootStackParamList, 'EventDetails'>;
 
-type RootStackParamList = {
-  EventDetails: { event: ScrapedEvent };
-};
+interface EventDetailsScreenProps {
+  navigation: EventDetailsScreenNavigationProp;
+  route: EventDetailsScreenRouteProp;
+}
 
-type EventDetailsScreenProps = {
-  route: RouteProp<RootStackParamList, 'EventDetails'>;
-  navigation: StackNavigationProp<RootStackParamList, 'EventDetails'>;
-};
-
-export default function EventDetailsScreen({ route }: EventDetailsScreenProps) {
+export default function EventDetailsScreen({ navigation, route }: EventDetailsScreenProps) {
   const { event } = route.params;
   const theme = useTheme();
   const { t } = useTranslation();

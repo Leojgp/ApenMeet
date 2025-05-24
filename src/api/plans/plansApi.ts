@@ -221,3 +221,12 @@ export const getPlansByLocation = async (city: string, country: string) => {
     handleApiError(error);
   }
 };
+
+export const removeParticipant = async (planId: string, participantUserId: string) => {
+    try {
+        const response = await api.delete(`plans/${planId}/participants/${participantUserId}/remove`);
+        return response.data;
+    } catch (error: any) {
+        return handleApiError(error);
+    }
+};

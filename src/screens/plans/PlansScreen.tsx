@@ -1,4 +1,4 @@
-import { ActivityIndicator, StyleSheet, Text, View, TextInput, TouchableOpacity, RefreshControl, FlatList, Modal, ScrollView } from 'react-native'
+import { ActivityIndicator, StyleSheet, Text, View, TextInput, TouchableOpacity, RefreshControl, FlatList, Modal, ScrollView, Alert, Linking } from 'react-native'
 import React, { useState, useCallback, useMemo, useEffect, useRef } from 'react'
 import PlanCard from '../../components/plans/cards/PlanCard';
 import { usePlans } from '../../hooks/plans/usePlans';
@@ -61,6 +61,7 @@ export default function PlansScreen({navigation}: PlansScreenProps) {
   const { t, i18n } = useTranslation();
   const [isInitialLoad, setIsInitialLoad] = useState(true);
   const [isLoadingCities, setIsLoadingCities] = useState(false);
+  const [locationPermissionDenied, setLocationPermissionDenied] = useState(false);
 
   const debouncedSetSearch = useCallback(
     debounce((text: string) => {
@@ -80,11 +81,19 @@ export default function PlansScreen({navigation}: PlansScreenProps) {
     }, 10);
   };
 
+  const openSettings = () => {
+    Linking.openSettings();
+  };
+
   useEffect(() => {
     if (!selectedCity && !userCity) {
       (async () => {
         let { status } = await Location.requestForegroundPermissionsAsync();
-        if (status !== 'granted') return;
+        if (status !== 'granted') {
+          setLocationPermissionDenied(true);
+          return;
+        }
+        setLocationPermissionDenied(false);
         const location = await Location.getCurrentPositionAsync({});
         const [place] = await Location.reverseGeocodeAsync(location.coords);
         setUserCity(place.city);
@@ -391,40 +400,59 @@ export default function PlansScreen({navigation}: PlansScreenProps) {
               <Text style={[styles.closeButton, { color: theme.text }]}>✕</Text>
             </TouchableOpacity>
           </View>
-          <View style={styles.searchContainer}>
-            <TextInput
-              style={[styles.searchInput, { backgroundColor: theme.card, color: theme.text, borderColor: theme.border }]}
-              placeholder={t('plans.searchCityPlaceholder')}
-              placeholderTextColor={theme.placeholder}
-              value={cityInput}
-              onChangeText={handleCityInputChange}
-              autoFocus
-            />
-            {isLoadingCities && <ActivityIndicator size="small" color={theme.primary} />}
-          </View>
+          
+          {locationPermissionDenied ? (
+            <View style={styles.permissionContainer}>
+              <Text style={[styles.permissionText, { color: theme.text }]}>
+                {t('location.locationDisabled')}
+              </Text>
+              <TouchableOpacity 
+                style={[styles.settingsButton, { backgroundColor: theme.primary }]}
+                onPress={openSettings}
+              >
+                <Text style={[styles.settingsButtonText, { color: theme.card }]}>
+                  {t('location.goToSettings')}
+                </Text>
+              </TouchableOpacity>
+            </View>
+          ) : (
+            <>
+              <View style={styles.searchContainer}>
+                <TextInput
+                  style={[styles.searchInput, { backgroundColor: theme.card, color: theme.text, borderColor: theme.border }]}
+                  placeholder={t('plans.searchCityPlaceholder')}
+                  placeholderTextColor={theme.placeholder}
+                  value={cityInput}
+                  onChangeText={handleCityInputChange}
+                  autoFocus
+                />
+                {isLoadingCities && <ActivityIndicator size="small" color={theme.primary} />}
+              </View>
 
-          {citySuggestions.length > 0 && (
-            <ScrollView style={[styles.suggestionsList, { maxHeight: 220 }]}>
-              {citySuggestions.map((city, index) => (
-                <TouchableOpacity
-                  key={`${city.city}-${city.country}-${index}`}
-                  style={[styles.suggestionItem, { borderBottomColor: theme.border }]}
-                  onPress={() => {
-                    setSelectedCity(city.city);
-                    setSelectedCountry(city.country);
-                    setCityInput(city.formattedAddress);
-                    setShowCityModal(false);
-                    refresh(city.city, city.country);
-                  }}
-                >
-                  <Text style={[styles.suggestionText, { color: theme.text, fontWeight: 'bold', fontSize: 16 }]}>{city.formattedAddress || `${city.city}, ${city.country}`}</Text>
-                  <Text style={[styles.suggestionText, { color: theme.text, fontSize: 13 }]}>{city.city}, {city.region ? city.region + ', ' : ''}{city.country}</Text>
-                  {city.postalCode ? (
-                    <Text style={[styles.suggestionText, { color: theme.placeholder, fontSize: 12 }]}>{city.postalCode}</Text>
-                  ) : null}
-                </TouchableOpacity>
-              ))}
-            </ScrollView>
+              {citySuggestions.length > 0 && (
+                <ScrollView style={[styles.suggestionsList, { maxHeight: 220 }]}>
+                  {citySuggestions.map((city, index) => (
+                    <TouchableOpacity
+                      key={`${city.city}-${city.country}-${index}`}
+                      style={[styles.suggestionItem, { borderBottomColor: theme.border }]}
+                      onPress={() => {
+                        setSelectedCity(city.city);
+                        setSelectedCountry(city.country);
+                        setCityInput(city.formattedAddress);
+                        setShowCityModal(false);
+                        refresh(city.city, city.country);
+                      }}
+                    >
+                      <Text style={[styles.suggestionText, { color: theme.text, fontWeight: 'bold', fontSize: 16 }]}>{city.formattedAddress || `${city.city}, ${city.country}`}</Text>
+                      <Text style={[styles.suggestionText, { color: theme.text, fontSize: 13 }]}>{city.city}, {city.region ? city.region + ', ' : ''}{city.country}</Text>
+                      {city.postalCode ? (
+                        <Text style={[styles.suggestionText, { color: theme.placeholder, fontSize: 12 }]}>{city.postalCode}</Text>
+                      ) : null}
+                    </TouchableOpacity>
+                  ))}
+                </ScrollView>
+              )}
+            </>
           )}
         </View>
       </View>
@@ -691,5 +719,23 @@ const styles = StyleSheet.create({
   },
   suggestionText: {
     fontSize: 16,
+  },
+  permissionContainer: {
+    padding: 20,
+    alignItems: 'center',
+  },
+  permissionText: {
+    fontSize: 16,
+    textAlign: 'center',
+    marginBottom: 20,
+  },
+  settingsButton: {
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    borderRadius: 8,
+  },
+  settingsButtonText: {
+    fontSize: 16,
+    fontWeight: 'bold',
   },
 });

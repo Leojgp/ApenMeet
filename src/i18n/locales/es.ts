@@ -99,7 +99,12 @@ export default {
       allow: "Permitir acceso a ubicación",
       loading: "Obteniendo ubicación...",
       update: "Actualizar Ubicación"
-    }
+    },
+    permissionTitle: 'Permiso de Ubicación Requerido',
+    permissionMessage: 'ApenMeet necesita acceso a tu ubicación para mostrarte planes cerca de ti y habilitar el filtrado por ciudad.',
+    goToSettings: 'Abrir Ajustes',
+    enableLocation: 'Activar Ubicación',
+    locationDisabled: 'Los servicios de ubicación están desactivados. Por favor, actívalos para usar el filtrado por ciudad.',
   },
   common: {
     close: "Cerrar",

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert, Share } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { usePlanDetails } from '../../hooks/plans/usePlanDetails';
 import { useJoinPlan } from '../../hooks/plans/useJoinPlan';
@@ -9,8 +9,20 @@ import { useTheme } from '../../hooks/theme/useTheme';
 import { useTranslation } from 'react-i18next';
 import MapView, { Marker } from 'react-native-maps';
 import { leavePlan } from '../../api/plans/plansApi';
+import { StackNavigationProp } from '@react-navigation/stack';
+import { RouteProp } from '@react-navigation/native';
+import { RootStackParamList } from '../../models/navigation';
+import SharePlanButton from '../../components/plans/SharePlanButton';
 
-export default function PlanDetailScreen({ route, navigation }: any) {
+type PlansDetailsScreenNavigationProp = StackNavigationProp<RootStackParamList, 'PlanDetail'>;
+type PlansDetailsScreenRouteProp = RouteProp<RootStackParamList, 'PlanDetail'>;
+
+interface PlansDetailsScreenProps {
+  navigation: PlansDetailsScreenNavigationProp;
+  route: PlansDetailsScreenRouteProp;
+}
+
+export default function PlanDetailScreen({ route, navigation }: PlansDetailsScreenProps) {
   const { planId } = route.params;
   const { plan, loading, error, refetch } = usePlanDetails(planId);
   const { user } = useUser();
@@ -72,6 +84,19 @@ export default function PlanDetailScreen({ route, navigation }: any) {
     );
   };
 
+  const handleShare = async () => {
+    try {
+      const shareLink = `apenmeet://plan/${planId}`;
+      await Share.share({
+        message: `${plan?.title}\n\n${plan?.description}\n\nDate: ${plan?.dateTime ? new Date(plan.dateTime).toLocaleDateString() : ''}\nLocation: ${plan?.location?.address}\n\nJoin me on ApenMeet! ${shareLink}`,
+        title: plan?.title,
+        url: shareLink
+      });
+    } catch (error) {
+      Alert.alert('Error', 'Could not share the plan');
+    }
+  };
+
   if (loading) {
     return (
       <View style={[styles.centered, { backgroundColor: theme.background }]}> 
@@ -110,13 +135,13 @@ export default function PlanDetailScreen({ route, navigation }: any) {
           <>
             <TouchableOpacity 
               style={[styles.editButton, { backgroundColor: theme.card }]}
-              onPress={() => navigation.navigate('EditPlan', { planId: plan._id })}
+              onPress={() => plan._id && navigation.navigate('EditPlan', { planId: plan._id })}
             >
               <Ionicons name="pencil" size={24} color={theme.primary} />
             </TouchableOpacity>
             <TouchableOpacity
               style={[styles.editButton, { backgroundColor: theme.card }]}
-              onPress={() => navigation.navigate('ManageAdmins', { planId: plan._id })}
+              onPress={() => plan._id && navigation.navigate('ManageAdmins', { planId: plan._id })}
             >
               <Ionicons name="people" size={24} color={theme.primary} />
             </TouchableOpacity>
@@ -151,32 +176,37 @@ export default function PlanDetailScreen({ route, navigation }: any) {
         mapReady={mapReady}
         setMapReady={setMapReady}
       />
-      <TouchableOpacity 
-        style={[styles.button, styles.chatButton, { backgroundColor: theme.success }]}
-        onPress={() => navigation.navigate('Chat', { planId, planTitle: plan.title })}
-      >
-        <Ionicons name="chatbubble-outline" size={24} color={theme.card} />
-        <Text style={[styles.buttonText, { color: theme.card }]}>{t('plans.detail.chat')}</Text>
-      </TouchableOpacity>
-      {!isParticipant && (
+      <View style={styles.buttonContainer}>
         <TouchableOpacity 
-          style={[styles.button, styles.joinButton, { backgroundColor: theme.primary }]}
-          onPress={handleJoin}
-          disabled={joinLoading}
+          style={[styles.button, styles.chatButton, { backgroundColor: theme.success }]}
+          onPress={() => navigation.navigate('Chat', { planId, planTitle: plan.title })}
         >
-          <Text style={[styles.buttonText, { color: theme.card }]}>
-            {joinLoading ? t('plans.detail.joining', 'Joining...') : t('plans.detail.join')}
-          </Text>
+          <Ionicons name="chatbubble-outline" size={24} color={theme.card} />
+          <Text style={[styles.buttonText, { color: theme.card }]}>{t('plans.detail.chat')}</Text>
         </TouchableOpacity>
-      )}
-      {isParticipant && !isCreator && (
-        <TouchableOpacity
-          style={[styles.button, { backgroundColor: theme.error }]}
-          onPress={handleLeavePlan}
-        >
-          <Text style={[styles.buttonText, { color: theme.card }]}>{t('plans.leave')}</Text>
-        </TouchableOpacity>
-      )}
+        {!isParticipant && (
+          <TouchableOpacity 
+            style={[styles.button, styles.joinButton, { backgroundColor: theme.primary }]}
+            onPress={handleJoin}
+            disabled={joinLoading}
+          >
+            <Text style={[styles.buttonText, { color: theme.card }]}>
+              {joinLoading ? t('plans.detail.joining', 'Joining...') : t('plans.detail.join')}
+            </Text>
+          </TouchableOpacity>
+        )}
+        {isParticipant && !isCreator && (
+          <TouchableOpacity
+            style={[styles.button, { backgroundColor: theme.error }]}
+            onPress={handleLeavePlan}
+          >
+            <Text style={[styles.buttonText, { color: theme.card }]}>{t('plans.leave')}</Text>
+          </TouchableOpacity>
+        )}
+      </View>
+      <View style={styles.shareButtonContainer}>
+        <SharePlanButton onPress={handleShare} />
+      </View>
       <JoinRequestModal
         visible={showJoinRequest}
         onRequestClose={() => setShowJoinRequest(false)}
@@ -245,5 +275,8 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: 'bold',
     textAlign: 'center',
+  },
+  shareButtonContainer: {
+    marginTop: 16,
   },
 });

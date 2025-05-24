@@ -21,12 +21,26 @@ import { RootStackParamList } from './models/navigation';
 
 const Stack = createStackNavigator<RootStackParamList>();
 
+const linking = {
+  prefixes: ['apenmeet://', 'https://apenmeet.app'],
+  config: {
+    screens: {
+      PlanDetail: {
+        path: 'plan/:planId',
+        parse: {
+          planId: (planId: string) => planId,
+        },
+      },
+    },
+  },
+};
+
 function AppContent() {
   const theme = useTheme();
   const isAuthenticated = useSelector((state: RootState) => !!state.user._id);
 
   return (
-    <NavigationContainer>
+    <NavigationContainer linking={linking}>
       <Stack.Navigator 
         initialRouteName="Home"
         screenOptions={{

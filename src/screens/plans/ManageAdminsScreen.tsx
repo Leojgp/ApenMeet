@@ -7,7 +7,7 @@ import { useTranslation } from 'react-i18next';
 import { Ionicons } from '@expo/vector-icons';
 import Swipeable from 'react-native-gesture-handler/Swipeable';
 import { RectButton } from 'react-native-gesture-handler';
-import { addAdmin, leavePlan, removeAdmin } from '../../api/plans';
+import { addAdmin, leavePlan, removeAdmin, removeParticipant } from '../../api/plans';
 
 export default function ManageAdminsScreen({ route }: any) {
   const { planId } = route.params;
@@ -94,7 +94,7 @@ export default function ManageAdminsScreen({ route }: any) {
           onPress: async () => {
             try {
               const planIdToUse = plan.id || plan._id;
-              await leavePlan(planIdToUse!, userId); 
+              await removeParticipant(planIdToUse!, userId); 
               await refetch();
             } catch (e: any) {
               Alert.alert('Error', e?.response?.data?.error || 'Error');

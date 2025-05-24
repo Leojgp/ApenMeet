@@ -1,5 +1,5 @@
 import React, { useRef } from 'react';
-import { View, Text, Image, StyleSheet, TouchableOpacity, Alert, Animated } from 'react-native';
+import { View, Text, Image, StyleSheet, TouchableOpacity, Alert, Animated, Share } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { Plan } from '../../../models/Plan';
 import { StackNavigationProp } from '@react-navigation/stack/lib/typescript/src/types';
@@ -10,6 +10,7 @@ import Swipeable from 'react-native-gesture-handler/Swipeable';
 import { RectButton } from 'react-native-gesture-handler';
 import { useTheme } from '../../../hooks/theme/useTheme';
 import { useTranslation } from 'react-i18next';
+import SharePlanButton from '../SharePlanButton';
 
 interface PlanCardProps {
   plan: Plan;
@@ -59,6 +60,17 @@ export default function PlanCard({ plan, navigation, onPlanDeleted }: PlanCardPr
     );
   };
 
+  const handleShare = async () => {
+    try {
+      const result = await Share.share({
+        message: `${plan.title}\n\n${plan.description}\n\nDate: ${new Date(plan.dateTime).toLocaleDateString()}\nLocation: ${plan.location?.city}, ${plan.location?.country}\n\nJoin me on ApenMeet!`,
+        title: plan.title,
+      });
+    } catch (error) {
+      Alert.alert('Error', 'Could not share the plan');
+    }
+  };
+
   const renderRightActions = () => {
     return (
       <RectButton style={styles.rightAction} onPress={handleEdit}>
@@ -105,14 +117,17 @@ export default function PlanCard({ plan, navigation, onPlanDeleted }: PlanCardPr
         <View style={styles.contentContainer}>
           <View style={styles.headerContainer}>
             <Text style={[styles.title, { color: theme.primary }]}>{plan.title}</Text>
-            {(isAdmin || isCreator) && (
-              <TouchableOpacity
-                onPress={() => navigation.navigate('ManageAdmins', { planId: planIdToUse })}
-                style={styles.adminButton}
-              >
-                <Ionicons name="people" size={22} color={theme.primary} />
-              </TouchableOpacity>
-            )}
+            <View style={styles.headerButtons}>
+              {(isAdmin || isCreator) && (
+                <TouchableOpacity
+                  onPress={() => navigation.navigate('ManageAdmins', { planId: planIdToUse })}
+                  style={styles.adminButton}
+                >
+                  <Ionicons name="people" size={22} color={theme.primary} />
+                </TouchableOpacity>
+              )}
+              <SharePlanButton onPress={handleShare} />
+            </View>
           </View>
           
           {plan.admins && plan.admins.length > 0 && (
@@ -219,6 +234,11 @@ const styles = StyleSheet.create({
     fontSize: 16,
     marginTop: 6,
     fontWeight: 'bold',
+  },
+  headerButtons: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
   },
 });
 

@@ -103,7 +103,12 @@ export default {
       allow: "Allow location access",
       loading: "Getting location...",
       update: "Update Location"
-    }
+    },
+    permissionTitle: 'Location Permission Required',
+    permissionMessage: 'ApenMeet needs access to your location to show you plans near you and enable city filtering.',
+    goToSettings: 'Open Settings',
+    enableLocation: 'Enable Location',
+    locationDisabled: 'Location services are disabled. Please enable them to use city filtering.',
   },
   navigation: {
     home: "Events",

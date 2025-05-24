@@ -1,31 +1,65 @@
 {
   "expo": {
     "name": "ApenMeet",
-    "slug": "ApenMeet",
+    "slug": "apenmeet",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
-    "userInterfaceStyle": "light",
+    "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "splash": {
       "image": "./assets/splash-icon.png",
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },
+    "assetBundlePatterns": [
+      "**/*"
+    ],
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.apenmeet.app",
+      "associatedDomains": [
+        "applinks:apenmeet.com"
+      ]
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
-      }
+      },
+      "package": "com.apenmeet.app",
+      "intentFilters": [
+        {
+          "action": "VIEW",
+          "autoVerify": true,
+          "data": [
+            {
+              "scheme": "apenmeet",
+              "host": "plan"
+            }
+          ],
+          "category": [
+            "BROWSABLE",
+            "DEFAULT"
+          ]
+        }
+      ]
     },
     "web": {
       "favicon": "./assets/favicon.png"
     },
+    "scheme": "apenmeet",
     "plugins": [
-      "expo-secure-store"
+      "expo-secure-store",
+      "expo-router",
+      [
+        "expo-location",
+        {
+          "locationAlwaysAndWhenInUsePermission": "Allow ApenMeet to use your location to find plans near you.",
+          "locationAlwaysPermission": "Allow ApenMeet to use your location to find plans near you.",
+          "locationWhenInUsePermission": "Allow ApenMeet to use your location to find plans near you."
+        }
+      ]
     ]
   }
 }
