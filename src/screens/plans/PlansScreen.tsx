@@ -308,6 +308,13 @@ export default function PlansScreen({navigation}: PlansScreenProps) {
     }
   };
 
+  const normalizeText = (text: string): string => {
+    return text
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '');
+  };
+
   const memoizedPlans = useMemo(() => {
     const basePlans = index === 0 ? plans : 
                      index === 1 ? myCreatedPlans : 
@@ -315,11 +322,14 @@ export default function PlansScreen({navigation}: PlansScreenProps) {
 
     if (filterByCity && selectedCity) {
       return basePlans.filter(plan => {
-        const planCity = plan.location?.city?.toLowerCase() || '';
-        const planCountry = plan.location?.country?.toLowerCase() || '';
+        const planCity = normalizeText(plan.location?.city || '');
+        const planCountry = normalizeText(plan.location?.country || '');
+        const searchCity = normalizeText(selectedCity);
+        const searchCountry = selectedCountry ? normalizeText(selectedCountry) : '';
+        
         return (
-          planCity.includes(selectedCity.toLowerCase()) &&
-          (!selectedCountry || planCountry.includes(selectedCountry.toLowerCase()))
+          planCity.includes(searchCity) &&
+          (!searchCountry || planCountry.includes(searchCountry))
         );
       });
     }

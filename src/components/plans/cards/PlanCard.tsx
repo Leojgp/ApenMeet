@@ -2,7 +2,6 @@ import React, { useRef } from 'react';
 import { View, Text, Image, StyleSheet, TouchableOpacity, Alert, Animated, Share } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { Plan } from '../../../models/Plan';
-import { StackNavigationProp } from '@react-navigation/stack/lib/typescript/src/types';
 import { Ionicons } from '@expo/vector-icons';
 import { useUser } from '../../../hooks/user/useUser';
 import { deletePlan } from '../../../api/plans/plansApi';
@@ -71,24 +70,38 @@ export default function PlanCard({ plan, navigation, onPlanDeleted }: PlanCardPr
     }
   };
 
-  const renderRightActions = () => {
+  const renderRightActions = (progress: Animated.AnimatedInterpolation<number>, dragX: Animated.AnimatedInterpolation<number>) => {
+    if (!isAdmin && !isCreator) return null;
+    
+    const trans = dragX.interpolate({
+      inputRange: [-100, 0],
+      outputRange: [0, 100],
+    });
+
     return (
       <RectButton style={styles.rightAction} onPress={handleEdit}>
-        <View style={styles.actionContent}>
+        <Animated.View style={[styles.actionContent, { transform: [{ translateX: trans }] }]}>
           <Ionicons name="pencil" size={24} color="#fff" />
           <Text style={styles.actionText}>{t('plans.edit.title')}</Text>
-        </View>
+        </Animated.View>
       </RectButton>
     );
   };
 
-  const renderLeftActions = () => {
+  const renderLeftActions = (progress: Animated.AnimatedInterpolation<number>, dragX: Animated.AnimatedInterpolation<number>) => {
+    if (!isCreator) return null;
+
+    const trans = dragX.interpolate({
+      inputRange: [0, 100],
+      outputRange: [-100, 0],
+    });
+
     return (
       <RectButton style={styles.leftAction} onPress={handleDelete}>
-        <View style={styles.actionContent}>
+        <Animated.View style={[styles.actionContent, { transform: [{ translateX: trans }] }]}>
           <Ionicons name="trash" size={24} color="#fff" />
           <Text style={styles.actionText}>{t('alerts.deletePlan.title')}</Text>
-        </View>
+        </Animated.View>
       </RectButton>
     );
   };
@@ -112,7 +125,7 @@ export default function PlanCard({ plan, navigation, onPlanDeleted }: PlanCardPr
       <TouchableOpacity onPress={handlePress} style={[styles.cardContainer, { backgroundColor: theme.card }]}>
         <Image 
           source={{ uri: plan.imageUrl || DEFAULT_IMAGE_URL }} 
-          style={styles.image}
+          style={[styles.image, { backgroundColor: theme.background }]} 
         />
         <View style={styles.contentContainer}>
           <View style={styles.headerContainer}>

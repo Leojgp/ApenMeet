@@ -43,6 +43,11 @@
             "DEFAULT"
           ]
         }
+      ],
+      "permissions": [
+        "android.permission.ACCESS_COARSE_LOCATION",
+        "android.permission.ACCESS_FINE_LOCATION",
+        "android.permission.RECORD_AUDIO"
       ]
     },
     "web": {
@@ -50,16 +55,25 @@
     },
     "scheme": "apenmeet",
     "plugins": [
-      "expo-secure-store",
       "expo-router",
+      "expo-secure-store",
+      "expo-location",
+      "expo-image-picker",
       [
-        "expo-location",
+        "@react-native-google-signin/google-signin",
         {
-          "locationAlwaysAndWhenInUsePermission": "Allow ApenMeet to use your location to find plans near you.",
-          "locationAlwaysPermission": "Allow ApenMeet to use your location to find plans near you.",
-          "locationWhenInUsePermission": "Allow ApenMeet to use your location to find plans near you."
+          "androidClientId": "230725176821-9nbermodl0jbo8mtoaacrbsuemjaqc44.apps.googleusercontent.com",
+          "iosClientId": "230725176821-c8men9fk85t9bkto5c7ea7c93nfjna8p.apps.googleusercontent.com",
+          "webClientId": "230725176821-kbvbpviikni7i4uvlsamt8hjvtq479po.apps.googleusercontent.com",
+          "iosUrlScheme": "com.googleusercontent.apps.230725176821-c8men9fk85t9bkto5c7ea7c93nfjna8p"
         }
       ]
-    ]
+    ],
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "e1c1f0c5-49e4-4287-b74d-300134197889"
+      }
+    }
   }
 }

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { StyleSheet } from 'react-native';
 import { createStackNavigator } from '@react-navigation/stack';
 import { NavigationContainer } from '@react-navigation/native';
@@ -18,6 +18,7 @@ import BottomTabs from './components/navigation/BottomTabs';
 import { I18nextProvider } from 'react-i18next';
 import i18n from './i18n';
 import { RootStackParamList } from './models/navigation';
+import { GoogleSignin } from '@react-native-google-signin/google-signin';
 
 const Stack = createStackNavigator<RootStackParamList>();
 
@@ -38,6 +39,13 @@ const linking = {
 function AppContent() {
   const theme = useTheme();
   const isAuthenticated = useSelector((state: RootState) => !!state.user._id);
+
+  useEffect(() => {
+    GoogleSignin.configure({
+      webClientId: process.env.GOOGLE_WEB_CLIENT_ID,
+      offlineAccess: true,
+    });
+  }, []);
 
   return (
     <NavigationContainer linking={linking}>

@@ -1,4 +1,4 @@
-#v🌍ÅpenMeet
+# 🌍ÅpenMeet
 
 **ÅpenMeet** es una aplicación móvil multiplataforma diseñada para conectar personas a través de planes y eventos sociales en su ciudad. Ideal para estudiantes, expatriados o cualquier persona que quiera ampliar su círculo social de forma moderna, fluida y segura.
 
