@@ -6,7 +6,8 @@ export default {
       password: "Password",
       submit: "Log In",
       signUpLink: "Don't have an account? Sign Up",
-      loading: "Signing in..."
+      loading: "Signing in...",
+      google: "Continue with Google"
     },
     signUp: {
       title: "Sign Up",

@@ -6,7 +6,8 @@ export default {
       password: "Contraseña",
       submit: "Iniciar Sesión",
       signUpLink: "¿No tienes cuenta? Regístrate",
-      loading: "Iniciando sesión..."
+      loading: "Iniciando sesión...",
+      google: "Continuar con Google"
     },
     signUp: {
       title: "Registro",

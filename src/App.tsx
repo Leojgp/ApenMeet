@@ -18,7 +18,9 @@ import BottomTabs from './components/navigation/BottomTabs';
 import { I18nextProvider } from 'react-i18next';
 import i18n from './i18n';
 import { RootStackParamList } from './models/navigation';
-import { GoogleSignin } from '@react-native-google-signin/google-signin';
+import * as Google from 'expo-auth-session/providers/google';
+import * as WebBrowser from 'expo-web-browser';
+import { GOOGLE_ANDROID_CLIENT_ID, GOOGLE_IOS_CLIENT_ID, GOOGLE_WEB_CLIENT_ID } from '@env';
 
 const Stack = createStackNavigator<RootStackParamList>();
 
@@ -36,16 +38,25 @@ const linking = {
   },
 };
 
+WebBrowser.maybeCompleteAuthSession();
+
 function AppContent() {
   const theme = useTheme();
   const isAuthenticated = useSelector((state: RootState) => !!state.user._id);
+  const [request, response, promptAsync] = Google.useAuthRequest({
+    webClientId: GOOGLE_WEB_CLIENT_ID,
+    iosClientId: GOOGLE_IOS_CLIENT_ID,
+    androidClientId: GOOGLE_ANDROID_CLIENT_ID
+  });
 
-  useEffect(() => {
-    GoogleSignin.configure({
-      webClientId: process.env.GOOGLE_WEB_CLIENT_ID,
-      offlineAccess: true,
-    });
-  }, []);
+  useEffect(() => { 
+    if (response?.type === 'success') {
+      const { authentication } = response;
+      console.log('Authentication successful:', authentication);
+    } else if (response?.type === 'error') {
+        console.error('Authentication error:', response.error);
+    }
+  }, [response]);
 
   return (
     <NavigationContainer linking={linking}>

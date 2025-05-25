@@ -8,6 +8,8 @@ import { RouteProp } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
 import { RootStackParamList } from '../../models/navigation';
 import { useTheme } from '../../hooks/theme/useTheme';
+import * as Google from 'expo-auth-session/providers/google';
+import { GOOGLE_WEB_CLIENT_ID, GOOGLE_IOS_CLIENT_ID, GOOGLE_ANDROID_CLIENT_ID } from '@env';
 
 type SignInScreenNavigationProp = StackNavigationProp<RootStackParamList, 'SignIn'>;
 type SignInScreenRouteProp = RouteProp<RootStackParamList, 'SignIn'>;
@@ -21,8 +23,37 @@ export default function SignInScreen() {
   const [email, setEmail] = React.useState('');
   const [password, setPassword] = React.useState('');
 
+  const [request, response, promptAsync] = Google.useAuthRequest({
+    webClientId: GOOGLE_WEB_CLIENT_ID,
+    iosClientId: GOOGLE_IOS_CLIENT_ID,
+    androidClientId: GOOGLE_ANDROID_CLIENT_ID
+  });
+
   const redirectTo = route.params?.redirectTo;
   const planId = route.params?.planId;
+
+  React.useEffect(() => {
+    if (response?.type === 'success') {
+      const { authentication } = response;
+      handleGoogleSignIn(authentication?.accessToken);
+    }
+  }, [response]);
+
+  const handleGoogleSignIn = async (accessToken?: string) => {
+    if (!accessToken) return;
+    try {
+      console.log('Google Sign In successful');
+      if (redirectTo && planId) {
+        if (redirectTo === 'PlanDetail') {
+          navigation.navigate('PlanDetail', { planId });
+        } else if (redirectTo === 'Chat') {
+          navigation.navigate('Chat', { planId });
+        }
+      }
+    } catch (error: any) {
+      Alert.alert('Error', error.message || 'An error occurred during Google sign in');
+    }
+  };
 
   const handleSignIn = async () => {
     try {
@@ -68,6 +99,23 @@ export default function SignInScreen() {
           {loading ? t('auth.signIn.loading') : t('auth.signIn.submit')}
         </Text>
       </TouchableOpacity>
+
+      <View style={styles.divider}>
+        <View style={[styles.dividerLine, { backgroundColor: theme.border }]} />
+        <Text style={[styles.dividerText, { color: theme.text }]}>OR</Text>
+        <View style={[styles.dividerLine, { backgroundColor: theme.border }]} />
+      </View>
+
+      <TouchableOpacity
+        style={[styles.googleButton, { backgroundColor: theme.card }]}
+        onPress={() => promptAsync()}
+        disabled={!request}
+      >
+        <Text style={[styles.googleButtonText, { color: theme.text }]}>
+          {t('auth.signIn.google')}
+        </Text>
+      </TouchableOpacity>
+
       <TouchableOpacity
         onPress={() => navigation.navigate('SignUp', { redirectTo, planId })}
       >
@@ -111,5 +159,29 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginTop: 15,
     fontSize: 16,
+  },
+  divider: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginVertical: 20,
+  },
+  dividerLine: {
+    flex: 1,
+    height: 1,
+  },
+  dividerText: {
+    marginHorizontal: 10,
+    fontSize: 14,
+  },
+  googleButton: {
+    padding: 15,
+    borderRadius: 12,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#ddd',
+  },
+  googleButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
   },
 });
