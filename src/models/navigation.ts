@@ -17,6 +17,7 @@ export type RootStackParamList = {
   Chat: { planId: string; planTitle?: string };
   Chats: undefined;
   EventDetails: { event: any };
+  Profile: undefined;
 };
 
 export type TabParamList = {
@@ -24,6 +25,7 @@ export type TabParamList = {
   Plans: undefined;
   Chats: undefined;
   Config: undefined;
+  Profile: undefined;
 };
 
 export type RootStackNavigationProp = StackNavigationProp<RootStackParamList>;

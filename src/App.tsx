@@ -10,6 +10,7 @@ import { PlansScreen, CreatePlanScreen, PlanDetailScreen, EditPlanScreen } from 
 import { ConfigScreen, EditProfileScreen } from './screens';
 import { ChatScreen, ChatsScreen } from './screens/chat';
 import EventDetailsScreen from './screens/home/EventDetailsScreen';
+import ProfileScreen from './screens/ProfileScreen';
 import { Provider } from 'react-redux';
 import { store } from './store';
 import { useTheme } from './hooks/theme/useTheme';
@@ -25,7 +26,7 @@ import { GOOGLE_ANDROID_CLIENT_ID, GOOGLE_IOS_CLIENT_ID, GOOGLE_WEB_CLIENT_ID } 
 const Stack = createStackNavigator<RootStackParamList>();
 
 const linking = {
-  prefixes: ['apenmeet://', 'https://apenmeet.app'],
+  prefixes: ['apenmeet://'],
   config: {
     screens: {
       PlanDetail: {
@@ -108,6 +109,7 @@ function AppContent() {
           }}
         />
         <Stack.Screen name="EventDetails" component={EventDetailsScreen} />
+        <Stack.Screen name="Profile" component={ProfileScreen} />
       </Stack.Navigator>
     </NavigationContainer>
   );

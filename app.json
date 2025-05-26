@@ -50,7 +50,16 @@
     },
     "scheme": "apenmeet",
     "plugins": [
-      "expo-secure-store"
+      "expo-secure-store",
+      "expo-router",
+      [
+        "expo-location",
+        {
+          "locationAlwaysAndWhenInUsePermission": "Allow ApenMeet to use your location to find plans near you.",
+          "locationAlwaysPermission": "Allow ApenMeet to use your location to find plans near you.",
+          "locationWhenInUsePermission": "Allow ApenMeet to use your location to find plans near you."
+        }
+      ]
     ],
     "extra": {
       "eas": {

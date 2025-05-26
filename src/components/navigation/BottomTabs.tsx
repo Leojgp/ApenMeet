@@ -7,16 +7,20 @@ import MainScreen from '../../screens/home/MainScreen';
 import PlansStack from '../../screens/plans/PlansStack';
 import { ChatsScreen } from '../../screens/chat';
 import { ConfigScreen } from '../../screens';
+import { useSelector } from 'react-redux';
+import { RootState } from '../../store';
+import { Image, TouchableOpacity } from 'react-native';
 
 const Tab = createBottomTabNavigator();
 
 export default function BottomTabs() {
   const theme = useTheme();
   const { t } = useTranslation();
+  const user = useSelector((state: RootState) => state.user);
 
   return (
     <Tab.Navigator
-      screenOptions={({ route }) => ({
+      screenOptions={({ route, navigation }) => ({
         tabBarIcon: ({ focused, color, size }) => {
           let iconName;
           if (route.name === 'Home') {
@@ -40,7 +44,24 @@ export default function BottomTabs() {
           backgroundColor: theme.card,
         },
         headerTintColor: theme.text,
-        headerRight: () => null
+        headerRight: () => (
+          <TouchableOpacity
+            onPress={() => navigation.navigate('Profile')}
+            style={{ marginRight: 15 }}
+          >
+            {user && user.profileImage ? (
+              <Image
+                source={{ uri: user.profileImage }}
+                style={{ width: 30, height: 30, borderRadius: 15 }}
+              />
+            ) : (
+              <Image
+                 source={require('../../../assets/icon.png')}
+                 style={{ width: 30, height: 30, borderRadius: 15 }}
+              />
+            )}
+          </TouchableOpacity>
+        ),
       })}
     >
       <Tab.Screen name="Home" component={MainScreen} options={{ title: t('navigation.home') }} />
