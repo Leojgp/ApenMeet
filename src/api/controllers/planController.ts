@@ -260,10 +260,13 @@ export const updatePlan = async (req: Request, res: Response): Promise<void> => 
       res.status(404).json({ error: 'Plan not found' });
       return;
     }
-    if (!plan.admins.some(admin => admin.id.toString() === authenticatedUser._id)) {
-      res.status(403).json({ error: 'You do not have permission to update this plan' });
+
+    if (plan.creatorId.toString() !== authenticatedUser._id && 
+        !plan.admins.some(admin => admin.id.toString() === authenticatedUser._id)) {
+      res.status(403).json({ error: 'Only the creator and administrators can edit this plan' });
       return;
     }
+
     const updateData: any = {};
     if (req.body.title) updateData.title = req.body.title;
     if (req.body.description) updateData.description = req.body.description;
@@ -456,10 +459,12 @@ export const deletePlan = async (req: Request, res: Response): Promise<void> => 
       res.status(404).json({ error: 'Plan not found' });
       return;
     }
-    if (!plan.admins.some(admin => admin.id.toString() === authenticatedUser._id)) {
-      res.status(403).json({ error: 'You do not have permission to delete this plan' });
+
+    if (plan.creatorId.toString() !== authenticatedUser._id) {
+      res.status(403).json({ error: 'Only the creator can delete this plan' });
       return;
     }
+
     await Plan.findByIdAndDelete(id);
     res.status(200).json({ message: 'Plan deleted successfully' });
   } catch (error) {
@@ -473,8 +478,23 @@ export const getPlansByLocation = async (req: Request, res: Response) => {
     const { city, country } = req.query;
     console.log('BACKEND LOG - city:', city, 'country:', country);
     let query: any = {};
-    if (city) query['location.city'] = { $regex: city, $options: 'i' };
-    if (country) query['location.country'] = { $regex: country, $options: 'i' };
+    
+    if (city) {
+      const normalizedCity = city.toString()
+        .toLowerCase()
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '');
+      query['location.city'] = { $regex: normalizedCity, $options: 'i' };
+    }
+    
+    if (country) {
+      const normalizedCountry = country.toString()
+        .toLowerCase()
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '');
+      query['location.country'] = { $regex: normalizedCountry, $options: 'i' };
+    }
+    
     const plans = await Plan.find(query)
       .populate('creatorId', 'username')
       .populate('participants.id', 'username');
@@ -533,5 +553,56 @@ export const removeParticipant = async (req: Request, res: Response): Promise<vo
   } catch (error) {
     console.error('Error removing participant:', error);
     res.status(500).json({ error: 'Error removing participant' });
+  }
+};
+
+export const getPlansByUserId = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { userId } = req.params;
+    console.log('Received request for getPlansByUserId with userId:', userId);
+
+    if (!userId) {
+      res.status(400).json({ error: 'User ID is required' });
+      return;
+    }
+
+    if (!mongoose.Types.ObjectId.isValid(userId)) {
+      console.log('Invalid ObjectId, trying to find user by username:', userId);
+      const user = await User.findOne({ username: userId });
+      if (!user) {
+        res.status(404).json({ error: 'User not found' });
+        return;
+      }
+      console.log('Found user by username, using their ID:', user._id);
+      const plans = await Plan.find({
+        $or: [
+          { 'participants.id': user._id },
+          { 'admins.id': user._id },
+          { 'creatorId': user._id } 
+        ],
+      })
+      .populate('creatorId', 'username')
+      .populate('participants.id', 'username')
+      .populate('admins.id', 'username');
+
+      res.json(plans);
+      return;
+    }
+
+    const plans = await Plan.find({
+      $or: [
+        { 'participants.id': userId },
+        { 'admins.id': userId },
+        { 'creatorId': userId } 
+      ],
+    })
+    .populate('creatorId', 'username')
+    .populate('participants.id', 'username')
+    .populate('admins.id', 'username');
+
+    res.json(plans);
+  } catch (err) {
+    console.error('Error fetching plans by user ID:', err);
+    res.status(500).json({ error: 'Error fetching plans by user ID' });
   }
 };

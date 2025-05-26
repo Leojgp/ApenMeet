@@ -10,15 +10,16 @@ export interface IUser extends Document {
     country: string;
     coordinates: [number, number];
     formattedAddress: string;
-    postalCode?: string;
-    region?: string;
-    timezone?: string;
+    postalCode: string;
+    region: string;
+    timezone: string;
   };
   interests: string[];
   profileImage: string;
   rating: number;
-  joinedAt: Date;
+  joinedAt: string;
   isVerified: boolean;
+  authProvider?: 'local' | 'google';
 }
 
 const UserSchema: Schema = new Schema({
@@ -28,18 +29,19 @@ const UserSchema: Schema = new Schema({
   bio: { type: String, default: '' },
   location: {
     city: { type: String, default: '' },
-    country: { type: String },
+    country: { type: String, default: '' },
     coordinates: { type: [Number], index: '2dsphere' },
     formattedAddress: { type: String, default: '' },
-    postalCode: { type: String },
-    region: { type: String },
-    timezone: { type: String }
+    postalCode: { type: String, default: '' },
+    region: { type: String, default: '' },
+    timezone: { type: String, default: '' }
   },
   interests: [{ type: String }],
   profileImage: { type: String, default: '' },
   rating: { type: Number, default: 0 },
-  joinedAt: { type: Date, default: Date.now },
+  joinedAt: { type: String, default: new Date().toISOString() },
   isVerified: { type: Boolean, default: false },
+  authProvider: { type: String, enum: ['local', 'google'], default: 'local' }
 });
 
 export const User = mongoose.model<IUser>('User', UserSchema);

@@ -3,10 +3,12 @@ import dotenv from 'dotenv';
 import { User } from '../../db/models/User';
 import bcrypt from 'bcryptjs';
 import { RefreshToken } from '../../db/models/RefreshToken';
-
+import { OAuth2Client } from 'google-auth-library';
 
 dotenv.config();
 const jwt = require('jsonwebtoken');
+
+const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
 export const getAllUsers = async (_req: Request, res: Response) => {
   try {
@@ -94,7 +96,7 @@ export const registerUser = async (req: Request, res: Response): Promise<void> =
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password, salt);
 
-    let profileImage = '';
+    let profileImage = 'https://res.cloudinary.com/dbfh8wmqt/image/upload/v1746874674/default_Profile_Image_oiw2nt.webp';
     if (req.file) {
       profileImage = (req.file as any).path;
     }
@@ -315,6 +317,107 @@ export const updateUserData = async (req: Request, res: Response): Promise<void>
   } catch (err) {
     console.error('Error updating user data:', err);
     res.status(500).json({ error: 'Internal server error while updating user data' });
+  }
+};
+
+export const googleAuth = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { accessToken } = req.body;
+    
+    const ticket = await client.verifyIdToken({
+      idToken: accessToken,
+      audience: process.env.GOOGLE_CLIENT_ID
+    });
+
+    const payload = ticket.getPayload();
+    if (!payload) {
+      res.status(400).json({ message: 'No payload received from Google' });
+      return;
+    }
+
+    const email = payload.email;
+    const name = payload.name;
+    const picture = payload.picture;
+
+    if (!email || !name) {
+      res.status(400).json({ message: 'Missing required fields from Google payload' });
+      return;
+    }
+
+    let user = await User.findOne({ email });
+    
+    if (!user) {
+      user = await User.create({
+        email,
+        username: name,
+        profileImage: picture || '',
+        isVerified: true, 
+        authProvider: 'google'
+      });
+    } else if (user.authProvider !== 'google') {
+      res.status(400).json({ 
+        message: 'Este email ya está registrado con otro método de autenticación' 
+      });
+      return;
+    }
+
+    const secret = process.env.JWT_SECRET;
+    if (!secret) {
+      res.status(500).json({ message: 'JWT_SECRET is not defined' });
+      return;
+    }
+
+    const token = jwt.sign(
+      { userId: user._id },
+      secret,
+      { expiresIn: '7d' }
+    );
+
+    res.json({
+      token,
+      user: {
+        _id: user._id,
+        username: user.username,
+        email: user.email,
+        profileImage: user.profileImage,
+        isVerified: user.isVerified
+      }
+    });
+  } catch (error) {
+    console.error('Error en googleAuth:', error);
+    res.status(500).json({ message: 'Error en la autenticación con Google' });
+  }
+};
+
+export const getUserById = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { userId } = req.params; 
+
+    if (!userId) {
+      res.status(400).json({ error: 'User ID is required' });
+      return;
+    }
+
+    const user = await User.findById(userId);
+
+    if (!user) {
+      res.status(404).json({ error: 'User not found' });
+      return;
+    }
+
+    res.status(200).json({
+      _id: user._id,
+      username: user.username,
+      bio: user.bio,
+      location: user.location,
+      interests: user.interests,
+      profileImage: user.profileImage,
+      rating: user.rating,
+      isVerified: user.isVerified
+    });
+  } catch (err) {
+    console.error('Error fetching user by ID:', err);
+    res.status(500).json({ error: 'Internal server error while fetching user data' });
   }
 };
 

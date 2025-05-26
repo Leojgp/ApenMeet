@@ -1,5 +1,5 @@
 import express from 'express';
-import { deleteRefreshToken, getAllUsers, getToken, getUserData, loginUser, registerUser, updateUserData } from '../controllers/userController';
+import { deleteRefreshToken, getAllUsers, getToken, getUserById, getUserData, googleAuth, loginUser, registerUser, updateUserData } from '../controllers/userController';
 import { authenticateToken } from '../middlewares/authenticateToken';
 import { upload, handleMulterError } from '../middlewares/uploadMiddleware';
 
@@ -12,5 +12,7 @@ router.post('/login', loginUser);
 router.post('/register', registerUser);
 router.post('/token', getToken);
 router.delete('/logout', deleteRefreshToken);
+router.post('/google', googleAuth);
+router.get('/:userId', getUserById)
 
 export default router;
