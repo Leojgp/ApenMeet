@@ -97,7 +97,8 @@ export default {
     noLocation: "Ubicación no establecida",
     noBio: "Sin biografía",
     editButton: "Editar Perfil",
-    errorLoadingPlans: "Error al cargar los planes"
+    errorLoadingPlans: "Error al cargar los planes",
+    other_user_plans: "Planes de {{username}}"
   },
   location: {
     permission: {

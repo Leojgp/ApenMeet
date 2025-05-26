@@ -41,15 +41,19 @@ export const getPlansByUsername = async (username: string) => {
     }
 };
 
-export const getUserParticipatingPlans = async () => {
+export const getUserParticipatingPlans = async (userId?: string) => {
     try {
-        const response = await api.get('plans/participating');
+        const endpoint = userId ? `/plans/user/${userId}` : '/plans/participating';
+        console.log('Endpoint being passed to api.get:', endpoint);
+        console.log('Full URL Axios will attempt:', api.defaults.baseURL + endpoint);
+        const response = await api.get(endpoint);
         return response.data;
     } catch (error: any) {
+        console.error('Error fetching user plans:', error); 
         if (error.response) {
-            throw new Error(error.response.data.error || i18next.t('api.errors.serverError'));
+            throw new Error(error.response.data.message || 'Error fetching user plans: ' + error.message);
         } else {
-            throw new Error(i18next.t('api.errors.serverError'));
+            throw new Error('Error fetching user plans: ' + error.message);
         }
     }
 };

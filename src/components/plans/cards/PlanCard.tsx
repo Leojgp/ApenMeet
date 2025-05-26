@@ -119,14 +119,15 @@ export default function PlanCard({ plan, navigation, onPlanDeleted }: PlanCardPr
           <View style={styles.headerContainer}>
             <Text style={[styles.title, { color: theme.primary }]}>{plan.title}</Text>
             <View style={styles.headerButtons}>
-              {(isAdmin || isCreator) && (
-                <TouchableOpacity
-                  onPress={() => navigation.navigate('ManageAdmins', { planId: planIdToUse })}
-                  style={styles.adminButton}
-                >
-                  <Ionicons name="people" size={22} color={theme.primary} />
-                </TouchableOpacity>
-              )}
+              <TouchableOpacity
+                onPress={() => navigation.navigate('ManageAdmins', { planId: planIdToUse })}
+                style={[styles.adminButton, !isAdmin && !isCreator && { opacity: 0.5 }]}
+              >
+                <Ionicons name="people" size={22} color={theme.primary} />
+                <Text style={[styles.adminButtonText, { color: theme.primary }]}>
+                  {plan.participants.length}
+                </Text>
+              </TouchableOpacity>
             </View>
           </View>
           
@@ -182,6 +183,13 @@ const styles = StyleSheet.create({
   },
   adminButton: {
     padding: 4,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  adminButtonText: {
+    fontSize: 14,
+    fontWeight: '500',
   },
   admins: {
     fontSize: 12,

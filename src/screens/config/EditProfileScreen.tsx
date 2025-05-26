@@ -91,7 +91,7 @@ export default function EditProfileScreen({ navigation }: any) {
     setLoading(true);
     getCurrentUser()
       .then((data) => {
-        const profileImage = data.user.profileImage || 'https://res.cloudinary.com/dbfh8wmqt/image/upload/v1746874674/default_Profile_Image_oiw2nt.webp';
+        const profileImage = data.user.profileImage;
         setForm({
           id: data.user._id || data.user.id || '',
           username: data.user.username || '',

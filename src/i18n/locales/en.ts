@@ -97,7 +97,8 @@ export default {
     noLocation: "No location set",
     noBio: "No bio yet",
     editButton: "Edit Profile",
-    errorLoadingPlans: "Error loading plans"
+    errorLoadingPlans: "Error loading plans",
+    other_user_plans: "{{username}}'s Plans",
   },
   common: {
     close: "Close",

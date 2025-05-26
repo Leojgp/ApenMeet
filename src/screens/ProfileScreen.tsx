@@ -1,99 +1,146 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, Image, TouchableOpacity, ScrollView, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Image, ActivityIndicator, TouchableOpacity } from 'react-native';
 import { useTheme } from '../hooks/theme/useTheme';
 import { useTranslation } from 'react-i18next';
-import { useSelector } from 'react-redux';
-import { RootState } from '../store';
-import { Ionicons } from '@expo/vector-icons';
+import { useUser } from '../hooks/user/useUser';
+import { getUserById } from '../api/user/userApi';
 import { getUserParticipatingPlans } from '../api/plans/plansApi';
-import PlanCard from '../components/plans/cards/PlanCard';
-import { useNavigation } from '@react-navigation/native';
+import { Plan } from '../models/Plan';
+import { Ionicons } from '@expo/vector-icons';
+import { useNavigation, useRoute } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { RootStackParamList } from '../models/navigation';
-import { Plan } from '../models/Plan';
+import { User } from '../models/User';
+import { RouteProp } from '@react-navigation/native';
 
 type ProfileScreenNavigationProp = StackNavigationProp<RootStackParamList, 'Profile'>;
 
 export default function ProfileScreen() {
-  const theme = useTheme();
-  const { t } = useTranslation();
-  const user = useSelector((state: RootState) => state.user);
-  const navigation = useNavigation<ProfileScreenNavigationProp>();
+  const route = useRoute<RouteProp<RootStackParamList, 'Profile'>>();
+  const { user: currentUser } = useUser();
+  const [user, setUser] = useState<User | null>(null);
   const [userPlans, setUserPlans] = useState<Plan[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
+  const [error, setError] = useState<string | null>(null);
+  const theme = useTheme();
+  const { t } = useTranslation();
+  const navigation = useNavigation<ProfileScreenNavigationProp>();
+
+  const isOwnProfile = !route.params?.userId || route.params.userId === currentUser._id;
 
   useEffect(() => {
-    loadUserPlans();
-  }, []);
+    const loadUserData = async () => {
+      try {
+        setLoading(true);
+        if (isOwnProfile) {
+          setUser(currentUser);
+        } else if (route.params?.userId) {
+          const userData = await getUserById(route.params.userId);
+          setUser(userData);
+        }
 
-  const loadUserPlans = async () => {
-    try {
-      setLoading(true);
-      const plans = await getUserParticipatingPlans();
-      setUserPlans(plans);
-    } catch (err) {
-      setError(t('profile.errorLoadingPlans'));
-    } finally {
-      setLoading(false);
-    }
-  };
+        const plans = await getUserParticipatingPlans(isOwnProfile ? undefined : route.params?.userId);
+        setUserPlans(plans);
 
-  const handleEditProfile = () => {
-    navigation.navigate('EditProfileScreen');
-  };
+      } catch (err: any) {
+        console.error('Error loading user or plans:', err);
+        setError(err.message || t('profile.errorLoadingProfile'));
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadUserData();
+  }, [isOwnProfile, currentUser, route.params?.userId]);
+
+  if (loading) {
+    return (
+      <View style={[styles.container, { backgroundColor: theme.background, justifyContent: 'center', alignItems: 'center' }]}>
+        <ActivityIndicator size="large" color={theme.primary} />
+      </View>
+    );
+  }
+
+  if (error || !user) {
+    return (
+      <View style={[styles.container, { backgroundColor: theme.background, justifyContent: 'center', alignItems: 'center' }]}>
+        <Text style={{ color: theme.error }}>{error || t('profile.errorLoadingProfile')}</Text>
+      </View>
+    );
+  }
 
   return (
     <ScrollView style={[styles.container, { backgroundColor: theme.background }]}>
-      <View style={styles.profileInfoContainer}>
-        <Image 
-          source={{ uri: user?.profileImage || "https://res.cloudinary.com/dbfh8wmqt/image/upload/v1746636109/apenmeet/dljiilozwzcmyinqaaeo.jpg" }} 
-          style={styles.profilePicture} 
+      <View style={styles.header}>
+        <Image
+          source={{ uri: user.profileImage || "https://res.cloudinary.com/dbfh8wmqt/image/upload/v1746636109/apenmeet/dljiilozwzcmyinqaaeo.jpg" }}
+          style={styles.profileImage}
         />
-        <View style={styles.userInfo}>
-          <Text style={[styles.userName, { color: theme.text }]}>{user?.username || "Usuario"}</Text>
-          <Text style={[styles.userLocation, { color: theme.text }]}>
-            {user?.location?.city && user?.location?.country 
+        <Text style={[styles.username, { color: theme.text }]}>{user.username}</Text>
+        {user.location && (
+          <Text style={[styles.location, { color: theme.textSecondary }]}>
+            <Ionicons name="location" size={16} color={theme.textSecondary} /> 
+            {user.location.city && user.location.country 
               ? `${user.location.city}, ${user.location.country}`
-              : t('profile.noLocation')}
+              : user.location.formattedAddress}
           </Text>
-        </View>
-        <TouchableOpacity style={[styles.editButton, { backgroundColor: theme.primary }]} onPress={handleEditProfile}>
-          <Ionicons name="pencil" size={20} color="#fff" />
-          <Text style={styles.editButtonText}>{t('profile.editButton')}</Text>
-        </TouchableOpacity>
-      </View>
-
-      <View style={styles.bioSection}>
-        <Text style={[styles.sectionTitle, { color: theme.text }]}>{t('profile.about')}</Text>
-        <Text style={[styles.userBio, { color: theme.text }]}>{user?.bio || t('profile.noBio')}</Text>
-      </View>
-
-      <View style={styles.interestsSection}>
-        <Text style={[styles.sectionTitle, { color: theme.text }]}>{t('profile.interests')}</Text>
-        <View style={styles.interestsContainer}>
-          {user?.interests?.map((interest, index) => (
-            <View key={index} style={[styles.interestChip, { backgroundColor: theme.card }]}>
-              <Text style={[styles.interestText, { color: theme.text }]}>{interest}</Text>
-            </View>
-          ))}
-        </View>
-      </View>
-
-      <View style={styles.plansSection}>
-        <Text style={[styles.sectionTitle, { color: theme.text }]}>{t('profile.my_plans')}</Text>
-        {loading ? (
-          <ActivityIndicator size="large" color={theme.primary} />
-        ) : error ? (
-          <Text style={[styles.errorText, { color: theme.error }]}>{error}</Text>
-        ) : userPlans.length > 0 ? (
-          userPlans.map((plan) => (
-            <PlanCard key={plan._id} plan={plan} navigation={navigation} />
-          ))
-        ) : (
-          <Text style={[styles.noPlansText, { color: theme.text }]}>{t('profile.noPlans')}</Text>
         )}
       </View>
+
+      {user.bio && (
+        <View style={[styles.section, { backgroundColor: theme.card }]}>
+          <Text style={[styles.sectionTitle, { color: theme.primary }]}>{t('profile.about')}</Text>
+          <Text style={[styles.bio, { color: theme.text }]}>{user.bio}</Text>
+        </View>
+      )}
+
+      {user.interests && user.interests.some(interest => interest && interest.trim() !== '') && (
+        <View style={[styles.section, { backgroundColor: theme.card }]}>
+          <Text style={[styles.sectionTitle, { color: theme.primary }]}>{t('profile.interests')}</Text>
+          <View style={styles.interestsContainer}>
+            {user.interests.map((interest: string, index: number) => (
+              <View key={index} style={[styles.interestTag, { backgroundColor: theme.primary }]}>
+                <Text style={[styles.interestText, { color: theme.card }]}>{interest}</Text>
+              </View>
+            ))}
+          </View>
+        </View>
+      )}
+
+      <View style={[styles.section, { backgroundColor: theme.card }]}>
+        <Text style={[styles.sectionTitle, { color: theme.primary }]}>
+          {isOwnProfile ? t('profile.my_plans') : t('profile.other_user_plans', { username: user.username })}
+        </Text>
+        {userPlans.length > 0 ? (
+          userPlans.map((plan) => (
+            <TouchableOpacity
+              key={plan._id}
+              style={[styles.planCard, { backgroundColor: theme.background }]}
+              onPress={() => {
+                if (plan._id) {
+                  navigation.navigate('PlanDetail', { planId: plan._id });
+                }
+              }}
+            >
+              <Text style={[styles.planTitle, { color: theme.text }]}>{plan.title}</Text>
+              <Text style={[styles.planDate, { color: theme.textSecondary }]}>
+                {new Date(plan.dateTime).toLocaleDateString()}
+              </Text>
+            </TouchableOpacity>
+          ))
+        ) : (
+          <Text style={[styles.noPlans, { color: theme.textSecondary }]}>{t('profile.noPlans')}</Text>
+        )}
+      </View>
+
+      {isOwnProfile && (
+        <TouchableOpacity
+          style={[styles.editButton, { backgroundColor: theme.primary }]}
+          onPress={() => navigation.navigate('EditProfileScreen')}
+        >
+          <Text style={[styles.editButtonText, { color: theme.card }]}>{t('profile.editButton')}</Text>
+        </TouchableOpacity>
+      )}
     </ScrollView>
   );
 }
@@ -102,89 +149,80 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  profileInfoContainer: {
+  header: {
     alignItems: 'center',
     padding: 20,
-    borderBottomWidth: 1,
-    borderBottomColor: '#eee',
+    paddingTop: 60,
   },
-  profilePicture: {
+  profileImage: {
     width: 120,
     height: 120,
     borderRadius: 60,
-    marginBottom: 15,
+    marginBottom: 16,
   },
-  userInfo: {
-    alignItems: 'center',
-    marginBottom: 15,
-  },
-  userName: {
+  username: {
     fontSize: 24,
     fontWeight: 'bold',
-    marginBottom: 5,
+    marginBottom: 8,
   },
-  userLocation: {
+  location: {
     fontSize: 16,
-    opacity: 0.8,
+    marginBottom: 16,
   },
-  editButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingVertical: 10,
-    borderRadius: 20,
-    marginTop: 10,
-  },
-  editButtonText: {
-    color: '#fff',
-    marginLeft: 5,
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  bioSection: {
-    padding: 20,
-    borderBottomWidth: 1,
-    borderBottomColor: '#eee',
+  section: {
+    margin: 16,
+    padding: 16,
+    borderRadius: 12,
   },
   sectionTitle: {
-    fontSize: 20,
+    fontSize: 18,
     fontWeight: 'bold',
-    marginBottom: 10,
+    marginBottom: 12,
   },
-  userBio: {
+  bio: {
     fontSize: 16,
     lineHeight: 24,
-  },
-  interestsSection: {
-    padding: 20,
-    borderBottomWidth: 1,
-    borderBottomColor: '#eee',
   },
   interestsContainer: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 10,
+    gap: 8,
   },
-  interestChip: {
-    paddingHorizontal: 15,
-    paddingVertical: 8,
-    borderRadius: 20,
-    marginRight: 8,
-    marginBottom: 8,
+  interestTag: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 16,
   },
   interestText: {
     fontSize: 14,
+    fontWeight: '500',
   },
-  plansSection: {
-    padding: 20,
+  planCard: {
+    padding: 16,
+    borderRadius: 8,
+    marginBottom: 8,
   },
-  errorText: {
-    textAlign: 'center',
-    marginTop: 20,
+  planTitle: {
+    fontSize: 16,
+    fontWeight: '500',
+    marginBottom: 4,
   },
-  noPlansText: {
+  planDate: {
+    fontSize: 14,
+  },
+  noPlans: {
+    fontSize: 16,
     textAlign: 'center',
     fontStyle: 'italic',
-    marginTop: 20,
+  },
+  editButton: {
+    margin: 16,
+    padding: 16,
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  editButtonText: {
+    fontSize: 16,
+    fontWeight: 'bold',
   },
 }); 

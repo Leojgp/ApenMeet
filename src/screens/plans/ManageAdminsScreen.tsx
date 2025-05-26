@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, FlatList, TouchableOpacity, StyleSheet, Alert, ActivityIndicator } from 'react-native';
+import { View, Text, FlatList, TouchableOpacity, StyleSheet, Alert, ActivityIndicator, Image } from 'react-native';
 import { usePlanDetails } from '../../hooks/plans/usePlanDetails';
 import { useUser } from '../../hooks/user/useUser';
 import { useTheme } from '../../hooks/theme/useTheme';
@@ -8,6 +8,18 @@ import { Ionicons } from '@expo/vector-icons';
 import Swipeable from 'react-native-gesture-handler/Swipeable';
 import { RectButton } from 'react-native-gesture-handler';
 import { addAdmin, leavePlan, removeAdmin, removeParticipant } from '../../api/plans';
+import { useNavigation } from '@react-navigation/native';
+import { StackNavigationProp } from '@react-navigation/stack';
+import { RootStackParamList } from '../../models/navigation';
+
+type ManageAdminsScreenNavigationProp = StackNavigationProp<RootStackParamList, 'ManageAdmins'>;
+
+type Participant = {
+  id: string;
+  _id?: string;
+  username: string;
+  profileImage?: string;
+};
 
 export default function ManageAdminsScreen({ route }: any) {
   const { planId } = route.params;
@@ -16,6 +28,7 @@ export default function ManageAdminsScreen({ route }: any) {
   const theme = useTheme();
   const { t } = useTranslation();
   const [loadingId, setLoadingId] = useState<string | null>(null);
+  const navigation = useNavigation<ManageAdminsScreenNavigationProp>();
 
   console.log('PLAN:', plan);
 
@@ -105,13 +118,29 @@ export default function ManageAdminsScreen({ route }: any) {
     );
   };
 
+  const handleViewProfile = (userId: string, username: string) => {
+    if (getUserId(user._id) === userId) {
+      navigation.navigate('Profile', { userId: getUserId(user._id), username: user.username });
+    } else {
+      const participant = plan.participants.find(p => getUserId(p.id) === userId);
+      if (participant) {
+        const participantId = typeof participant.id === 'object' && participant.id !== null
+          ? String((participant.id as { _id?: string; id?: string })._id || (participant.id as { id?: string }).id)
+          : String(participant.id);
+        console.log('Navigating to profile with userId:', participantId);
+        navigation.navigate('Profile', { userId: participantId, username });
+      }
+    }
+  };
+
   return (
     <View style={[styles.container, { backgroundColor: theme.background }]}> 
       <Text style={[styles.title, { color: theme.primary }]}>{t('adminManagement.title')}</Text>
       <FlatList
         data={plan.participants}
         keyExtractor={item => String(item._id)}
-        renderItem={({ item }) => {
+        renderItem={({ item }: { item: Participant }) => {
+          console.log('Participant item in renderItem:', item);
           const participantUserId = getUserId(item.id);
           const participantIsAdmin = isAdmin(participantUserId);
           const currentUserIsAdmin = plan.admins.some((admin: any) => getUserId(admin.id) === getUserId(user._id));
@@ -141,43 +170,60 @@ export default function ManageAdminsScreen({ route }: any) {
 
           return (
             <Swipeable
-              renderRightActions={currentUserIsAdmin && !participantIsAdmin ? renderRightActions : undefined}
+              renderRightActions={(currentUserIsAdmin || isCreator) && !participantIsAdmin ? renderRightActions : undefined}
               overshootRight={false}
             >
-              <View style={[styles.row, { backgroundColor: theme.card, borderBottomColor: theme.border }]}> 
-                <Text style={[styles.username, { color: theme.text }]}>{item.username}{isSelf ? ' (' + (t('adminManagement.you') || 'Tú') + ')' : ''}</Text>
-                {participantIsAdmin ? (
-                  isCreator && !isSelf ? (
+              <TouchableOpacity 
+                style={[styles.row, { backgroundColor: theme.card, borderBottomColor: theme.border }]}
+                onPress={() => handleViewProfile(participantUserId, item.username)}
+              > 
+                <View style={styles.userInfo}>
+                  {item.profileImage && item.profileImage !== "https://res.cloudinary.com/dbfh8wmqt/image/upload/v1746636109/apenmeet/dljiilozwzcmyinqaaeo.jpg" ? (
+                    <Image 
+                      source={{ uri: item.profileImage }}
+                      style={styles.profileImage} 
+                    />
+                  ) : null}
+                  <Text style={[styles.username, { color: theme.text }]}>
+                    {item.username}{isSelf ? ' (' + (t('adminManagement.you') || 'Tú') + ')' : ''}
+                  </Text>
+                </View>
+                {(currentUserIsAdmin || isCreator) ? (
+                  participantIsAdmin ? (
+                    isCreator && !isSelf ? (
+                      <TouchableOpacity
+                        style={[styles.button, { backgroundColor: theme.error, opacity: loadingId === participantUserId ? 0.5 : 1 }]}
+                        onPress={() => handleToggleAdmin(participantUserId)}
+                        disabled={loadingId === participantUserId}
+                        activeOpacity={0.7}
+                      >
+                        <Ionicons name={'remove-circle'} size={22} color={theme.card} />
+                        <Text style={[styles.buttonText, { color: theme.card }]}>
+                          {t('adminManagement.removeAdmin')}
+                        </Text>
+                      </TouchableOpacity>
+                    ) : (
+                      <Text style={{ color: theme.success, fontWeight: 'bold' }}>{t('adminManagement.alreadyAdmin') || 'Admin'}</Text>
+                    )
+                  ) : (
                     <TouchableOpacity
-                      style={[styles.button, { backgroundColor: theme.error, opacity: loadingId === participantUserId ? 0.5 : 1 }]}
+                      style={[styles.button, { backgroundColor: theme.success, opacity: loadingId === participantUserId ? 0.5 : 1 }]}
                       onPress={() => handleToggleAdmin(participantUserId)}
                       disabled={loadingId === participantUserId}
                       activeOpacity={0.7}
                     >
-                      <Ionicons name={'remove-circle'} size={22} color={theme.card} />
-                      <Text style={[styles.buttonText, { color: theme.card }]}> 
-                        {t('adminManagement.removeAdmin')}
+                      <Ionicons name={'person-add'} size={22} color={theme.card} />
+                      <Text style={[styles.buttonText, { color: theme.card }]}>
+                        {t('adminManagement.addAdmin')}
                       </Text>
                     </TouchableOpacity>
-                  ) : isSelf ? (
-                    <Text style={{ color: theme.success, fontWeight: 'bold' }}>{t('adminManagement.you') || 'Tú'}</Text>
-                  ) : (
-                    <Text style={{ color: theme.success, fontWeight: 'bold' }}>{t('adminManagement.alreadyAdmin') || 'Admin'}</Text>
                   )
                 ) : (
-                  <TouchableOpacity
-                    style={[styles.button, { backgroundColor: theme.success, opacity: loadingId === participantUserId ? 0.5 : 1 }]}
-                    onPress={() => handleToggleAdmin(participantUserId)}
-                    disabled={loadingId === participantUserId}
-                    activeOpacity={0.7}
-                  >
-                    <Ionicons name={'person-add'} size={22} color={theme.card} />
-                    <Text style={[styles.buttonText, { color: theme.card }]}> 
-                      {t('adminManagement.addAdmin')}
-                    </Text>
-                  </TouchableOpacity>
+                  participantIsAdmin ? (
+                    <Text style={{ color: theme.success, fontWeight: 'bold' }}>{t('adminManagement.alreadyAdmin') || 'Admin'}</Text>
+                  ) : null
                 )}
-              </View>
+              </TouchableOpacity>
             </Swipeable>
           );
         }}
@@ -207,6 +253,17 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderRadius: 14,
     paddingHorizontal: 12,
+  },
+  userInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+  },
+  profileImage: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    marginRight: 12,
   },
   username: {
     fontSize: 16,
