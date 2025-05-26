@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert, Share } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert, Share, Modal, SafeAreaView } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { usePlanDetails } from '../../hooks/plans/usePlanDetails';
 import { useJoinPlan } from '../../hooks/plans/useJoinPlan';
@@ -13,6 +13,8 @@ import { StackNavigationProp } from '@react-navigation/stack';
 import { RouteProp } from '@react-navigation/native';
 import { RootStackParamList } from '../../models/navigation';
 import SharePlanButton from '../../components/plans/SharePlanButton';
+import QRCode from 'react-native-qrcode-svg';
+import Svg from 'react-native-svg';
 
 type PlansDetailsScreenNavigationProp = StackNavigationProp<RootStackParamList, 'PlanDetail'>;
 type PlansDetailsScreenRouteProp = RouteProp<RootStackParamList, 'PlanDetail'>;
@@ -30,6 +32,7 @@ export default function PlanDetailScreen({ route, navigation }: PlansDetailsScre
   const [showJoinRequest, setShowJoinRequest] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
   const [mapReady, setMapReady] = useState(false);
+  const [showQRModal, setShowQRModal] = useState(false);
   const theme = useTheme();
   const { t } = useTranslation();
 
@@ -87,8 +90,9 @@ export default function PlanDetailScreen({ route, navigation }: PlansDetailsScre
   const handleShare = async () => {
     try {
       const shareLink = `apenmeet://plan/${planId}`;
+      const message = `Para abrir el plan, copia y pega este enlace en el navegador de tu móvil:\n\n${shareLink}\n\nSi tienes la app instalada, se abrirá automáticamente.`;
       await Share.share({
-        message: `${plan?.title}\n\n${plan?.description}\n\nDate: ${plan?.dateTime ? new Date(plan.dateTime).toLocaleDateString() : ''}\nLocation: ${plan?.location?.address}\n\nJoin me on ApenMeet! ${shareLink}`,
+        message,
         title: plan?.title,
         url: shareLink
       });
@@ -207,12 +211,44 @@ export default function PlanDetailScreen({ route, navigation }: PlansDetailsScre
       <View style={styles.shareButtonContainer}>
         <SharePlanButton onPress={handleShare} />
       </View>
+      <TouchableOpacity
+        style={[styles.qrButton, { backgroundColor: theme.primary }]}
+        onPress={() => setShowQRModal(true)}
+      >
+        <Ionicons name="qr-code-outline" size={24} color={theme.card} />
+        <Text style={[styles.qrButtonText, { color: theme.card }]}>Show QR Code</Text>
+      </TouchableOpacity>
       <JoinRequestModal
         visible={showJoinRequest}
         onRequestClose={() => setShowJoinRequest(false)}
         onAccept={handleJoin}
         onReject={() => setShowJoinRequest(false)}
       />
+      {showQRModal && (
+        <Modal
+          visible={showQRModal}
+          transparent={true}
+          animationType="fade"
+          onRequestClose={() => setShowQRModal(false)}
+        >
+          <View style={styles.modalOverlay}>
+            <View style={styles.modalContent}>
+              <QRCode
+                value={`apenmeet://plan/${planId}`}
+                size={200}
+                backgroundColor={theme.card}
+                color={theme.text}
+              />
+              <TouchableOpacity
+                style={styles.closeButton}
+                onPress={() => setShowQRModal(false)}
+              >
+                <Text style={styles.closeButtonText}>Close</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </Modal>
+      )}
     </ScrollView>
   );
 }
@@ -278,5 +314,53 @@ const styles = StyleSheet.create({
   },
   shareButtonContainer: {
     marginTop: 16,
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    gap: 12,
+  },
+  section: {
+    padding: 20,
+    borderRadius: 8,
+    marginTop: 16,
+  },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 12,
+  },
+  qrButton: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 14,
+    paddingVertical: 16,
+    gap: 8,
+    marginTop: 12,
+  },
+  qrButtonText: {
+    fontSize: 18,
+    fontWeight: 'bold',
+  },
+  modalOverlay: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+  },
+  modalContent: {
+    backgroundColor: 'white',
+    padding: 20,
+    borderRadius: 10,
+    alignItems: 'center',
+  },
+  closeButton: {
+    marginTop: 20,
+    padding: 10,
+    backgroundColor: 'lightgray',
+    borderRadius: 5,
+  },
+  closeButtonText: {
+    fontSize: 16,
   },
 });

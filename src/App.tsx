@@ -22,13 +22,19 @@ import { RootStackParamList } from './models/navigation';
 import * as Google from 'expo-auth-session/providers/google';
 import * as WebBrowser from 'expo-web-browser';
 import { GOOGLE_ANDROID_CLIENT_ID, GOOGLE_IOS_CLIENT_ID, GOOGLE_WEB_CLIENT_ID } from '@env';
+import * as Linking from 'expo-linking';
 
 const Stack = createStackNavigator<RootStackParamList>();
 
+const prefix = Linking.createURL('/');
+
 const linking = {
-  prefixes: ['apenmeet://'],
+  prefixes: [prefix],
   config: {
     screens: {
+      Home: {
+        path: '/',
+      },
       PlanDetail: {
         path: 'plan/:planId',
         parse: {

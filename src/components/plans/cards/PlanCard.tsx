@@ -217,7 +217,7 @@ const styles = StyleSheet.create({
   rightAction: {
     backgroundColor: '#4CAF50',
     justifyContent: 'center',
-    alignItems: 'flex-end',
+    alignItems: 'center',
     width: 140,
     marginBottom: 16,
     borderRadius: 12,
@@ -225,7 +225,7 @@ const styles = StyleSheet.create({
   leftAction: {
     backgroundColor: '#f44336',
     justifyContent: 'center',
-    alignItems: 'flex-start',
+    alignItems: 'center',
     width: 140,
     marginBottom: 16,
     borderRadius: 12,

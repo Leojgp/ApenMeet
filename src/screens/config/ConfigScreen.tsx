@@ -23,8 +23,8 @@ interface ConfigScreenProps {
 
 export default function ConfigScreen({ navigation }: ConfigScreenProps) {
   const theme = useTheme();
-  const dispatch = useDispatch();
   const { t } = useTranslation();
+  const dispatch = useDispatch();
 
   const handleLogout = async () => {
     await SecureStore.deleteItemAsync('accessToken');
@@ -33,13 +33,13 @@ export default function ConfigScreen({ navigation }: ConfigScreenProps) {
   };
 
   return (
-    <ScrollView style={[styles.bg, { backgroundColor: theme.background }]} contentContainerStyle={styles.container}>
-      <Text style={[styles.title, { color: theme.text }]}>{t('config.settings')}</Text>
-      <View style={styles.optionsList}>
+    <ScrollView contentContainerStyle={{ flexGrow: 1 }} style={{ backgroundColor: theme.background }}>
+      <Text style={{ color: theme.text, fontSize: 28, fontWeight: 'bold', margin: 20 }}>Configuración</Text>
+      <View style={{ gap: 16, paddingHorizontal: 16 }}>
         {options.map((opt, idx) => (
           <TouchableOpacity 
             key={opt.label} 
-            style={[styles.optionRow, { backgroundColor: theme.card }]}
+            style={[styles.option, { backgroundColor: theme.card }]}
             onPress={() => {
               if (opt.label === 'config.editProfile') navigation.navigate('EditProfileScreen');
             }}
@@ -48,19 +48,19 @@ export default function ConfigScreen({ navigation }: ConfigScreenProps) {
             <Text style={[styles.optionText, { color: theme.text }]}>{t(opt.label)}</Text>
           </TouchableOpacity>
         ))}
-        <View style={[styles.optionRow, { backgroundColor: theme.card }]}>
-          <Ionicons name="moon-outline" size={26} color={theme.primary} />
-          <Text style={[styles.optionText, { color: theme.text }]}>{t('config.darkMode')}</Text>
-          <View style={styles.toggleContainer}>
-            <ThemeToggle />
+        <View style={[styles.option, { backgroundColor: theme.card, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }]}> 
+          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+            <Ionicons name="moon" size={24} color={theme.primary} style={styles.icon} />
+            <Text style={[styles.optionText, { color: theme.text }]}>{t('config.darkMode', 'Modo Oscuro')}</Text>
           </View>
+          <ThemeToggle />
         </View>
-        <View style={[styles.optionRow, { backgroundColor: theme.card }]}>
-          <Ionicons name="language-outline" size={26} color={theme.primary} />
-          <Text style={[styles.optionText, { color: theme.text }]}>{t('config.language')}</Text>
-          <View style={styles.toggleContainer}>
-            <LanguageToggle />
+        <View style={[styles.option, { backgroundColor: theme.card, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }]}> 
+          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+            <Ionicons name="language-outline" size={24} color={theme.primary} style={styles.icon} />
+            <Text style={[styles.optionText, { color: theme.text }]}>{t('config.language')}</Text>
           </View>
+          <LanguageToggle />
         </View>
       </View>
       <TouchableOpacity 
@@ -74,48 +74,20 @@ export default function ConfigScreen({ navigation }: ConfigScreenProps) {
 }
 
 const styles = StyleSheet.create({
-  bg: {
-    flex: 1,
-  },
-  container: {
-    padding: 24,
-    paddingTop: 40,
-    minHeight: '100%',
-  },
-  title: {
-    fontSize: 30,
-    fontWeight: 'bold',
-    marginTop: 14,
-    marginBottom: 32,
-    textAlign: 'left',
-  },
-  optionsList: {
-    backgroundColor: 'transparent',
-    borderRadius: 18,
-    paddingVertical: 8,
-    marginBottom: 32,
-  },
-  optionRow: {
+  option: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 26,
-    paddingHorizontal: 22,
+    padding: 20,
     borderRadius: 16,
-    marginBottom: 16,
-    shadowColor: '#5C4D91',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.06,
-    shadowRadius: 6,
-    elevation: 2,
+    marginBottom: 8,
   },
   optionText: {
-    fontSize: 22,
-    marginLeft: 22,
-    fontWeight: '500',
-    flex: 1,
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginLeft: 12,
   },
-  toggleContainer: {
-    marginLeft: 'auto',
+  icon: {
+    marginRight: 8,
   },
   logoutButton: {
     borderRadius: 12,
