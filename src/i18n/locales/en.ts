@@ -89,7 +89,15 @@ export default {
       save: "Save",
       saving: "Saving...",
       errorLoading: "Error loading user data"
-    }
+    },
+    about: "About",
+    interests: "Interests",
+    my_plans: "My Plans",
+    noPlans: "You haven't joined any plans yet",
+    noLocation: "No location set",
+    noBio: "No bio yet",
+    editButton: "Edit Profile",
+    errorLoadingPlans: "Error loading plans"
   },
   common: {
     close: "Close",

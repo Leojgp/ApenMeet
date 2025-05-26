@@ -60,7 +60,7 @@ export default function ProfileScreen() {
         </View>
         <TouchableOpacity style={[styles.editButton, { backgroundColor: theme.primary }]} onPress={handleEditProfile}>
           <Ionicons name="pencil" size={20} color="#fff" />
-          <Text style={styles.editButtonText}>{t('profile.edit')}</Text>
+          <Text style={styles.editButtonText}>{t('profile.editButton')}</Text>
         </TouchableOpacity>
       </View>
 

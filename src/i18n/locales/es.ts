@@ -89,7 +89,15 @@ export default {
       save: "Guardar",
       saving: "Guardando...",
       errorLoading: "Error al cargar los datos del usuario"
-    }
+    },
+    about: "Sobre mí",
+    interests: "Intereses",
+    my_plans: "Mis Planes",
+    noPlans: "Aún no te has unido a ningún plan",
+    noLocation: "Ubicación no establecida",
+    noBio: "Sin biografía",
+    editButton: "Editar Perfil",
+    errorLoadingPlans: "Error al cargar los planes"
   },
   location: {
     permission: {
