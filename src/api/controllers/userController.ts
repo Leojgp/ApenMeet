@@ -3,12 +3,9 @@ import dotenv from 'dotenv';
 import { User } from '../../db/models/User';
 import bcrypt from 'bcryptjs';
 import { RefreshToken } from '../../db/models/RefreshToken';
-import { OAuth2Client } from 'google-auth-library';
 
 dotenv.config();
 const jwt = require('jsonwebtoken');
-
-const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
 export const getAllUsers = async (_req: Request, res: Response) => {
   try {
@@ -158,10 +155,10 @@ export const registerUser = async (req: Request, res: Response): Promise<void> =
 // Login
 export const loginUser = async (req: Request, res: Response): Promise<void> => {
   try {
-    const { email, password } = req.body;
+    const { email, password, accessToken: googleAccessToken } = req.body;
 
-    if (!email || !password) {
-      res.status(400).json({ message: 'Email/username and password are required' });
+    if (!email) {
+      res.status(400).json({ message: 'Email is required' });
       return;
     }
 
@@ -172,7 +169,66 @@ export const loginUser = async (req: Request, res: Response): Promise<void> => {
       return;
     }
 
+    if (user.authProvider === 'google') {
+      if (!googleAccessToken) {
+        res.status(400).json({ message: 'Google token is required for Google users' });
+        return;
+      }
+
+      try {
+        const userInfoResponse = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+          headers: { Authorization: `Bearer ${googleAccessToken}` }
+        });
+
+        if (!userInfoResponse.ok) {
+          throw new Error('Failed to get user info from Google');
+        }
+
+        const userData = await userInfoResponse.json();
+        if (userData.email !== email) {
+          res.status(401).json({ message: 'Invalid Google token' });
+          return;
+        }
+      } catch (error) {
+        res.status(401).json({ message: 'Invalid Google token' });
+        return;
+      }
+
+      const userResponse = {
+        _id: user._id,
+        username: user.username,
+        email: user.email,
+        profileImage: user.profileImage
+      };
+
+      await RefreshToken.deleteMany({ userId: user._id });
+
+      const jwtAccessToken = generateAccesToken(userResponse, false);
+      const refreshToken = jwt.sign(userResponse, process.env.REFRESH_TOKEN_SECRET || '');
+
+      const newTokenDoc = new RefreshToken({ 
+        token: refreshToken, 
+        userId: user._id,
+        username: user.username 
+      });
+      await newTokenDoc.save();
+
+      res.status(200).json({
+        message: 'Login successful',
+        user: userResponse,
+        accessToken: jwtAccessToken,
+        refreshToken
+      });
+      return;
+    }
+
+    if (!password) {
+      res.status(400).json({ message: 'Password is required' });
+      return;
+    }
+
     const validPassword = await bcrypt.compare(password, user.passwordHash);
+
     if (!validPassword) {
       res.status(401).json({ message: 'Invalid credentials' });
       return;
@@ -187,7 +243,7 @@ export const loginUser = async (req: Request, res: Response): Promise<void> => {
 
     await RefreshToken.deleteMany({ userId: user._id });
 
-    const accessToken = generateAccesToken(userResponse, false);
+    const jwtAccessToken = generateAccesToken(userResponse, false);
     const refreshToken = jwt.sign(userResponse, process.env.REFRESH_TOKEN_SECRET || '');
 
     const newTokenDoc = new RefreshToken({ 
@@ -200,11 +256,10 @@ export const loginUser = async (req: Request, res: Response): Promise<void> => {
     res.status(200).json({
       message: 'Login successful',
       user: userResponse,
-      accessToken,
+      accessToken: jwtAccessToken,
       refreshToken
     });
   } catch (error) {
-    console.error('Error in login:', error);
     res.status(500).json({ message: 'Internal server error' });
   }
 };
@@ -320,74 +375,124 @@ export const updateUserData = async (req: Request, res: Response): Promise<void>
   }
 };
 
-export const googleAuth = async (req: Request, res: Response): Promise<void> => {
+export const googleAuth = async (req: Request, res: Response) => {
   try {
     const { accessToken } = req.body;
+    console.log('Access Token recibido:', accessToken);
     
-    const ticket = await client.verifyIdToken({
-      idToken: accessToken,
-      audience: process.env.GOOGLE_CLIENT_ID
+    if (!accessToken) {
+      res.status(400).json({ message: 'No access token provided' });
+      return;
+    }
+
+
+    const userInfoResponse = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+      headers: { Authorization: `Bearer ${accessToken}` }
     });
 
-    const payload = ticket.getPayload();
-    if (!payload) {
-      res.status(400).json({ message: 'No payload received from Google' });
-      return;
+    if (!userInfoResponse.ok) {
+      throw new Error('Failed to get user info from Google');
     }
 
-    const email = payload.email;
-    const name = payload.name;
-    const picture = payload.picture;
+    const userData = await userInfoResponse.json();
+    console.log('Información del usuario de Google:', userData);
 
-    if (!email || !name) {
-      res.status(400).json({ message: 'Missing required fields from Google payload' });
-      return;
-    }
-
-    let user = await User.findOne({ email });
+    let user = await User.findOne({ email: userData.email });
     
     if (!user) {
-      user = await User.create({
-        email,
-        username: name,
-        profileImage: picture || '',
-        isVerified: true, 
+      const salt = await bcrypt.genSalt(10);
+      const randomPassword = Math.random().toString(36).slice(-8);
+      const hashedPassword = await bcrypt.hash(randomPassword, salt);
+
+      const newUser = new User({
+        username: userData.name,
+        email: userData.email,
+        passwordHash: hashedPassword,
+        bio: '',
+        location: {
+          city: 'Granada',
+          country: 'Spain',
+          coordinates: [-3.6023, 37.1765],
+          formattedAddress: 'Granada, Spain',
+          postalCode: '18001',
+          region: 'Andalusia',
+          timezone: 'Europe/Madrid'
+        },
+        interests: [],
+        profileImage: userData.picture || 'https://res.cloudinary.com/dbfh8wmqt/image/upload/v1746874674/default_Profile_Image_oiw2nt.webp',
+        rating: 0,
+        isVerified: true,
+        joinedAt: new Date(),
         authProvider: 'google'
       });
-    } else if (user.authProvider !== 'google') {
-      res.status(400).json({ 
-        message: 'Este email ya está registrado con otro método de autenticación' 
-      });
-      return;
+
+      user = await newUser.save();
+      console.log('Usuario creado:', user);
+    } else {
+      // Si el usuario existe, actualizamos su información y establecemos authProvider como google
+      user.authProvider = 'google';
+      user.profileImage = userData.picture || user.profileImage;
+      user.username = userData.name || user.username;
+      await user.save();
+      console.log('Usuario actualizado:', user);
     }
 
-    const secret = process.env.JWT_SECRET;
-    if (!secret) {
-      res.status(500).json({ message: 'JWT_SECRET is not defined' });
-      return;
-    }
+    // Generamos los tokens
+    const userForToken = {
+      _id: user._id,
+      username: user.username,
+      email: user.email
+    };
 
-    const token = jwt.sign(
-      { userId: user._id },
-      secret,
-      { expiresIn: '7d' }
+    const jwtAccessToken = jwt.sign(
+      { ...userForToken, isRefreshToken: false, iat: Math.floor(Date.now() / 1000) },
+      process.env.ACCESS_TOKEN_SECRET || '',
+      { expiresIn: process.env.ACCESS_TOKEN_EXPIRATION }
     );
 
+    const refreshToken = jwt.sign(
+      userForToken,
+      process.env.REFRESH_TOKEN_SECRET || '',
+      { expiresIn: process.env.REFRESH_TOKEN_EXPIRATION }
+    );
+
+    // Guardamos el refresh token
+    await RefreshToken.deleteMany({ userId: user._id });
+    const newTokenDoc = new RefreshToken({ 
+      token: refreshToken, 
+      userId: user._id,
+      username: user.username 
+    });
+    await newTokenDoc.save();
+
+    // Devolvemos la información del usuario y los tokens
     res.json({
-      token,
+      success: true,
       user: {
         _id: user._id,
         username: user.username,
         email: user.email,
+        bio: user.bio,
+        location: user.location,
+        interests: user.interests,
         profileImage: user.profileImage,
-        isVerified: user.isVerified
-      }
+        rating: user.rating,
+        isVerified: user.isVerified,
+        joinedAt: user.joinedAt,
+        authProvider: user.authProvider
+      },
+      accessToken: jwtAccessToken,
+      refreshToken
     });
+
   } catch (error) {
-    console.error('Error en googleAuth:', error);
-    res.status(500).json({ message: 'Error en la autenticación con Google' });
+    console.error('Error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error en la autenticación'
+    });
   }
-};
+}; 
 
 export const getUserById = async (req: Request, res: Response): Promise<void> => {
   try {

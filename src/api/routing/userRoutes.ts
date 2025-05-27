@@ -12,7 +12,7 @@ router.post('/login', loginUser);
 router.post('/register', registerUser);
 router.post('/token', getToken);
 router.delete('/logout', deleteRefreshToken);
-router.post('/google', googleAuth);
+router.post('/auth/google', googleAuth);
 router.get('/:userId', getUserById)
 
 export default router;
