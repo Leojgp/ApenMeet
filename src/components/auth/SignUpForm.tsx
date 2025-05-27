@@ -362,6 +362,15 @@ export default function SignUpForm({
       />
       
       <View style={styles.locationContainer}>
+        <TouchableOpacity 
+          style={[styles.countryButton, { backgroundColor: theme.card, borderColor: theme.border, marginBottom: 16 }]}
+          onPress={() => setShowCountryModal(true)}
+        >
+          <Text style={[styles.countryButtonText, { color: theme.primary }]}>
+            {formState.location.country || t('auth.signUp.selectCountry')}
+          </Text>
+        </TouchableOpacity>
+
         <View style={styles.cityInputContainer}>
           <TextInput
             style={[styles.input, cityInput && styles.inputWithClear, { backgroundColor: theme.card, color: theme.text, borderColor: theme.border }]}
@@ -379,15 +388,6 @@ export default function SignUpForm({
             </TouchableOpacity>
           )}
         </View>
-
-        <TouchableOpacity 
-          style={[styles.countryButton, { backgroundColor: theme.card, borderColor: theme.border }]}
-          onPress={() => setShowCountryModal(true)}
-        >
-          <Text style={[styles.countryButtonText, { color: theme.primary }]}>
-            {formState.location.country || t('auth.signUp.selectCountry')}
-          </Text>
-        </TouchableOpacity>
 
         {isLoadingLocation && (
           <ActivityIndicator style={styles.locationLoader} color={theme.primary} />

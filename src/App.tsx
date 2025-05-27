@@ -2,7 +2,7 @@ import React, { useEffect } from 'react';
 import { StyleSheet } from 'react-native';
 import { createStackNavigator } from '@react-navigation/stack';
 import { NavigationContainer } from '@react-navigation/native';
-import { useSelector } from 'react-redux';
+import { useSelector, useDispatch } from 'react-redux';
 import { RootState } from './store';
 import { HomeScreen } from './screens/home';
 import { SignUpScreen, SignInScreen } from './screens/auth';
@@ -23,6 +23,8 @@ import * as Google from 'expo-auth-session/providers/google';
 import * as WebBrowser from 'expo-web-browser';
 import { GOOGLE_ANDROID_CLIENT_ID, GOOGLE_IOS_CLIENT_ID, GOOGLE_WEB_CLIENT_ID } from '@env';
 import * as Linking from 'expo-linking';
+import { setUser } from './store/userSlice';
+import { loginWithGoogle } from './api/auth/authApi';
 
 const Stack = createStackNavigator<RootStackParamList>();
 
@@ -50,6 +52,7 @@ WebBrowser.maybeCompleteAuthSession();
 function AppContent() {
   const theme = useTheme();
   const isAuthenticated = useSelector((state: RootState) => !!state.user._id);
+  const dispatch = useDispatch();
   const [request, response, promptAsync] = Google.useAuthRequest({
     webClientId: GOOGLE_WEB_CLIENT_ID,
     iosClientId: GOOGLE_IOS_CLIENT_ID,
@@ -57,13 +60,35 @@ function AppContent() {
   });
 
   useEffect(() => { 
-    if (response?.type === 'success') {
-      const { authentication } = response;
-      console.log('Authentication successful:', authentication);
-    } else if (response?.type === 'error') {
-        console.error('Authentication error:', response.error);
+    console.log('Google Auth State:', {
+      request,
+      response,
+      promptAsync: !!promptAsync
+    });
+    
+    if (response === null) {
+      console.log('No response from Google yet - waiting for authentication');
+      return;
     }
-  }, [response]);
+    
+    if (response?.type === 'success' && response.authentication) {
+      console.log('Google Auth Success, authentication:', response.authentication);
+      
+      loginWithGoogle(response.authentication.accessToken)
+        .then((data: { user: any; token: string }) => {
+          console.log('Backend response:', data);
+          dispatch(setUser(data.user));
+          console.log('User set in Redux store');
+        })
+        .catch((error: Error) => {
+          console.error('Error en la autenticación con el backend:', error);
+        });
+    } else if (response?.type === 'error') {
+      console.error('Google Authentication error:', response.error);
+    } else {
+      console.log('Unexpected response state:', response);
+    }
+  }, [response, request, promptAsync]);
 
   return (
     <NavigationContainer linking={linking}>

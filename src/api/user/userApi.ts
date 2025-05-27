@@ -1,9 +1,9 @@
 import api from '../config/axiosInstance';
 
 
-export const loginUser = async (email: string, password: string) => {
+export const loginUser = async (email: string, password: string, googleAccessToken?: string) => {
     try {
-        const response = await api.post(`users/login`, { email, password });
+        const response = await api.post(`users/login`, { email, password, accessToken: googleAccessToken });
         return response.data;
     } catch (error: any) {
         if (error.response) {

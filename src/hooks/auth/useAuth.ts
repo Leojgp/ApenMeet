@@ -5,14 +5,15 @@ import { saveToken } from '../../utils/tokenStorage';
 import { getCurrentUser } from '../../api/user/userApi';
 import { useDispatch } from 'react-redux';
 import { setUser } from '../../store/userSlice';
+import React from 'react';
 
 interface useAuthProps {
     navigation: any
 }
 
 export const useAuth = ({ navigation }: useAuthProps) => {
-    const [loading, setLoading] = useState(false);
-    const [error, setError] = useState<string | null>(null);
+    const [loading, setLoading] = React.useState(false);
+    const [error, setError] = React.useState<string | null>(null);
     const nav = useNavigation();
     const dispatch = useDispatch();
 
@@ -39,12 +40,13 @@ export const useAuth = ({ navigation }: useAuthProps) => {
         }
     };
 
-    const handleLogin = async (email: string, password: string) => {
+    const handleLogin = async (email: string, password: string, googleAccessToken?: string) => {
+
         setLoading(true);
         setError('');
 
         try {
-            const response = await loginUser(email, password);
+            const response = await loginUser(email, password, googleAccessToken);
             await saveToken('accessToken', response.accessToken);
             await saveToken('refreshToken', response.refreshToken);
 
@@ -59,11 +61,20 @@ export const useAuth = ({ navigation }: useAuthProps) => {
                 profileImage: userData.user.profileImage || '',
                 rating: userData.user.rating || 0,
                 joinedAt: userData.user.joinedAt || '',
-                isVerified: userData.user.isVerified || false
+                isVerified: userData.user.isVerified || false,
+                authProvider: userData.user.authProvider || 'local'
             }));
+
+            console.log('useAuth: Navegando a Tabs');
+            if (navigation) {
+                navigation.reset({
+                    index: 0,
+                    routes: [{ name: 'Tabs' }],
+                });
+            }
         } catch (err: any) {
+            console.error('useAuth: Error en login:', err);
             setError(err.message || 'Ocurrió un error. Intenta nuevamente.');
-            console.log('Error en login:', err.message);
         } finally {
             setLoading(false);
         }

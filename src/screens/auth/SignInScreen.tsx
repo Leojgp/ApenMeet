@@ -10,6 +10,8 @@ import { RootStackParamList } from '../../models/navigation';
 import { useTheme } from '../../hooks/theme/useTheme';
 import * as Google from 'expo-auth-session/providers/google';
 import { GOOGLE_WEB_CLIENT_ID, GOOGLE_IOS_CLIENT_ID, GOOGLE_ANDROID_CLIENT_ID } from '@env';
+import { loginWithGoogle } from '../../api/auth/authApi';
+import * as SecureStore from 'expo-secure-store';
 
 type SignInScreenNavigationProp = StackNavigationProp<RootStackParamList, 'SignIn'>;
 type SignInScreenRouteProp = RouteProp<RootStackParamList, 'SignIn'>;
@@ -35,29 +37,41 @@ export default function SignInScreen() {
   React.useEffect(() => {
     if (response?.type === 'success') {
       const { authentication } = response;
-      handleGoogleSignIn(authentication?.accessToken);
+      console.log('Google Auth Response:', authentication);
+      
+      if (authentication?.accessToken) {
+        loginWithGoogle(authentication.accessToken)
+          .then(response => {
+            console.log('Respuesta del backend:', response);
+            if (response.success) {
+
+              setEmail(response.user.email);
+              handleLogin(response.user.email, '', authentication.accessToken);
+            }
+          })
+          .catch(error => {
+            console.error('Error en login con Google:', error);
+            Alert.alert('Error', error.message);
+          });
+      }
     }
   }, [response]);
 
-  const handleGoogleSignIn = async (accessToken?: string) => {
-    if (!accessToken) return;
+  const handleGooglePress = async () => {
     try {
-      console.log('Google Sign In successful');
-      if (redirectTo && planId) {
-        if (redirectTo === 'PlanDetail') {
-          navigation.navigate('PlanDetail', { planId });
-        } else if (redirectTo === 'Chat') {
-          navigation.navigate('Chat', { planId });
-        }
-      }
-    } catch (error: any) {
-      Alert.alert('Error', error.message || 'An error occurred during Google sign in');
+      const result = await promptAsync();
+      console.log('Resultado de Google Sign In:', result);
+    } catch (error) {
+      console.error('Error al iniciar sesión con Google:', error);
+      Alert.alert('Error', 'No se pudo iniciar sesión con Google');
     }
   };
 
   const handleSignIn = async () => {
     try {
+      console.log('Iniciando proceso de login con:', { email, password });
       await handleLogin(email, password);
+      console.log('Login completado');
       if (redirectTo && planId) {
         if (redirectTo === 'PlanDetail') {
           navigation.navigate('PlanDetail', { planId });
@@ -66,6 +80,7 @@ export default function SignInScreen() {
         }
       }
     } catch (error: any) {
+      console.error('Error en SignInScreen:', error);
       Alert.alert('Error', error.message || 'An error occurred');
     }
   };
@@ -90,6 +105,7 @@ export default function SignInScreen() {
         onChangeText={setPassword}
         secureTextEntry
       />
+      {error && <Text style={[styles.errorText, { color: theme.error }]}>{error}</Text>}
       <TouchableOpacity
         style={[styles.button, { backgroundColor: theme.primary }]}
         onPress={handleSignIn}
@@ -108,7 +124,7 @@ export default function SignInScreen() {
 
       <TouchableOpacity
         style={[styles.googleButton, { backgroundColor: theme.card }]}
-        onPress={() => promptAsync()}
+        onPress={handleGooglePress}
         disabled={!request}
       >
         <Text style={[styles.googleButtonText, { color: theme.text }]}>
@@ -183,5 +199,10 @@ const styles = StyleSheet.create({
   googleButtonText: {
     fontSize: 16,
     fontWeight: '600',
+  },
+  errorText: {
+    textAlign: 'center',
+    marginTop: 10,
+    color: 'red',
   },
 });
