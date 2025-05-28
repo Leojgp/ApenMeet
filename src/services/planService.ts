@@ -3,7 +3,7 @@ import {
   getPlanById, 
   getPlans, 
   getPlansByUsername, 
-  getUserParticipatingPlans,
+  getUserParticipatingPlans as apiGetUserParticipatingPlans,
   getPlansByLocation
 } from '../api/plans/plansApi';
 import { Plan, fromApiResponse } from '../models/Plan';
@@ -51,19 +51,29 @@ export const fetchPlanById = async (planId: string) => {
 
 export const fetchMyCreatedPlans = async (username: string) => {
   try {
-    const data = await getPlansByUsername(username);
-    return data.map((plan: any) => fromApiResponse(plan));
+    console.log(`[FRONTEND] fetchMyCreatedPlans called for username: ${username}`);
+    const response = await api.get(`plans/created-by/${username}`);
+    return response.data.map((plan: any) => fromApiResponse(plan));
   } catch (error: any) {
+    console.error('Error fetching created plans:', error);
     throw new Error(error.response?.data?.error || i18next.t('api.errors.serverError'));
   }
 };
 
-export const fetchMyJoinedPlans = async () => {
+export const fetchMyJoinedPlans = async (userId?: string) => {
   try {
-    const data = await getUserParticipatingPlans();
-    return data.map((plan: any) => fromApiResponse(plan));
+    const endpoint = userId ? `/user/${userId}` : '/plans/participating';
+    console.log('Endpoint being passed to api.get:', endpoint);
+    console.log('Full URL Axios will attempt:', api.defaults.baseURL + endpoint);
+    const response = await api.get(endpoint);
+    return response.data.map((plan: any) => fromApiResponse(plan));
   } catch (error: any) {
-    throw new Error(error.response?.data?.error || i18next.t('api.errors.serverError'));
+    console.error('Error fetching user plans:', error); 
+    if (error.response) {
+      throw new Error(error.response.data.message || 'Error fetching user plans: ' + error.message);
+    } else {
+      throw new Error('Error fetching user plans: ' + error.message);
+    }
   }
 };
 

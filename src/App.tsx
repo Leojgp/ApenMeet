@@ -25,6 +25,7 @@ import { GOOGLE_ANDROID_CLIENT_ID, GOOGLE_IOS_CLIENT_ID, GOOGLE_WEB_CLIENT_ID } 
 import * as Linking from 'expo-linking';
 import { setUser } from './store/userSlice';
 import { loginWithGoogle } from './api/auth/authApi';
+import { StatusBar } from 'expo-status-bar';
 
 const Stack = createStackNavigator<RootStackParamList>();
 
@@ -92,6 +93,7 @@ function AppContent() {
 
   return (
     <NavigationContainer linking={linking}>
+      <StatusBar style="auto" />
       <Stack.Navigator 
         initialRouteName="Home"
         screenOptions={{

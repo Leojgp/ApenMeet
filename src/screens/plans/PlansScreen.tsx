@@ -480,7 +480,7 @@ export default function PlansScreen({navigation}: PlansScreenProps) {
 
   const renderScene = useCallback(({ route }: { route: { key: string } }) => (
     <FlatList
-      data={uniquePlans}
+      data={filteredPlans}
       renderItem={renderItem}
       keyExtractor={(item) => item.id}
       contentContainerStyle={[styles.container, { backgroundColor: theme.background }]}
@@ -505,7 +505,7 @@ export default function PlansScreen({navigation}: PlansScreenProps) {
       initialNumToRender={10}
       keyboardShouldPersistTaps="handled"
     />
-  ), [uniquePlans, renderItem, refreshing, onRefresh, loading, error, theme, t]);
+  ), [filteredPlans, renderItem, refreshing, onRefresh, loading, error, theme, t]);
 
   const renderTabBar = useCallback((props: any) => (
     <TabBar

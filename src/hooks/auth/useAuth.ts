@@ -1,20 +1,17 @@
 import { useState } from 'react';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, CommonActions } from '@react-navigation/native';
 import { loginUser, registerUser } from '../../api/user/userApi';
 import { saveToken } from '../../utils/tokenStorage';
 import { getCurrentUser } from '../../api/user/userApi';
 import { useDispatch } from 'react-redux';
 import { setUser } from '../../store/userSlice';
 import React from 'react';
+import { RootStackNavigationProp } from '../../models/navigation';
 
-interface useAuthProps {
-    navigation: any
-}
-
-export const useAuth = ({ navigation }: useAuthProps) => {
+export const useAuth = () => {
     const [loading, setLoading] = React.useState(false);
     const [error, setError] = React.useState<string | null>(null);
-    const nav = useNavigation();
+    const navigation = useNavigation<RootStackNavigationProp>();
     const dispatch = useDispatch();
 
     const handleRegister = async (formData: any) => {
@@ -30,9 +27,7 @@ export const useAuth = ({ navigation }: useAuthProps) => {
 
             await registerUser(formData);
 
-            if (navigation) {
-                navigation.navigate('SignIn');
-            }
+            navigation.navigate('SignIn', {});
         } catch (err: any) {
             setError(err.message || 'Error al registrar usuario');
         } finally {
@@ -66,12 +61,14 @@ export const useAuth = ({ navigation }: useAuthProps) => {
             }));
 
             console.log('useAuth: Navegando a Tabs');
-            if (navigation) {
-                navigation.reset({
-                    index: 0,
-                    routes: [{ name: 'Tabs' }],
-                });
-            }
+            setTimeout(() => {
+                navigation.dispatch(
+                    CommonActions.reset({
+                        index: 0,
+                        routes: [{ name: 'Tabs' }],
+                    })
+                );
+            }, 50);
         } catch (err: any) {
             console.error('useAuth: Error en login:', err);
             setError(err.message || 'Ocurrió un error. Intenta nuevamente.');

@@ -161,7 +161,33 @@ export default function MainScreen({ navigation }: any) {
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={theme.primary} />
         }
-        ListEmptyComponent={null}
+        ListEmptyComponent={
+          <>
+            {loading && !refreshing && <ActivityIndicator size="large" color={theme.primary} style={{marginTop: 20}} />}
+            {error && !loading && (
+              error.includes('No events found for this city') ? (
+                <View style={[styles.container, { backgroundColor: theme.background, justifyContent: 'center', alignItems: 'center' }]}> 
+                   <Text style={{ fontSize: 22, fontWeight: 'bold', color: theme.primary, marginBottom: 8 }}>{t('events.empty.title')}</Text>
+                   <Text style={{ color: theme.text, marginBottom: 24 }}>{t('events.empty.message')}</Text>
+                   <TouchableOpacity style={{ backgroundColor: theme.primary, paddingHorizontal: 24, paddingVertical: 12, borderRadius: 8 }} onPress={onRefresh}>
+                     <Text style={{ color: theme.card, fontWeight: 'bold', fontSize: 16 }}>{t('events.empty.refresh')}</Text>
+                   </TouchableOpacity>
+                 </View>
+              ) : (
+                <Text style={[styles.notFound, { color: theme.error, marginTop: 20 }]}>{error}</Text>
+              )
+            )}
+            {!error && !loading && events.length === 0 && (
+               <View style={[styles.container, { backgroundColor: theme.background, justifyContent: 'center', alignItems: 'center' }]}> 
+                   <Text style={{ fontSize: 22, fontWeight: 'bold', color: theme.primary, marginBottom: 8 }}>{t('events.empty.title')}</Text>
+                   <Text style={{ color: theme.text, marginBottom: 24 }}>{t('events.empty.message')}</Text>
+                   <TouchableOpacity style={{ backgroundColor: theme.primary, paddingHorizontal: 24, paddingVertical: 12, borderRadius: 8 }} onPress={onRefresh}>
+                     <Text style={{ color: theme.card, fontWeight: 'bold', fontSize: 16 }}>{t('events.empty.refresh')}</Text>
+                   </TouchableOpacity>
+                 </View>
+            )}
+          </>
+        }
       />
     </View>
   );
@@ -247,5 +273,9 @@ const styles = StyleSheet.create({
   emptyButtonText: {
     fontSize: 16,
     fontWeight: 'bold',
+  },
+  notFound: {
+    textAlign: 'center',
+    margin: 16,
   },
 });

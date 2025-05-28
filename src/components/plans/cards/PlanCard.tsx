@@ -23,6 +23,12 @@ export default function PlanCard({ plan, navigation, onPlanDeleted }: PlanCardPr
   const swipeableRef = useRef<Swipeable>(null);
   const isAdmin = plan.admins?.some(admin => admin._id === user?._id || (admin as any).id === user?._id);
   const isCreator = plan.creatorId === user?._id;
+  const isParticipant = plan.participants?.some(
+    (p: any) => {
+      const participantId = p.id?._id || p._id;
+      return participantId === user?._id;
+    }
+  );
   const theme = useTheme();
   const { t } = useTranslation();
 
@@ -119,15 +125,14 @@ export default function PlanCard({ plan, navigation, onPlanDeleted }: PlanCardPr
           <View style={styles.headerContainer}>
             <Text style={[styles.title, { color: theme.primary }]}>{plan.title}</Text>
             <View style={styles.headerButtons}>
-              <TouchableOpacity
-                onPress={() => navigation.navigate('ManageAdmins', { planId: planIdToUse })}
-                style={[styles.adminButton, !isAdmin && !isCreator && { opacity: 0.5 }]}
-              >
-                <Ionicons name="people" size={22} color={theme.primary} />
-                <Text style={[styles.adminButtonText, { color: theme.primary }]}>
-                  {plan.participants.length}
-                </Text>
-              </TouchableOpacity>
+            {(isAdmin || isCreator || isParticipant) && (
+                <TouchableOpacity
+                  onPress={() => navigation.navigate('ManageAdmins', { planId: planIdToUse })}
+                  style={styles.adminButton}
+                >
+                  <Ionicons name="people" size={22} color={theme.primary} />
+                </TouchableOpacity>
+              )}
             </View>
           </View>
           

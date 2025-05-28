@@ -207,7 +207,7 @@ export default {
     language: "Idioma"
   },
   adminManagement: {
-    title: "Gestionar administradores",
+    title: "Gestionar participantes",
     addAdmin: "Añadir admin",
     removeAdmin: "Eliminar admin",
     alreadyAdmin: "Ya es admin",

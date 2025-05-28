@@ -28,10 +28,12 @@ export const usePlans = () => {
       } else {
         allPlans = await fetchPlans();
       }
+
       const [created, joined] = await Promise.all([
         user ? fetchMyCreatedPlans(user.username) : [],
         fetchMyJoinedPlans()
       ]);
+
       setPlans(allPlans.filter((plan: Plan | null): plan is Plan => plan !== null));
       setMyCreatedPlans(created.filter((plan: Plan | null): plan is Plan => plan !== null));
       setMyJoinedPlans(joined.filter((plan: Plan | null): plan is Plan => plan !== null));

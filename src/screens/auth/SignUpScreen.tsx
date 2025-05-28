@@ -1,4 +1,4 @@
-import { StyleSheet, Text, SafeAreaView } from 'react-native';
+import { StyleSheet, Text, SafeAreaView, ScrollView } from 'react-native';
 import { useSignUpForm } from '../../hooks/auth/useSignUpForm';
 import SignUpForm from '../../components/auth/SignUpForm';
 import { useTheme } from '../../hooks/theme/useTheme';
@@ -19,16 +19,16 @@ export default function SignUpScreen({ navigation }: any) {
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]}>
       <Text style={[styles.title, { color: theme.primary }]}>{t('auth.signUp.title')}</Text>
-      <SignUpForm
-        formState={formState}
-        updateFormState={updateFormState}
-        handleSubmit={handleSubmit}
-        pickImage={pickImage}
-        loading={loading}
-        error={error}
-        onNavigateToSignIn={() => navigation.navigate('SignIn')}
-        navigation={navigation}
-      />
+        <SignUpForm
+          formState={formState}
+          updateFormState={updateFormState}
+          handleSubmit={handleSubmit}
+          pickImage={pickImage}
+          loading={loading}
+          error={error}
+          onNavigateToSignIn={() => navigation.navigate('SignIn')}
+          navigation={navigation}
+        />
     </SafeAreaView>
   );
 }
@@ -41,6 +41,7 @@ const styles = StyleSheet.create({
     fontSize: 28,
     fontWeight: 'bold',
     textAlign: 'center',
-    marginTop: 160,
+    marginBottom: 20,
+    marginTop: 70,
   },
 });
