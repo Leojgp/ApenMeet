@@ -33,9 +33,21 @@ export const scrapeUrl = async (req: Request, res: Response): Promise<void> => {
     }
 
     res.status(200).json(savedData);
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error in scraping controller:', error);
-    res.status(500).json({ error: 'Error scraping the provided location' });
+
+    if (error.name === 'TimeoutError' || (error.message && error.message.includes('no activities found'))) {
+      console.log('Scraping timed out or no activities found, sending empty response.');
+      res.status(200).json([]);
+    } else if (error.message && error.message.includes('Error al extraer actividades de Fever')) {
+
+      console.log('Scraping extraction failed, sending empty response.');
+      res.status(200).json([]);
+    }
+     else {
+
+      res.status(500).json({ error: 'Error scraping the provided location' });
+    }
   }
 };
 

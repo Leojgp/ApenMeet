@@ -9,7 +9,7 @@ router.get('/location', getPlansByLocation);
 router.get('/', getAllPlans);
 router.post('/', authenticateToken, upload.single('image'), handleMulterError, createPlan);
 router.get('/user/:userId', authenticateToken, getPlansByUserId);
-router.get('/user/:username', getPlansByUsername);
+router.get('/created-by/:username', getPlansByUsername);
 router.get('/participating', authenticateToken, getUserParticipatingPlans);
 router.get('/:id', getPlanById);
 router.post('/:id/join', authenticateToken, joinPlan);
